@@ -1,6 +1,6 @@
 #pragma once
 
-#include <AML/_AMLCore.hpp>
+#include <AML/Iterator.hpp>
 
 #include <cstddef>
 #include <type_traits>
@@ -85,6 +85,9 @@ public:
 		return Storage::size > 5;
 	}
 
+	using iterator		 = std::conditional_t<uses_static_array(), T* , aml::IndexIterator<Vector<T, Size>>>;
+	using const_iterator = std::conditional_t<uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
+
 	static constexpr bool has_index(size_type index) noexcept {
 		return Storage::size > index && !uses_static_array();
 	}
@@ -168,6 +171,52 @@ public:
 	constexpr
 	const_reference operator[](size_type index) const noexcept {
 		return const_cast<Vector&>(*this)[index];
+	}
+
+	[[nodiscard]] constexpr
+	iterator begin() noexcept {
+		if constexpr (uses_static_array()) {
+			return Storage::array;
+		} else {
+			return iterator(*this, 0);
+		}
+	}
+
+	[[nodiscard]] constexpr
+	iterator end() noexcept {
+		if constexpr (uses_static_array()) {
+			return Storage::array + size();
+		} else {
+			return iterator(*this, size());
+		}
+	}
+
+	[[nodiscard]] constexpr
+	const_iterator begin() const noexcept {
+		if constexpr (uses_static_array()) {
+			return Storage::array;
+		} else {
+			return const_iterator(*this, 0);
+		}
+	}
+
+	[[nodiscard]] constexpr
+	const_iterator end() const noexcept {
+		if constexpr (uses_static_array()) {
+			return Storage::array + size();
+		} else {
+			return const_iterator(*this, size());
+		}
+	}
+
+	[[nodiscard]] constexpr
+	const_iterator cbegin() const noexcept {
+		return begin();
+	}
+
+	[[nodiscard]] constexpr
+	const_iterator cend() const noexcept {
+		return end();
 	}
 
 };
