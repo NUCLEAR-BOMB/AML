@@ -11,7 +11,7 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/include/
 if (MSVC)
 	add_compile_options(/W4 /WX)
 else()
-	add_compile_options(-Wall -Wextra -pedantic -Werror)
+	add_compile_options(-Wall -Wextra -pedantic -Werror -Wimplicit-int-float-conversion)
 endif()
 
 add_library("${PROJECT_NAME}" STATIC ${SOURCE_FILES} ${HEADER_FILES})
