@@ -6,17 +6,18 @@ using namespace aml;
 
 namespace {
 
-	template<class> struct VectorSuite : testing::Test{};
-	using VectorTypeList = testing::Types<int, float, char, double>;
+	TEST(VectorTest, init_using_array) {
+		Vector<int, 1> a({2});
+		Vector<int, 2> b({3, 4});
+		Vector<int, 3> c({100, -100, 200});
 
-	TYPED_TEST_SUITE(VectorSuite, VectorTypeList);
+		Vector<int, 6> d({1, 2, 3, 4, 5, 6});
+	}
 
-	TYPED_TEST(VectorSuite, initUsingArray) {
-		Vector<TypeParam, 1> a({static_cast<TypeParam>(2)});
-		Vector<TypeParam, 2> b({static_cast<TypeParam>(3), static_cast<TypeParam>(4)});
-		Vector<TypeParam, 3> c({static_cast<TypeParam>(100), static_cast<TypeParam>(-100), static_cast<TypeParam>(200)});
-
-		Vector<TypeParam, 6> d({1, 2, 3, 4, 5, 6});
+	TEST(VectorTest, init_using_variadic) {
+		Vector<int, 2> a(1, 2);
+		Vector<int, 3> b(3, 4, 5);
+		Vector<int, 6> c(1, 2, 3, 4, 5, 6);
 	}
 
 	TEST(VectorTest, checkSize) {

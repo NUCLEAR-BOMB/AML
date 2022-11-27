@@ -3,7 +3,9 @@
 #include <AML/_AMLCore.hpp>
 
 #include <cstddef>
+#include <type_traits>
 #include <algorithm>
+#include <tuple>
 
 AML_NAMESPACE
 
@@ -98,6 +100,28 @@ public:
 			if constexpr (has_index(2)) Storage::z = Array[2];
 			if constexpr (has_index(3)) Storage::w = Array[3];
 			if constexpr (has_index(4)) Storage::v = Array[4];
+		}
+	}
+
+	template<class... Ts> constexpr
+	Vector(Ts&&... r) noexcept {
+		static_assert((std::is_same_v<T, Ts> && ...), "Variadic parameter type is not a storage type");
+		static_assert(sizeof...(r) == Storage::size, "Bad number of variadic parameters");
+
+		if constexpr (uses_static_array()) {
+			std::size_t arri = 0;
+			([&] {
+				Storage::array[arri] = std::forward<T>(r);
+				++arri;
+			}(), ...);
+		}
+		else {
+			auto&& t = std::forward_as_tuple(r...);
+			if constexpr (has_index(0)) Storage::x = std::get<0>(t);
+			if constexpr (has_index(1)) Storage::y = std::get<1>(t);
+			if constexpr (has_index(2)) Storage::z = std::get<2>(t);
+			if constexpr (has_index(3)) Storage::w = std::get<3>(t);
+			if constexpr (has_index(4)) Storage::v = std::get<4>(t);
 		}
 	}
 
