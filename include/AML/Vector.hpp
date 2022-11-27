@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AML/Iterator.hpp>
+#include <AML/Tools.hpp>
 
 #include <cstddef>
 #include <type_traits>
@@ -72,6 +73,11 @@ namespace detail
 template<class T, Vectorsize Size>
 class Vector : public detail::VectorStorage<T, Size>
 {
+
+	static_assert(std::is_object_v<T>,	  "A vector's T must be an object type");
+	static_assert(!std::is_abstract_v<T>, "A vector's T cannot be an abstract class type");
+	static_assert(aml::is_complete<T>,	  "A vector's T must be a complete type");
+
 	using Storage = detail::VectorStorage<T, Size>;
 public:
 
