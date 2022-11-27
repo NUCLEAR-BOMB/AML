@@ -8,6 +8,18 @@ AML_NAMESPACE
 
 using Vectorsize = std::size_t;
 
+namespace VI
+{
+	template<Vectorsize I>
+	struct Index {};
+
+	inline constexpr Index<0> X;
+	inline constexpr Index<1> Y;
+	inline constexpr Index<2> Z;
+	inline constexpr Index<3> W;
+	inline constexpr Index<4> V;
+}
+
 namespace detail
 {
 	template<class T, Vectorsize S>
@@ -63,6 +75,9 @@ public:
 	using size_type = Vectorsize;
 	using value_type = T;
 
+	using reference = T&;
+	using const_reference = const T&;
+
 	constexpr
 	Vector(const T (&Array)[Size]) noexcept {
 		if constexpr (Storage::size >= 1) Storage::x = Array[0];
@@ -77,7 +92,19 @@ public:
 		return Storage::size;
 	}
 
+	template<Vectorsize I> constexpr
+	reference operator[](VI::Index<I>) noexcept {
+			 if constexpr (I == 0) return Storage::x;
+		else if constexpr (I == 1) return Storage::y;
+		else if constexpr (I == 2) return Storage::z;
+		else if constexpr (I == 3) return Storage::w;
+		else if constexpr (I == 4) return Storage::v;
+	}
 
+	template<Vectorsize I> constexpr
+	const_reference operator[](VI::Index<I>) const noexcept {
+		return const_cast<Vector&>(*this)[VI::Index<I>{}];
+	}
 
 };
 

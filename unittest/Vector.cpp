@@ -28,6 +28,15 @@ namespace {
 		ASSERT_EQ(c.size(), 4);
 	}
 
+	TEST(VectorTest, static_call_index_operator) {
+		Vector<int, 2> a({500, 1000});
+		ASSERT_EQ(a.operator[](VI::X), 500);
+		ASSERT_EQ(a.operator[](VI::Y), 1000);
+		const Vector<unsigned int, 3> b({300, 800, 200});
+		ASSERT_EQ(b.operator[](VI::X), 300);
+		ASSERT_EQ(b.operator[](VI::Y), 800);
+		ASSERT_EQ(b.operator[](VI::Z), 200);
+	}
 
 	int main(int argc, char **argv)
 	{
