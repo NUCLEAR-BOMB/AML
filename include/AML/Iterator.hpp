@@ -23,7 +23,7 @@ public:
 
 	constexpr
 	IndexIterator(Object& object, difference_type startshift) noexcept 
-		: m_object(object), m_shift(startshift) {}
+		: m_shift(startshift), m_object(object) {}
 
 	[[nodiscard]] constexpr
 	bool operator==(const IndexIterator& right) const noexcept {
