@@ -63,11 +63,21 @@ public:
 	using size_type = Vectorsize;
 	using value_type = T;
 
+	constexpr
+	Vector(const T (&Array)[Size]) noexcept {
+		if constexpr (Storage::size >= 1) Storage::x = Array[0];
+		if constexpr (Storage::size >= 2) Storage::y = Array[1];
+		if constexpr (Storage::size >= 3) Storage::z = Array[2];
+		if constexpr (Storage::size >= 4) Storage::w = Array[3];
+		if constexpr (Storage::size >= 5) Storage::v = Array[4];
+	}
 
 	[[nodiscard]] constexpr
 	size_type size() const noexcept {
 		return Storage::size;
 	}
+
+
 
 };
 
