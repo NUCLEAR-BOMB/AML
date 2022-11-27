@@ -38,6 +38,17 @@ namespace {
 		ASSERT_EQ(b.operator[](VI::Z), 200);
 	}
 
+	TEST(VectorTest, runtime_call_index_operator) {
+		Vector<int, 2> a({1, 2});
+		ASSERT_EQ(a[0], 1);
+		ASSERT_EQ(a[1], 2);
+		Vector<unsigned int, 4> b({4, 5, 6, 7});
+		ASSERT_EQ(b[0], 4);
+		ASSERT_EQ(b[1], 5);
+		ASSERT_EQ(b[2], 6);
+		ASSERT_EQ(b[3], 7);
+	}
+
 	int main(int argc, char **argv)
 	{
 		::testing::InitGoogleTest(&argc, argv);

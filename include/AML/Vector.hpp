@@ -78,13 +78,17 @@ public:
 	using reference = T&;
 	using const_reference = const T&;
 
+	static constexpr bool has_index(Vectorsize index) noexcept {
+		return Storage::size > index;
+	}
+
 	constexpr
 	Vector(const T (&Array)[Size]) noexcept {
-		if constexpr (Storage::size >= 1) Storage::x = Array[0];
-		if constexpr (Storage::size >= 2) Storage::y = Array[1];
-		if constexpr (Storage::size >= 3) Storage::z = Array[2];
-		if constexpr (Storage::size >= 4) Storage::w = Array[3];
-		if constexpr (Storage::size >= 5) Storage::v = Array[4];
+		if constexpr (has_index(0)) Storage::x = Array[0];
+		if constexpr (has_index(1)) Storage::y = Array[1];
+		if constexpr (has_index(2)) Storage::z = Array[2];
+		if constexpr (has_index(3)) Storage::w = Array[3];
+		if constexpr (has_index(4)) Storage::v = Array[4];
 	}
 
 	[[nodiscard]] constexpr
@@ -99,11 +103,27 @@ public:
 		else if constexpr (I == 2) return Storage::z;
 		else if constexpr (I == 3) return Storage::w;
 		else if constexpr (I == 4) return Storage::v;
+		AML_UNREACHABLE;
 	}
 
 	template<Vectorsize I> constexpr
 	const_reference operator[](VI::Index<I>) const noexcept {
 		return const_cast<Vector&>(*this)[VI::Index<I>{}];
+	}
+
+	constexpr
+	reference operator[](Vectorsize index) noexcept {
+		if constexpr (has_index(0)) if (index == 0) return Storage::x;
+		if constexpr (has_index(1)) if (index == 1) return Storage::y;
+		if constexpr (has_index(2)) if (index == 2) return Storage::z;
+		if constexpr (has_index(3)) if (index == 3) return Storage::w;
+		if constexpr (has_index(4)) if (index == 4) return Storage::v;
+		AML_UNREACHABLE;
+	}
+
+	constexpr
+	const_reference operator[](Vectorsize index) const noexcept {
+		return const_cast<Vector&>(*this)[index];
 	}
 
 };
