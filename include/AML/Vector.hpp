@@ -79,6 +79,7 @@ class Vector : public detail::VectorStorage<T, Size>
 	static_assert(aml::is_complete<T>,	  "A vector's T must be a complete type");
 
 	using Storage = detail::VectorStorage<T, Size>;
+
 public:
 
 	using size_type = Vectorsize;
@@ -93,6 +94,13 @@ public:
 
 	using iterator		 = std::conditional_t<uses_static_array(), T* , aml::IndexIterator<Vector<T, Size>>>;
 	using const_iterator = std::conditional_t<uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
+
+public:
+
+	constexpr
+	Vector() noexcept {
+		
+	}
 
 	static constexpr bool has_index(size_type index) noexcept {
 		return Storage::size > index && !uses_static_array();
@@ -112,27 +120,35 @@ public:
 		}
 	}
 
-	template<class... Ts> constexpr
-	Vector(Ts&&... r) noexcept {
-		static_assert((std::is_same_v<T, Ts> && ...), "Variadic parameter type is not a storage type");
-		static_assert(sizeof...(r) == Storage::size, "Bad number of variadic parameters");
+	template<class First, class... Rest> constexpr
+	explicit Vector(First&& f, Rest&&... r) noexcept {
+		static_assert(std::is_same_v<T, First> && (std::is_same_v<T, Rest> && ...), "Variadic parameter type is not a storage type");
+		static_assert(sizeof...(r) + 1 == Storage::size, "Bad number of variadic parameters");
 
 		if constexpr (uses_static_array()) {
-			std::size_t arri = 0;
+			Storage::array[0] = std::forward<First>(f);
+			std::size_t arri = 1;
 			([&] {
-				Storage::array[arri] = std::forward<T>(r);
+				Storage::array[arri] = std::forward<Rest>(r);
 				++arri;
 			}(), ...);
 		}
 		else {
 			auto&& t = std::forward_as_tuple(r...);
-			if constexpr (has_index(0)) Storage::x = std::get<0>(t);
-			if constexpr (has_index(1)) Storage::y = std::get<1>(t);
-			if constexpr (has_index(2)) Storage::z = std::get<2>(t);
-			if constexpr (has_index(3)) Storage::w = std::get<3>(t);
-			if constexpr (has_index(4)) Storage::v = std::get<4>(t);
+			Storage::x = std::forward<First>(f);
+			if constexpr (has_index(1)) Storage::y = std::get<0>(t);
+			if constexpr (has_index(2)) Storage::z = std::get<1>(t);
+			if constexpr (has_index(3)) Storage::w = std::get<2>(t);
+			if constexpr (has_index(4)) Storage::v = std::get<3>(t);
 		}
 	}
+
+	constexpr
+	Vector(const Vector&) noexcept = default;
+
+	constexpr
+	Vector& operator=(const Vector&) noexcept = default;
+
 
 	[[nodiscard]] constexpr
 	size_type size() const noexcept {
@@ -226,5 +242,93 @@ public:
 	}
 
 };
+
+
+#define AML_OP_BODY1(outtype, action) \
+	aml::Vector<outtype, Size> out; \
+	aml::static_for<Size>([&](Vectorsize i) {	\
+		out[i] = action;			\
+	});											\
+	return out
+
+#define AML_OP_BODY2(action) \
+	aml::static_for<Size>([&](Vectorsize i) {	\
+		action;									\
+	});											\
+	return left
+
+template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto operator+(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept {
+	AML_OP_BODY1(decltype(std::declval<Left>() + std::declval<Right>()), left[i] + right[i]);
+}
+
+template<class Left, class Right, Vectorsize Size> constexpr
+auto operator+=(aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept {
+	AML_OP_BODY2(left[i] += right[i]);
+}
+
+template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto operator-(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept {
+	AML_OP_BODY1(decltype(std::declval<Left>() - std::declval<Right>()), left[i] - right[i]);
+}
+
+template<class Left, class Right, Vectorsize Size> constexpr
+auto operator-=(aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept {
+	AML_OP_BODY2(left[i] -= right[i]);
+}
+
+template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto operator*(const aml::Vector<Left, Size>& left, const Right& right) noexcept {
+	AML_OP_BODY1(decltype(std::declval<Left>() * std::declval<Right>()), left[i] * right);
+}
+
+template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto operator*(const Left& left, const aml::Vector<Right, Size>& right) noexcept {
+	return (right * left);
+}
+
+template<class Left, class Right, Vectorsize Size> constexpr
+auto operator*=(aml::Vector<Left, Size>& left, const Right& right) noexcept {
+	AML_OP_BODY2(left[i] *= right);
+}
+
+template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto operator/(const aml::Vector<Left, Size>& left, const Right& right) noexcept {
+	AML_OP_BODY1(decltype(std::declval<Left>() / std::declval<Right>()), left[i] / right);
+}
+
+template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto operator/(const Left& left, const aml::Vector<Right, Size>& right) noexcept {
+	AML_OP_BODY1(decltype(std::declval<Left>() / std::declval<Right>()), left / right[i]);
+}
+
+template<class Left, class Right, Vectorsize Size> constexpr
+auto operator/=(aml::Vector<Left, Size>& left, const Right& right) noexcept {
+	AML_OP_BODY2(left[i] /= right);
+}
+
+template<class Left, Vectorsize Size> [[nodiscard]] constexpr
+auto operator-(const aml::Vector<Left, Size>& left) noexcept {
+	AML_OP_BODY1(Left, -left[i]);
+}
+
+
+
+template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
+bool operator==(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept {
+	if constexpr (LeftSize != RightSize) return false;
+	else {
+		for (Vectorsize i = 0; i < LeftSize; ++i) {
+			if (left[i] != right[i]) return false;
+		}
+		return true;
+	}
+}
+
+template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
+bool operator!=(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept {
+	return !(left == right);
+}
+
 
 AML_NAMESPACE_END

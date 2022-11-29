@@ -1,5 +1,6 @@
 
 #include <AML/Vector.hpp>
+
 #include <gtest/gtest.h>
 
 using namespace aml;
@@ -81,7 +82,7 @@ TEST(VectorTest, iterate_constant) {
 		if (ai == 0) EXPECT_EQ(i, 10);
 		else if (ai == 1) EXPECT_EQ(i, 20);
 		else if (ai == 2) EXPECT_EQ(i, 30);
-		else if (ai == 3) EXPECT_EQ(i, 40);
+		else if (ai == 3) ASSERT_EQ(i, 40);
 		++ai;
 	}
 
@@ -91,7 +92,7 @@ TEST(VectorTest, iterate_constant) {
 		if (ai == 0) EXPECT_EQ(*i, 10);
 		else if (ai == 1) EXPECT_EQ(*i, 20);
 		else if (ai == 2) EXPECT_EQ(*i, 30);
-		else if (ai == 3) EXPECT_EQ(*i, 40);
+		else if (ai == 3) ASSERT_EQ(*i, 40);
 
 		++ai;
 	}
@@ -106,7 +107,7 @@ TEST(VectorTest, iterate_constant) {
 		else if (bi == 3) EXPECT_EQ(i, 43);
 		else if (bi == 4) EXPECT_EQ(i, 53);
 		else if (bi == 5) EXPECT_EQ(i, 63);
-		else if (bi == 6) EXPECT_EQ(i, 73);
+		else if (bi == 6) ASSERT_EQ(i, 73);
 
 		++bi;
 	}
@@ -119,7 +120,7 @@ TEST(VectorTest, iterate_constant) {
 		else if (bi == 3) EXPECT_EQ(*i, 43);
 		else if (bi == 4) EXPECT_EQ(*i, 53);
 		else if (bi == 5) EXPECT_EQ(*i, 63);
-		else if (bi == 6) EXPECT_EQ(*i, 73);
+		else if (bi == 6) ASSERT_EQ(*i, 73);
 
 		++bi;
 	}
@@ -132,7 +133,7 @@ TEST(VectorTest, iterate) {
 	for (auto& i : a) {
 		if (ai == 0) EXPECT_EQ(i, 10);
 		else if (ai == 1) EXPECT_EQ(i, 20);
-		else if (ai == 2) EXPECT_EQ(i, 30);
+		else if (ai == 2) ASSERT_EQ(i, 30);
 		++ai;
 	}
 
@@ -142,7 +143,7 @@ TEST(VectorTest, iterate) {
 
 		if (ai == 0) EXPECT_EQ(i, 0);
 		else if (ai == 1) EXPECT_EQ(i, 10);
-		else if (ai == 2) EXPECT_EQ(i, 20);
+		else if (ai == 2) ASSERT_EQ(i, 20);
 		++ai;
 	}
 
@@ -156,7 +157,7 @@ TEST(VectorTest, iterate) {
 		else if (bi == 3) EXPECT_EQ(i, 41);
 		else if (bi == 4) EXPECT_EQ(i, 51);
 		else if (bi == 5) EXPECT_EQ(i, 61);
-		else if (bi == 6) EXPECT_EQ(i, 71);
+		else if (bi == 6) ASSERT_EQ(i, 71);
 		++bi;
 	}
 
@@ -170,9 +171,106 @@ TEST(VectorTest, iterate) {
 		else if (bi == 3) EXPECT_EQ(i, 33);
 		else if (bi == 4) EXPECT_EQ(i, 44);
 		else if (bi == 5) EXPECT_EQ(i, 55);
-		else if (bi == 6) EXPECT_EQ(i, 66);
+		else if (bi == 6) ASSERT_EQ(i, 66);
 		++bi;
 	}
+}
+// +
+TEST(VectorTest, add) {
+	const Vector<int, 3> a(1, 2, 3);
+	const Vector<int, 3> b(3, 2, 1);
+
+	const auto r1 = a + b;
+	const auto r2 = b + a;
+
+	const Vector<int, 3> result(4, 4, 4);
+	ASSERT_EQ(r1, result);
+	ASSERT_EQ(r2, result);
+}
+// +=
+TEST(VectorTest, add_eq) {
+	Vector<int, 3> a(2, 4, 6);
+	const Vector<int, 3> b(1, 2, 3);
+
+	a += b;
+
+	const Vector<int, 3> result(3, 6, 9);
+	ASSERT_EQ(a, result);
+}
+// -
+TEST(VectorTest, sub) {
+	const Vector<int, 3> a(3, 4, 5);
+	const Vector<int, 3> b(5, 6, 7);
+
+	const auto r1 = a - b;
+	const auto r2 = b - a;
+
+	const Vector<int, 3> result(-2, -2, -2);
+	ASSERT_EQ(r1, result);
+	ASSERT_NE(r1, r2);
+}
+// -=
+TEST(VectorTest, sub_eq) {
+	Vector<int, 3> a(-1, -2, -3);
+	const Vector<int, 3> b(1, 2, 3);
+
+	a -= b;
+	const Vector<int, 3> result(-2, -4, -6);
+	ASSERT_EQ(a, result);
+}
+// *
+TEST(VectorTest, mul_by_scalar) {
+	const Vector<int, 3> a(0, 1, 0);
+	const int b = 3;
+
+	const auto r1 = a * b;
+	const auto r2 = b * a;
+
+	const Vector<int, 3> result(0, 3, 0);
+	ASSERT_EQ(r1, result);
+	ASSERT_EQ(r2, result);
+}
+// *=
+TEST(VectorTest, mul_eq_by_scalar) {
+	Vector<int, 3> a(10, 20, 30);
+	const int b = 3;
+
+	a *= b;
+
+	const Vector<int, 3> result(30, 60, 90);
+	ASSERT_EQ(a, result);
+}
+// /
+TEST(VectorTest, div_by_scalar) {
+	const Vector<int, 3> a(5, 10, 15);
+	const int b = 5;
+
+	const auto r1 = a / b;
+	const auto r2 = b / a;
+
+	const Vector<int, 3> result(1, 2, 3);
+	ASSERT_EQ(r1, result);
+	ASSERT_NE(r1, r2);
+}
+// /=
+TEST(VectorTest, div_eq_by_scalar) {
+	Vector<int, 3> a(10, 20, 30);
+	const int b = 10;
+
+	a /= b;
+
+	const Vector<int, 3> result(1, 2, 3);
+	ASSERT_EQ(a, result);
+}
+// -
+TEST(VectorTest, neg) {
+	const Vector<int, 3> a(1, 3, 5);
+
+	auto b = -a;
+
+	const Vector<int, 3> result(-1, -3, -5);
+	ASSERT_EQ(b, result);
+	ASSERT_NE(b, a);
 }
 
 }
