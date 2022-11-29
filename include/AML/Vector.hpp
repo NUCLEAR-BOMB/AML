@@ -147,8 +147,13 @@ public:
 	Vector(const Vector&) noexcept = default;
 
 	constexpr
+	Vector(Vector&&) noexcept = default;
+
+	constexpr
 	Vector& operator=(const Vector&) noexcept = default;
 
+	constexpr
+	Vector& operator=(Vector&&) noexcept = default;
 
 	[[nodiscard]] constexpr
 	size_type size() const noexcept {
