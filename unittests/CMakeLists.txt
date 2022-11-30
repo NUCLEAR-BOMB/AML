@@ -2,18 +2,18 @@ cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
 
 project("AML-unittests" CXX)
 
+if (MSVC)
+
+else()
+	add_compile_options(-Wno-implicit-int-float-conversion)
+endif()
+
 add_subdirectory(googletest)
 
 file(GLOB_RECURSE ALL_FILES CONFIGURE_DEPENDS 
 	"${PROJECT_SOURCE_DIR}/*.cpp"
 	"${PROJECT_SOURCE_DIR}/*.hpp"
 )
-
-if (MSVC)
-
-else()
-	add_compile_options(-Wno-implicit-int-float-conversion)
-endif()
 
 add_executable("${PROJECT_NAME}" Vector.cpp ${ALL_FILES})
 
