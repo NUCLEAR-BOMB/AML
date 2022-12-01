@@ -1,2 +1,9 @@
 
-/build
+/*
+
+!.gitignore
+!include/
+!source/
+!unittests/
+!CMakeLists.txt
+!LICENSE
