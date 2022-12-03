@@ -27,13 +27,11 @@ file(GLOB_RECURSE ALL_FILES CONFIGURE_DEPENDS
 
 add_executable("${PROJECT_NAME}" ${ALL_FILES})
 
-target_link_libraries("${PROJECT_NAME}" GTest::gtest_main
-	# AML
-)
+target_link_libraries("${PROJECT_NAME}" GTest::gtest_main AML)
 
 target_include_directories("${PROJECT_NAME}" PUBLIC 
 	"${PROJECT_SOURCE_DIR}/googletest/googletest/include"
-	"${PROJECT_SOURCE_DIR}/googletest/googlemock/include"
+	#"${PROJECT_SOURCE_DIR}/googletest/googlemock/include"
 	"${PROJECT_SOURCE_DIR}/../include"
 )
 

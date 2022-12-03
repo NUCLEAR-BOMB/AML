@@ -14,10 +14,11 @@ else()
 	add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
-add_library("${PROJECT_NAME}" STATIC ${SOURCE_FILES} ${HEADER_FILES})
+add_library("${PROJECT_NAME}" OBJECT ${HEADER_FILES} ${SOURCE_FILES})
 
 target_include_directories("${PROJECT_NAME}" PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
+
 
 add_subdirectory(unittests)
