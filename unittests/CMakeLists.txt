@@ -30,10 +30,12 @@ add_executable("${PROJECT_NAME}" ${ALL_FILES})
 target_link_libraries("${PROJECT_NAME}" GTest::gtest_main AML)
 
 target_include_directories("${PROJECT_NAME}" PRIVATE 
-	"${PROJECT_SOURCE_DIR}/googletest/googletest/include"
-	#"${PROJECT_SOURCE_DIR}/googletest/googlemock/include"
 	"${PROJECT_SOURCE_DIR}/../include"
 )
 
+set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "GoogleTest")
+
 include(GoogleTest)
 gtest_discover_tests("${PROJECT_NAME}")
+
+set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "${PROJECT_NAME}")
