@@ -6,17 +6,20 @@
 
 AML_NAMESPACE
 
-using selectable_unused_t = void;
+using selectable_unused = void;
 
 template<class Out, class In> [[nodiscard]] constexpr
 auto selectable_convert(In&& val) noexcept
 {
-	if constexpr (std::is_same_v<Out, selectable_unused_t>) {
+	if constexpr (std::is_same_v<Out, selectable_unused>) {
 		return std::forward<In>(val);
 	} else {
 		return static_cast<Out>(val);
 	}
 }
+
+template<class Out, class In>
+using selectable_type = std::conditional_t<std::is_same_v<Out, selectable_unused>, In, Out>;
 
 namespace detail {
 	template<class, class = std::size_t>
