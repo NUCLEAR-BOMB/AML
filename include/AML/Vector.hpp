@@ -2,6 +2,7 @@
 
 #include <AML/Iterator.hpp>
 #include <AML/Tools.hpp>
+#include <AML/MathFunctions.hpp>
 
 #include <cstddef>
 #include <type_traits>
@@ -14,14 +15,14 @@ using Vectorsize = std::size_t;
 
 namespace VI
 {
-	template<Vectorsize I>
-	struct Index {};
+	template<std::size_t I>
+	using index = std::integral_constant<decltype(I), I>;
 
-	inline constexpr Index<0> X;
-	inline constexpr Index<1> Y;
-	inline constexpr Index<2> Z;
-	inline constexpr Index<3> W;
-	inline constexpr Index<4> V;
+	inline constexpr index<0> X;
+	inline constexpr index<1> Y;
+	inline constexpr index<2> Z;
+	inline constexpr index<3> W;
+	inline constexpr index<4> V;
 }
 
 namespace detail
@@ -89,7 +90,7 @@ public:
 	using const_reference = const T&;
 
 	static constexpr bool uses_static_array() noexcept {
-		return Storage::size > 5;
+		return Storage::size > 5ull;
 	}
 
 	using iterator		 = std::conditional_t<uses_static_array(), T* , aml::IndexIterator<Vector<T, Size>>>;
@@ -161,7 +162,7 @@ public:
 	}
 
 	template<size_type I> constexpr
-	reference operator[](VI::Index<I>) noexcept {
+	reference operator[](VI::index<I>) noexcept {
 		if constexpr (uses_static_array()) {
 			return Storage::array[I];
 		}
@@ -176,8 +177,8 @@ public:
 	}
 
 	template<size_type I> constexpr
-	const_reference operator[](VI::Index<I>) const noexcept {
-		return const_cast<Vector&>(*this)[VI::Index<I>{}];
+	const_reference operator[](VI::index<I>) const noexcept {
+		return const_cast<Vector&>(*this)[VI::index<I>{}];
 	}
 
 	constexpr
@@ -317,8 +318,6 @@ auto operator-(const aml::Vector<Left, Size>& left) noexcept {
 	AML_OP_BODY1(Left, -left[i]);
 }
 
-
-
 template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
 bool operator==(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept {
 	if constexpr (LeftSize != RightSize) return false;
@@ -334,6 +333,21 @@ template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[n
 bool operator!=(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept {
 	return !(left == right);
 }
+
+
+template<class OutType = aml::selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
+auto dist(const aml::Vector<T, Size>& vec) noexcept {
+	using outtype = std::common_type_t<float, T>;
+	outtype out = aml::sqr<outtype>(vec[VI::index<0>{}]);
+
+	aml::static_for<1, Size>([&](const auto i) {
+		out += aml::sqr<outtype>(vec[i]);
+	});
+
+	return aml::selectable_convert<OutType>(aml::sqrt(out));
+}
+
+
 
 
 AML_NAMESPACE_END

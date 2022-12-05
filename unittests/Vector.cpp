@@ -53,7 +53,7 @@ TEST(VectorTest, static_call_index_operator) {
 	EXPECT_EQ(c[VI::X], 1);
 	EXPECT_EQ(c[VI::Y], 2);
 	EXPECT_EQ(c[VI::Z], 3);
-	EXPECT_EQ(c[VI::Index<6>{}], 7);
+	EXPECT_EQ(c[VI::index<6>{}], 7);
 }
 
 TEST(VectorTest, runtime_call_index_operator) {
@@ -271,6 +271,17 @@ TEST(VectorTest, neg) {
 	const Vector<int, 3> result(-1, -3, -5);
 	ASSERT_EQ(b, result);
 	ASSERT_NE(b, a);
+}
+
+TEST(VectorTest, dist) {
+	const Vector<int, 2> a(3, 4);
+	ASSERT_FLOAT_EQ(aml::dist(a), 5.f);
+
+	const Vector<float, 3> b(1.f, 2.f, 3.f);
+	ASSERT_FLOAT_EQ(aml::dist(b), 3.74165738f);
+
+	const Vector<double, 7> c(1., 2., 3., 4., 5., 6., 7.);
+	ASSERT_DOUBLE_EQ(aml::dist(c), 11.832159566199232);
 }
 
 }
