@@ -19,10 +19,6 @@ namespace algorithms
 
 			using outtype = std::common_type_t<float, T>;
 
-			//if (val < outtype(10000))		x = outtype(44.72135955)  + outtype(0.011180339887)   * (val - outtype(2000));
-			//else if (val < outtype(200000)) x = outtype(1000)		  + outtype(0.0005)			  * (val - outtype(1000000));
-			//else	x = outtype(2236.0679775) + outtype(0.00022360679775) * (val - outtype(5000000));
-
 			outtype x = static_cast<outtype>(start_val);
 			if (iter_count > 0) {
 				for (; iter_count > 0; --iter_count)
