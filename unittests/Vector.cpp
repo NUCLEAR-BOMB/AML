@@ -299,4 +299,13 @@ TEST(VectorTest, dot) {
 	ASSERT_EQ(aml::dot(a, b), 43);
 }
 
+TEST(VectorTest, cross) {
+	const Vector<int, 3> a(1, 2, 3);
+	const Vector<int, 3> b(4, 5, 6);
+
+	auto r = aml::cross(a, b);
+	const Vector<int, 3> result(-3, 6, -3);
+	ASSERT_EQ(r, result);
+}
+
 }

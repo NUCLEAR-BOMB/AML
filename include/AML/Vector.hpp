@@ -89,9 +89,7 @@ public:
 	using reference = T&;
 	using const_reference = const T&;
 
-	static constexpr bool uses_static_array() noexcept {
-		return Storage::size > 5ull;
-	}
+	static constexpr bool uses_static_array() noexcept { return Storage::size > 5; }
 
 	using iterator		 = std::conditional_t<uses_static_array(), T* , aml::IndexIterator<Vector<T, Size>>>;
 	using const_iterator = std::conditional_t<uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
@@ -107,41 +105,25 @@ public:
 		return Storage::size > index && !uses_static_array();
 	}
 
-	constexpr
-	Vector(const T (&Array)[Size]) noexcept {
-		if constexpr (uses_static_array()) {
-			std::copy_n(Array, size(), Storage::array);
-		}
-		else {
-			if constexpr (has_index(0)) Storage::x = Array[0];
-			if constexpr (has_index(1)) Storage::y = Array[1];
-			if constexpr (has_index(2)) Storage::z = Array[2];
-			if constexpr (has_index(3)) Storage::w = Array[3];
-			if constexpr (has_index(4)) Storage::v = Array[4];
-		}
+	template<std::size_t ArraySize> constexpr
+	Vector(const T (&Array)[ArraySize]) noexcept {
+		static_assert(ArraySize == Size, "The size of the array does not equal to vector's size");
+
+		aml::static_for<Size>([&](const auto i) {
+			(*this)[i] = Array[i];
+		});
 	}
 
 	template<class First, class... Rest> constexpr
 	explicit Vector(First&& f, Rest&&... r) noexcept {
-		static_assert(!(aml::is_narrowing_conversion<T, First> || (aml::is_narrowing_conversion<T, Rest> || ...)), "Variadic parameter type is not a storage type");
-		static_assert(sizeof...(r) + 1 == Storage::size, "Bad number of variadic parameters");
+		static_assert(!(aml::is_narrowing_conversion<T, First> || (aml::is_narrowing_conversion<T, Rest> || ...)), "Variadic parameter types have a narrowing conversion");
+		static_assert((sizeof...(r) + 1) == Storage::size, "Bad number of variadic parameters");
 
-		if constexpr (uses_static_array()) {
-			Storage::array[0] = std::forward<First>(f);
-			std::size_t arri = 1;
-			([&] {
-				Storage::array[arri] = std::forward<Rest>(r);
-				++arri;
-			}(), ...);
-		}
-		else {
-			auto&& t = std::forward_as_tuple(r...);
-			Storage::x = std::forward<First>(f);
-			if constexpr (has_index(1)) Storage::y = std::get<0>(t);
-			if constexpr (has_index(2)) Storage::z = std::get<1>(t);
-			if constexpr (has_index(3)) Storage::w = std::get<2>(t);
-			if constexpr (has_index(4)) Storage::v = std::get<3>(t);
-		}
+		(*this)[VI::index<0>{}] = f;
+		auto&& t = std::forward_as_tuple(r...);
+		aml::static_for<1, Size>([&](const auto i) {
+			(*this)[i] = std::get<i - 1>(t);
+		});
 	}
 
 	template<class U> constexpr
@@ -363,6 +345,22 @@ auto dot(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& ri
 	aml::static_for<1u, Size>([&](const auto i) {
 		out += left[i] * right[i];
 	});
+	return out;
+}
+
+template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto cross(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept
+{
+	static_assert(Size == 3, "The size of the vectors must be equal to 3");
+
+	using outvectype = std::common_type_t<Left, Right>;
+	aml::Vector<outvectype, 3> out;
+
+	using namespace aml::VI;
+	out[X] = left[Y] * right[Z] - left[Z] * right[Y];
+	out[Y] = left[Z] * right[X] - left[X] * right[Z];
+	out[Z] = left[X] * right[Y] - left[Y] * right[X];
+
 	return out;
 }
 
