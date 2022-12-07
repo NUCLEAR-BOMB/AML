@@ -156,7 +156,7 @@ public:
 	constexpr
 	Vector& operator=(Vector&&) noexcept = default;
 
-	[[nodiscard]] constexpr
+	[[nodiscard]] constexpr AML_FORCEINLINE
 	size_type size() const noexcept {
 		return Storage::size;
 	}
@@ -336,15 +336,27 @@ bool operator!=(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right
 
 
 template<class OutType = aml::selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
-auto dist(const aml::Vector<T, Size>& vec) noexcept {
+auto dist(const aml::Vector<T, Size>& vec) noexcept 
+{
 	using outtype = std::common_type_t<float, T>;
 	outtype out = aml::sqr<outtype>(vec[VI::index<0>{}]);
 
-	aml::static_for<1, Size>([&](const auto i) {
+	aml::static_for<1u, Size>([&](const auto i) {
 		out += aml::sqr<outtype>(vec[i]);
 	});
-
 	return aml::selectable_convert<OutType>(aml::sqrt(out));
+}
+
+template<class OutType = aml::selectable_unused, class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto dot(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept
+{
+	using type = std::common_type_t<Left, Right>;
+	type out = left[VI::index<0>{}] * right[VI::index<0>{}];
+	
+	aml::static_for<1u, Size>([&](const auto i) {
+		out += left[i] * right[i];
+	});
+	return out;
 }
 
 

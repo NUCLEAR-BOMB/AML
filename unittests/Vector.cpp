@@ -284,4 +284,11 @@ TEST(VectorTest, dist) {
 	ASSERT_DOUBLE_EQ(aml::dist(c), 11.832159566199232);
 }
 
+TEST(VectorTest, dot) {
+	const Vector<int, 3> a(5, 6, 7);
+	const Vector<int, 3> b(-2, 10, -1);
+
+	ASSERT_EQ(aml::dot(a, b), 43);
+}
+
 }
