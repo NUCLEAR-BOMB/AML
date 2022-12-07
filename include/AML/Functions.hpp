@@ -5,6 +5,15 @@
 
 AML_NAMESPACE
 
+inline
+bool is_big_endian() noexcept {
+	static const union {
+		uint32_t i;
+		char c[4];
+	} bint = { 0x01020304 };
+	return (bint.c[0] == 1);
+}
+
 template<class OutType = aml::selectable_unused, class First> [[nodiscard]] constexpr
 auto max(First&& first) noexcept {
 	return aml::selectable_convert<OutType>(std::forward<First>(first));
@@ -56,6 +65,11 @@ bool equal(const Left& left, const Right& right) noexcept {
 	}
 }
 
+template<class Left, class Right> [[nodiscard]] constexpr
+bool not_equal(const Left& left, const Right& right) noexcept {
+	return !aml::equal(left, right);
+}
+
 template<class T> [[nodiscard]] constexpr
 bool is_zero(const T& val) noexcept {
 	return aml::equal(val, static_cast<T>(0));
@@ -65,5 +79,43 @@ template<class OutType = aml::selectable_unused, class Left, class Right> [[nodi
 auto dist(const Left& left, const Right& right) noexcept {
 	return aml::abs<OutType>(left - right);
 }
+
+template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+bool odd(const T& val) noexcept 
+{
+	static_assert(!std::is_floating_point_v<T>, "T must not be a floating point number");
+	return static_cast<bool>((val % static_cast<T>(2)) != static_cast<T>(0));
+}
+
+template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+bool even(const T& val) noexcept {
+	return !aml::odd(val);
+}
+
+
+template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_integral_v<T>, int> = 0> [[nodiscard]] constexpr
+auto floor(T&& val) noexcept {
+	return aml::selectable_convert<OutType>(std::forward<T>(val));
+}
+template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0> [[nodiscard]] constexpr
+auto floor(const T& val) noexcept {
+	const auto t = static_cast<std::int_fast64_t>(val);
+	using conv = aml::selectable_type<OutType, T>;
+	return static_cast<conv>(t - (t > val ? 1 : 0));
+}
+
+template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_integral_v<T>, int> = 0> [[nodiscard]] constexpr
+auto ceil(T&& val) noexcept {
+	return aml::selectable_convert<OutType>(std::forward<T>(val));
+}
+template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0> [[nodiscard]] constexpr
+auto ceil(const T& val) noexcept {
+	const auto t = static_cast<std::int_fast64_t>(val);
+	using conv = aml::selectable_type<OutType, T>;
+	return static_cast<conv>(t + (t < val ? 1 : 0));
+}
+
+
+
 
 AML_NAMESPACE_END

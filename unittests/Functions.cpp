@@ -65,4 +65,40 @@ TEST(FunctionsTest, equal)
 	ASSERT_FALSE(aml::equal(b, b * 5));
 }
 
+TEST(FunctionsTest, odd_even)
+{
+	ASSERT_TRUE(aml::odd(3));
+	ASSERT_TRUE(aml::even(8));
+	ASSERT_FALSE(aml::odd(246));
+	ASSERT_FALSE(aml::even(123));
+}
+
+TEST(FunctionTest, floor)
+{
+	ASSERT_EQ(aml::floor<int>(50.5f), 50);
+	ASSERT_FLOAT_EQ(aml::floor(123.456f), 123.f);
+	ASSERT_FLOAT_EQ(aml::floor(100.f), 100.f);
+
+	ASSERT_EQ(aml::floor<int>(-6.7f), -7);
+	ASSERT_FLOAT_EQ(aml::floor(-1000.1f), -1001.f);
+	ASSERT_FLOAT_EQ(aml::floor(-500.f), -500.f);
+
+	ASSERT_EQ(aml::floor(50), 50);
+	ASSERT_EQ(aml::floor(-20), -20);
+}
+
+TEST(FunctionTest, ceil)
+{
+	ASSERT_EQ(aml::ceil<int>(50.5f), 51);
+	ASSERT_FLOAT_EQ(aml::ceil(7890.9f), 7891.f);
+	ASSERT_FLOAT_EQ(aml::ceil(100.f), 100.f);
+
+	ASSERT_EQ(aml::ceil<int>(-4.26454f), -4);
+	ASSERT_FLOAT_EQ(aml::ceil(-1000000.9f), -1000000.f);
+	ASSERT_FLOAT_EQ(aml::ceil(-400.f), -400.f);
+
+	ASSERT_EQ(aml::floor(75), 75);
+	ASSERT_EQ(aml::floor(-100), -100);
+}
+
 }
