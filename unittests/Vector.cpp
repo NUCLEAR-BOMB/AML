@@ -292,6 +292,16 @@ TEST(VectorTest, dist) {
 	ASSERT_DOUBLE_EQ(aml::dist(c), 11.832159566199232);
 }
 
+TEST(VectorTest, dist_between) {
+	const Vector<int, 2> a1(15, 21);
+	const Vector<int, 2> b1(-5, 0);
+	ASSERT_FLOAT_EQ(aml::dist(a1, b1), 29.f);
+
+	const Vector<float, 3> a2(100.24f, -100.64f, 50.5f);
+	const Vector<float, 3> b2(125.f, 250.f, 300.f);
+	ASSERT_FLOAT_EQ(aml::dist(a2, b2), 431.05884f);
+}
+
 TEST(VectorTest, dot) {
 	const Vector<int, 3> a(5, 6, 7);
 	const Vector<int, 3> b(-2, 10, -1);

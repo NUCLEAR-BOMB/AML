@@ -18,13 +18,14 @@ namespace VI
 	template<std::size_t I>
 	using index = std::integral_constant<decltype(I), I>;
 
-	inline constexpr index<0> X;
-	inline constexpr index<1> Y;
-	inline constexpr index<2> Z;
-	inline constexpr index<3> W;
-	inline constexpr index<4> V;
-}
+	inline constexpr index<0> X{};
+	inline constexpr index<1> Y{};
+	inline constexpr index<2> Z{};
+	inline constexpr index<3> W{};
+	inline constexpr index<4> V{};
 
+	inline constexpr index<0> first{};
+}
 namespace detail
 {
 	template<class T, Vectorsize S>
@@ -107,7 +108,8 @@ public:
 
 	template<std::size_t ArraySize> constexpr
 	Vector(const T (&Array)[ArraySize]) noexcept {
-		static_assert(ArraySize == Size, "The size of the array does not equal to vector's size");
+		static_assert(ArraySize == Size, 
+			"The size of the array does not equal to vector's size");
 
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = Array[i];
@@ -116,10 +118,12 @@ public:
 
 	template<class First, class... Rest> constexpr
 	explicit Vector(First&& f, Rest&&... r) noexcept {
-		static_assert(!(aml::is_narrowing_conversion<T, First> || (aml::is_narrowing_conversion<T, Rest> || ...)), "Variadic parameter types have a narrowing conversion");
-		static_assert((sizeof...(r) + 1) == Storage::size, "Bad number of variadic parameters");
+		static_assert(!(aml::is_narrowing_conversion<T, First> || (aml::is_narrowing_conversion<T, Rest> || ...)), 
+			"Variadic parameter types have a narrowing conversion");
+		static_assert((sizeof...(r) + 1) == Storage::size, 
+			"Bad number of variadic parameters");
 
-		(*this)[VI::index<0>{}] = f;
+		(*this)[VI::first] = f;
 		auto&& t = std::forward_as_tuple(r...);
 		aml::static_for<1, Size>([&](const auto i) {
 			(*this)[i] = std::get<i - 1>(t);
@@ -150,43 +154,41 @@ public:
 		return Storage::size;
 	}
 
-	template<size_type I> constexpr
-	reference operator[](VI::index<I>) noexcept {
+	template<size_type I> constexpr AML_FORCEINLINE
+	reference operator[](const VI::index<I>) noexcept {
 		if constexpr (uses_static_array()) {
-			return Storage::array[I];
-		}
-		else {
-				 if constexpr (I == 0) return Storage::x;
-			else if constexpr (I == 1) return Storage::y;
-			else if constexpr (I == 2) return Storage::z;
-			else if constexpr (I == 3) return Storage::w;
-			else if constexpr (I == 4) return Storage::v;
-			AML_UNREACHABLE;
+		return Storage::array[I];
+		} else {
+			 if constexpr (I == 0) return Storage::x;
+		else if constexpr (I == 1) return Storage::y;
+		else if constexpr (I == 2) return Storage::z;
+		else if constexpr (I == 3) return Storage::w;
+		else if constexpr (I == 4) return Storage::v;
+		AML_UNREACHABLE;
 		}
 	}
 
-	template<size_type I> constexpr
-	const_reference operator[](VI::index<I>) const noexcept {
+	template<size_type I> constexpr AML_FORCEINLINE
+	const_reference operator[](const VI::index<I>) const noexcept {
 		return const_cast<Vector&>(*this)[VI::index<I>{}];
 	}
 
 	constexpr
-	reference operator[](size_type index) noexcept {
+	reference operator[](const size_type index) noexcept {
 		if constexpr (uses_static_array()) {
-			return Storage::array[index];
-		}
-		else {
-			if constexpr (has_index(0)) if (index == 0) return Storage::x;
-			if constexpr (has_index(1)) if (index == 1) return Storage::y;
-			if constexpr (has_index(2)) if (index == 2) return Storage::z;
-			if constexpr (has_index(3)) if (index == 3) return Storage::w;
-			if constexpr (has_index(4)) if (index == 4) return Storage::v;
-			AML_UNREACHABLE;
+		return Storage::array[index];
+		} else {
+		if constexpr (has_index(0)) if (index == 0) return Storage::x;
+		if constexpr (has_index(1)) if (index == 1) return Storage::y;
+		if constexpr (has_index(2)) if (index == 2) return Storage::z;
+		if constexpr (has_index(3)) if (index == 3) return Storage::w;
+		if constexpr (has_index(4)) if (index == 4) return Storage::v;
+		AML_UNREACHABLE;
 		}
 	}
 
 	constexpr
-	const_reference operator[](size_type index) const noexcept {
+	const_reference operator[](const size_type index) const noexcept {
 		return const_cast<Vector&>(*this)[index];
 	}
 
@@ -242,7 +244,7 @@ public:
 #define AML_OP_BODY1(outtype, action) \
 	aml::Vector<outtype, Size> out; \
 	aml::static_for<Size>([&](Vectorsize i) {	\
-		out[i] = action;			\
+		out[i] = action;						\
 	});											\
 	return out
 
@@ -311,10 +313,10 @@ template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[n
 bool operator==(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept {
 	if constexpr (LeftSize != RightSize) return false;
 	else {
-		for (Vectorsize i = 0; i < LeftSize; ++i) {
-			if (left[i] != right[i]) return false;
-		}
-		return true;
+	for (Vectorsize i = 0; i < LeftSize; ++i) {
+		if (left[i] != right[i]) return false;
+	}
+	return true;
 	}
 }
 
@@ -328,7 +330,7 @@ template<class OutType = aml::selectable_unused, class T, Vectorsize Size> [[nod
 auto dist(const aml::Vector<T, Size>& vec) noexcept 
 {
 	using outtype = std::common_type_t<float, T>;
-	outtype out = aml::sqr<outtype>(vec[VI::index<0>{}]);
+	outtype out = aml::sqr<outtype>(vec[VI::first]);
 
 	aml::static_for<1u, Size>([&](const auto i) {
 		out += aml::sqr<outtype>(vec[i]);
@@ -337,13 +339,18 @@ auto dist(const aml::Vector<T, Size>& vec) noexcept
 }
 
 template<class OutType = aml::selectable_unused, class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
+auto dist(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept {
+	return aml::dist<OutType>(left - right);
+}
+
+template<class OutType = aml::selectable_unused, class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
 auto dot(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept
 {
-	using type = std::common_type_t<Left, Right>;
-	type out = left[VI::index<0>{}] * right[VI::index<0>{}];
+	using outtype = std::common_type_t<Left, Right>;
+	outtype out = (left[VI::first] * right[VI::first]);
 	
 	aml::static_for<1u, Size>([&](const auto i) {
-		out += left[i] * right[i];
+		out += (left[i] * right[i]);
 	});
 	return out;
 }
@@ -351,15 +358,17 @@ auto dot(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& ri
 template<class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
 auto cross(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept
 {
-	static_assert(Size == 3, "The size of the vectors must be equal to 3");
+	static_assert((Size == 3), "The size of the vectors must be equal to 3");
 
 	using outvectype = std::common_type_t<Left, Right>;
 	aml::Vector<outvectype, 3> out;
 
 	using namespace aml::VI;
-	out[X] = left[Y] * right[Z] - left[Z] * right[Y];
-	out[Y] = left[Z] * right[X] - left[X] * right[Z];
-	out[Z] = left[X] * right[Y] - left[Y] * right[X];
+	const auto& a = left; const auto& b = right;
+
+	out[X] = (a[Y] * b[Z]) - (a[Z] * b[Y]);
+	out[Y] = (a[Z] * b[X]) - (a[X] * b[Z]);
+	out[Z] = (a[X] * b[Y]) - (a[Y] * b[X]);
 
 	return out;
 }
