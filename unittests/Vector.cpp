@@ -332,4 +332,12 @@ TEST(VectorTest, unitvector) {
 	ASSERT_EQ(a, result);
 }
 
+TEST(VectorTest, normalize) {
+	const Vector<int, 2> a(5, 10);
+	const Vector<float, 2> na = aml::normalize(a);
+
+	const Vector<float, 2> resulta(0.44721359549f, 0.894427190999f);
+	ASSERT_EQ(na, resulta);
+}
+
 }

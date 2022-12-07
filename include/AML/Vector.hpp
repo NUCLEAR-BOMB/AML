@@ -336,7 +336,7 @@ bool operator==(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right
 	if constexpr (LeftSize != RightSize) return false;
 	else {
 	for (Vectorsize i = 0; i < LeftSize; ++i) {
-		if (left[i] != right[i]) return false;
+		if (aml::not_equal(left[i], right[i])) return false;
 	}
 	return true;
 	}
@@ -393,6 +393,15 @@ auto cross(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& 
 	out[Z] = (a[X] * b[Y]) - (a[Y] * b[X]);
 
 	return out;
+}
+
+template<class T, Vectorsize Size> [[nodiscard]] constexpr
+auto normalize(const aml::Vector<T, Size>& vec) noexcept 
+{
+	using disttype = decltype(aml::dist(vec));
+
+	const disttype inv_mag = static_cast<disttype>(1) / aml::dist(vec);
+	return (vec * inv_mag);
 }
 
 
