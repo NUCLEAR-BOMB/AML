@@ -74,6 +74,14 @@ TEST(VectorTest, runtime_call_index_operator) {
 	EXPECT_EQ(c[6], 7);
 }
 
+TEST(VectorTest, cast) {
+	const Vector<int, 2> a1(10, 20);
+	const Vector<float, 2> a2 = static_cast<Vector<float, 2>>(a1);
+
+	const Vector<float, 3> b1(1.f, -2.f, 3.f);
+	const Vector<int, 3> b2(b1);
+}
+
 TEST(VectorTest, iterate_constant) {
 	const Vector<int, 4> a(10, 20, 30, 40);
 
