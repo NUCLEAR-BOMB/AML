@@ -318,4 +318,18 @@ TEST(VectorTest, cross) {
 	ASSERT_EQ(r, result);
 }
 
+TEST(VectorTest, zerovector) {
+	const Vector<int, 3> a(aml::zero);
+	const Vector<int, 3> b(0, 0, 0);
+
+	ASSERT_EQ(a, b);
+}
+
+TEST(VectorTest, unitvector) {
+	const Vector<int, 4> a(aml::unit<0>);
+
+	const Vector<int, 4> result(1, 0, 0, 0);
+	ASSERT_EQ(a, result);
+}
+
 }

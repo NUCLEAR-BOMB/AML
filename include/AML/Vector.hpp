@@ -69,7 +69,6 @@ namespace detail
 	protected:
 		static constexpr Vectorsize size = 5;
 	};
-
 }
 
 template<class T, Vectorsize Size>
@@ -95,6 +94,8 @@ public:
 	using iterator		 = std::conditional_t<uses_static_array(), T* , aml::IndexIterator<Vector<T, Size>>>;
 	using const_iterator = std::conditional_t<uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
 
+	static constexpr Vectorsize extent = aml::dynamic_extent;
+
 public:
 
 	constexpr
@@ -102,8 +103,8 @@ public:
 		
 	}
 
-	static constexpr bool has_index(size_type index) noexcept {
-		return Storage::size > index && !uses_static_array();
+	static constexpr bool in_range(size_type index) noexcept {
+		return Storage::size > index;
 	}
 
 	template<std::size_t ArraySize> constexpr
@@ -134,6 +135,27 @@ public:
 	explicit Vector(const Vector<U, Size>& other) noexcept {
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<T>(other[i]);
+		});
+	}
+
+	constexpr
+	explicit Vector(const aml::zero_t) noexcept {
+		aml::static_for<Size>([&](const auto i) {
+			(*this)[i] = static_cast<T>(0);
+		});
+	}
+	constexpr
+	explicit Vector(const aml::one_t) noexcept {
+		aml::static_for<Size>([&](const auto i) {
+			(*this)[i] = static_cast<T>(1);
+		});
+	}
+	template<std::size_t Dir> constexpr 
+	explicit Vector(const aml::unit_t<Dir>) noexcept {
+		static_assert(in_range(Dir), "Unit must be in vector's range");
+		aml::static_for<Size>([&](const auto i) {
+			if constexpr (i == Dir) (*this)[i] = static_cast<T>(1);
+			else					(*this)[i] = static_cast<T>(0);
 		});
 	}
 
@@ -178,11 +200,11 @@ public:
 		if constexpr (uses_static_array()) {
 		return Storage::array[index];
 		} else {
-		if constexpr (has_index(0)) if (index == 0) return Storage::x;
-		if constexpr (has_index(1)) if (index == 1) return Storage::y;
-		if constexpr (has_index(2)) if (index == 2) return Storage::z;
-		if constexpr (has_index(3)) if (index == 3) return Storage::w;
-		if constexpr (has_index(4)) if (index == 4) return Storage::v;
+		if constexpr (in_range(0)) if (index == 0) return Storage::x;
+		if constexpr (in_range(1)) if (index == 1) return Storage::y;
+		if constexpr (in_range(2)) if (index == 2) return Storage::z;
+		if constexpr (in_range(3)) if (index == 3) return Storage::w;
+		if constexpr (in_range(4)) if (index == 4) return Storage::v;
 		AML_UNREACHABLE;
 		}
 	}

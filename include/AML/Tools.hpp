@@ -6,6 +6,34 @@
 
 AML_NAMESPACE
 
+inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1);
+
+template<class T>
+inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>;
+
+struct zero_t {
+	template<class T, std::enable_if_t<!aml::is_custom<T>, int> = 0>
+	explicit constexpr operator T() const noexcept { return static_cast<T>(0); }
+};
+
+struct one_t {
+	template<class T, std::enable_if_t<!aml::is_custom<T>, int> = 0>
+	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
+};
+
+template<std::size_t Direction>
+struct unit_t {
+	static constexpr auto dir = Direction;
+	template<class T, std::enable_if_t<!aml::is_custom<T>, int> = 0>
+	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
+};
+
+inline constexpr zero_t zero{};
+inline constexpr one_t one{};
+
+template<std::size_t Dir>
+unit_t<Dir> unit{};
+
 using selectable_unused = void;
 
 template<class Out, class In> [[nodiscard]] constexpr

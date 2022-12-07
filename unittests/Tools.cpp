@@ -96,5 +96,10 @@ void test_of_bits() {
 	static_assert(4 > sizeof(float) || is_same_v<floating_point_from_bits<32>, float>);
 }
 
+TEST(ToolsOther, custom_type) {
+	ASSERT_EQ((int)aml::zero, 0);
+	ASSERT_EQ((int)aml::one, 1);
+}
+
 
 }
