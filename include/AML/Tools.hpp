@@ -145,4 +145,16 @@ template<std::size_t Bits>
 using floating_point_from_bits = floating_point_from_bytes<(Bits + (CHAR_BIT - 1)) / CHAR_BIT>;
 
 
+namespace detail
+{
+	template<typename From, typename To, typename = void>
+	struct is_narrowing_conversion_impl : std::true_type {};
+
+	template<typename From, typename To>
+	struct is_narrowing_conversion_impl<From, To, std::void_t<decltype(To{ std::declval<From>() })>> : std::false_type {};
+}
+
+template<class From, class To>
+inline constexpr bool is_narrowing_conversion = detail::is_narrowing_conversion_impl<From, To>::value;
+
 AML_NAMESPACE_END
