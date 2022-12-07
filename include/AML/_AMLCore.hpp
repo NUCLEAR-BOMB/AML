@@ -20,3 +20,10 @@
 #else
 	#define AML_UNREACHABLE __builtin_unreachable()
 #endif
+
+#if AML_MSVC
+	#define AML_FORCEINLINE __forceinline
+#else
+	#AML_FORCEINLINE inline
+#endif
+
