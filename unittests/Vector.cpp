@@ -295,11 +295,11 @@ TEST(VectorTest, dist) {
 TEST(VectorTest, dist_between) {
 	const Vector<int, 2> a1(15, 21);
 	const Vector<int, 2> b1(-5, 0);
-	ASSERT_FLOAT_EQ(aml::dist(a1, b1), 29.f);
+	ASSERT_FLOAT_EQ(aml::dist_between(a1, b1), 29.f);
 
 	const Vector<float, 3> a2(100.24f, -100.64f, 50.5f);
 	const Vector<float, 3> b2(125.f, 250.f, 300.f);
-	ASSERT_FLOAT_EQ(aml::dist(a2, b2), 431.05884f);
+	ASSERT_FLOAT_EQ(aml::dist_between(a2, b2), 431.05884f);
 }
 
 TEST(VectorTest, dot) {

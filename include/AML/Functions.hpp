@@ -38,6 +38,14 @@ auto max(First&& first, Second&& second, Rest&&... rest) noexcept
 	return aml::selectable_convert<OutType>(std::forward<outtype>(out));
 }
 
+template<class OutType = aml::selectable_unused, class First, class... Rest> [[nodiscard]] constexpr
+auto sum_of(const First& first, const Rest&... rest) noexcept {
+	decltype(first + (rest + ...)) out = first;
+	([&] {
+		out += rest;
+	}(), ...);
+	return out;
+}
 
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto sqr(const T& val) noexcept {
@@ -76,9 +84,10 @@ bool is_zero(const T& val) noexcept {
 }
 
 template<class OutType = aml::selectable_unused, class Left, class Right> [[nodiscard]] constexpr
-auto dist(const Left& left, const Right& right) noexcept {
+auto dist_between(const Left& left, const Right& right) noexcept {
 	return aml::abs<OutType>(left - right);
 }
+
 
 template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
 bool odd(const T& val) noexcept 
@@ -92,29 +101,67 @@ bool even(const T& val) noexcept {
 	return !aml::odd(val);
 }
 
-
-template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_integral_v<T>, int> = 0> [[nodiscard]] constexpr
-auto floor(T&& val) noexcept {
-	return aml::selectable_convert<OutType>(std::forward<T>(val));
-}
-template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0> [[nodiscard]] constexpr
-auto floor(const T& val) noexcept {
-	const auto t = static_cast<std::int_fast64_t>(val);
-	using conv = aml::selectable_type<OutType, T>;
-	return static_cast<conv>(t - (t > val ? 1 : 0));
+template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+bool negative(const T& val) noexcept {
+	if constexpr (std::is_unsigned_v<T>) {
+		return false;
+	} else {
+		return (val < static_cast<T>(0));
+	}
 }
 
-template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_integral_v<T>, int> = 0> [[nodiscard]] constexpr
-auto ceil(T&& val) noexcept {
-	return aml::selectable_convert<OutType>(std::forward<T>(val));
-}
-template<class OutType = aml::selectable_unused, class T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0> [[nodiscard]] constexpr
-auto ceil(const T& val) noexcept {
-	const auto t = static_cast<std::int_fast64_t>(val);
-	using conv = aml::selectable_type<OutType, T>;
-	return static_cast<conv>(t + (t < val ? 1 : 0));
+template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+bool positive(const T& val) noexcept {
+	return !aml::negative(val);
 }
 
+template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
+auto floor(const T& val) noexcept 
+{
+	if constexpr (std::is_integral_v<T>) { 
+		return aml::selectable_convert<OutType>(val);
+	} 
+	else if constexpr (std::is_floating_point_v<T>) { 
+		const auto t = static_cast<std::int_fast64_t>(val);
+		using conv = aml::selectable_type<OutType, T>;
+		return static_cast<conv>(t - (t > val ? 1 : 0));
+	} 
+	else {
+		static_assert(!sizeof(T*), "Flooring not supported type");
+	}
+}
+
+template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
+auto ceil(const T& val) noexcept 
+{
+	if constexpr (std::is_integral_v<T>) {
+		return aml::selectable_convert<OutType>(val);
+	}
+	else if constexpr (std::is_floating_point_v<T>) {
+		const auto t = static_cast<std::int_fast64_t>(val);
+		using conv = aml::selectable_type<OutType, T>;
+		return static_cast<conv>(t + (t < val ? 1 : 0));
+	} 
+	else {
+		static_assert(!sizeof(T*), "Ceiling not supported type");
+	}
+}
+
+template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
+auto round(const T& val) noexcept 
+{
+	if constexpr (std::is_integral_v<T>) {
+		return aml::selectable_convert<OutType>(val);
+	} 
+	else if constexpr (std::is_floating_point_v<T>) {
+		return (val >= static_cast<T>(0)) ? 
+			aml::floor<OutType>(val + static_cast<T>(0.5)) 
+		  : aml::floor<OutType>(val - static_cast<T>(0.5));
+	} 
+	else {
+		static_assert(!sizeof(T*), "Rounding not supported type");
+	}
+}
 
 
 

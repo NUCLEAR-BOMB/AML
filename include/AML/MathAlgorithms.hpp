@@ -33,7 +33,22 @@ namespace algorithms
 		}
 		return x;
 	}
-}
 
+	template<class Left, class Right, std::enable_if_t<std::is_unsigned_v<Right>, int> = 0> [[nodiscard]] constexpr
+	auto binary_pow(Left left, Right right) noexcept {
+		Left out = 1;
+		while (right != 0) 
+		{
+			if (aml::odd(right))
+				out *= left;
+
+			left *= left;
+			right >>= 1;
+		}
+		return out;
+	}
+
+
+}
 
 AML_NAMESPACE_END

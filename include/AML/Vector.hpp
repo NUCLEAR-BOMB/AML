@@ -103,7 +103,7 @@ public:
 		
 	}
 
-	static constexpr bool in_range(size_type index) noexcept {
+	static constexpr bool has_index(size_type index) noexcept {
 		return Storage::size > index;
 	}
 
@@ -152,7 +152,7 @@ public:
 	}
 	template<std::size_t Dir> constexpr 
 	explicit Vector(const aml::unit_t<Dir>) noexcept {
-		static_assert(in_range(Dir), "Unit must be in vector's range");
+		static_assert(has_index(Dir), "Unit must be in vector's range");
 		aml::static_for<Size>([&](const auto i) {
 			if constexpr (i == Dir) (*this)[i] = static_cast<T>(1);
 			else					(*this)[i] = static_cast<T>(0);
@@ -200,11 +200,11 @@ public:
 		if constexpr (uses_static_array()) {
 		return Storage::array[index];
 		} else {
-		if constexpr (in_range(0)) if (index == 0) return Storage::x;
-		if constexpr (in_range(1)) if (index == 1) return Storage::y;
-		if constexpr (in_range(2)) if (index == 2) return Storage::z;
-		if constexpr (in_range(3)) if (index == 3) return Storage::w;
-		if constexpr (in_range(4)) if (index == 4) return Storage::v;
+		if constexpr (has_index(0)) if (index == 0) return Storage::x;
+		if constexpr (has_index(1)) if (index == 1) return Storage::y;
+		if constexpr (has_index(2)) if (index == 2) return Storage::z;
+		if constexpr (has_index(3)) if (index == 3) return Storage::w;
+		if constexpr (has_index(4)) if (index == 4) return Storage::v;
 		AML_UNREACHABLE;
 		}
 	}
@@ -360,8 +360,17 @@ auto dist(const aml::Vector<T, Size>& vec) noexcept
 	return aml::selectable_convert<OutType>(aml::sqrt(out));
 }
 
+template<class OutType = aml::selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
+auto sum_of(const aml::Vector<T, Size>& vec) noexcept {
+	T out = vec[VI::first];
+	aml::static_for<1, Size>([&](const auto i) {
+		out += vec[i];
+	});
+	return out;
+}
+
 template<class OutType = aml::selectable_unused, class Left, class Right, Vectorsize Size> [[nodiscard]] constexpr
-auto dist(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept {
+auto dist_between(const aml::Vector<Left, Size>& left, const aml::Vector<Right, Size>& right) noexcept {
 	return aml::dist<OutType>(left - right);
 }
 

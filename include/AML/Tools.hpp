@@ -72,7 +72,7 @@ namespace detail
 		{
 			using t = decltype(std::forward<Function>(fun)());
 			if constexpr (!std::is_void_v<t>) {
-				static_assert(!sizeof(Function*), "Functions/lambda must not return the value");
+				static_assert(!sizeof(Function*), "Functions/lambda must return void");
 			}
 			else {
 				std::forward<Function>(fun)();
@@ -81,7 +81,7 @@ namespace detail
 		{
 			using t = decltype(std::forward<Function>(fun)(std::forward<FunVal>(val)));
 			if constexpr (!std::is_void_v<t>) {
-				static_assert(!sizeof(Function*), "Functions/lambda must not return the value");
+				static_assert(!sizeof(Function*), "Functions/lambda must return void");
 			}
 			else {
 				std::forward<Function>(fun)(std::forward<FunVal>(val));
@@ -124,6 +124,16 @@ template<auto To, class Function> constexpr
 void static_for(Function&& fun) noexcept
 {
 	detail::static_for_impl<static_cast<decltype(To)>(0), To>(std::forward<Function>(fun));
+}
+
+template<class... Args, class Function> constexpr
+void variadic_loop(Args&&... args, Function&& fun) noexcept {
+	static constexpr bool is_return_void = (... && std::is_void_v<decltype(fun(args))>);
+	if constexpr (is_return_void) {
+		(std::forward<Function>(fun)(args)...);
+	} else {
+		static_assert(!sizeof(Function*), "Functions/lambda must return void");
+	}
 }
 
 namespace detail
