@@ -89,18 +89,18 @@ namespace detail
 		}
 	}
 
-	template<auto From, decltype(From) To, class Function> constexpr
+	template<auto From, auto To, class Function> constexpr
 	void static_for_impl2(Function&& fun) noexcept
 	{
 		if constexpr (From < To) 
 		{
-			detail::static_for_impl_call_fun(std::integral_constant<decltype(From), From>{}, std::forward<Function>(fun));
+			detail::static_for_impl_call_fun(std::integral_constant<decltype(From + To), From>{}, std::forward<Function>(fun));
 			
 			detail::static_for_impl2<From + 1, To>(std::forward<Function>(fun));
 		}
 	}
 
-	template<auto From, decltype(From) To, class Function> constexpr
+	template<auto From, auto To, class Function> constexpr
 	void static_for_impl(Function&& fun) noexcept
 	{
 		if constexpr (static_cast<std::size_t>(To - From) <= STATIC_FOR_MAX) {
@@ -114,7 +114,7 @@ namespace detail
 	}
 }
 
-template<auto From, decltype(From) To, class Function> constexpr
+template<auto From, auto To, class Function> constexpr
 void static_for(Function&& fun) noexcept
 {
 	detail::static_for_impl<From, To>(std::forward<Function>(fun));
