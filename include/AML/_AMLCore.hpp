@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+#include <type_traits>
+
 #define AML_NAMESPACE namespace aml {
 #define AML_NAMESPACE_END }
 
@@ -26,4 +29,54 @@
 #else
 	#AML_FORCEINLINE inline
 #endif
+
+#ifdef __cpp_constexpr_dynamic_alloc
+	#define AML_CONSTEXPR_DYNAMIC_ALLOC constexpr
+#else
+	#define AML_CONSTEXPR_DYNAMIC_ALLOC
+#endif
+
+#ifdef NDEBUG
+	#define AML_DEBUG 0
+#else
+	#define AML_DEBUG 1
+#endif
+
+AML_NAMESPACE
+
+using error_line_type		= std::decay_t<decltype(__LINE__)>;
+using error_file_str_type	= std::decay_t<decltype(__FILE__)>;
+
+using error_string_type		= const char*; // std::string?
+
+inline
+void logerror(error_string_type msg, error_file_str_type file, error_line_type line) noexcept {
+	std::cerr << "\n\tAML RUNTIME ERROR | " << file << "(" << line << "): " << msg << '\n';
+	std::terminate();
+}
+
+#if AML_DEBUG
+	#define AML_DEBUG_ERROR(errmsg) ::aml::logerror(errmsg, __FILE__, __LINE__)
+	#define AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_) ::aml::logerror(errmsg, file_, line_)
+#else
+	#define AML_DEBUG_ERROR(errmsg)
+#endif
+
+#if AML_DEBUG
+	#define AML_DEBUG_VERIFY(expression, errmsg)	\
+		if (expression) {}							\
+		else {										\
+			AML_DEBUG_ERROR(errmsg);				\
+		}
+
+	#define AML_DEBUG_VERIFY_LOCATION(expression, errmsg, file_, line_) \
+		if (expression) {}												\
+		else {															\
+			AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_);				\
+		}
+#else
+	#define AML_DEBUG_VERIFY(expression, errmsg)
+#endif
+
+AML_NAMESPACE_END
 

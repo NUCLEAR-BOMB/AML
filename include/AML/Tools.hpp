@@ -3,29 +3,81 @@
 #include <AML/_AMLCore.hpp>
 
 #include <type_traits>
+#include <tuple>
 
 AML_NAMESPACE
 
 inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1);
 
 template<class T>
+using remove_cvref = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template<class T>
 inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>;
 
 struct zero_t {
-	template<class T, std::enable_if_t<!aml::is_custom<T>, int> = 0>
+	template<class T>
 	explicit constexpr operator T() const noexcept { return static_cast<T>(0); }
 };
 
 struct one_t {
-	template<class T, std::enable_if_t<!aml::is_custom<T>, int> = 0>
+	template<class T>
 	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
 };
 
 template<std::size_t Direction>
 struct unit_t {
 	static constexpr auto dir = Direction;
-	template<class T, std::enable_if_t<!aml::is_custom<T>, int> = 0>
+	template<class T>
 	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
+};
+
+template<std::size_t Size = aml::dynamic_extent>
+struct size_initializer 
+{
+	using size_type = std::size_t;
+
+	static constexpr size_type size = Size;
+
+	constexpr operator size_type() const noexcept { return this->size; }
+};
+
+template<>
+struct size_initializer<aml::dynamic_extent> 
+{
+	using size_type = std::size_t;
+
+	size_initializer(const size_type size_) noexcept : size(size_) {}
+	
+	constexpr operator size_type() const noexcept { return this->size; }
+
+	const size_type size;
+};
+
+template<class T, std::size_t Size = aml::dynamic_extent>
+struct fill_initializer 
+{
+	using value_type = T;
+	using size_type = std::size_t;
+
+	constexpr fill_initializer(const T& val) noexcept : value(val) {}
+	constexpr fill_initializer(T&& val) noexcept : value(std::move(val)) {}
+
+	static constexpr size_type size = Size;
+	const value_type value;
+};
+
+template<class T>
+struct fill_initializer<T, aml::dynamic_extent> 
+{
+	using value_type = T;
+	using size_type = std::size_t;
+
+	constexpr fill_initializer(const size_type size_, const T& val) noexcept : size(size_), value(val) {}
+	constexpr fill_initializer(const size_type size_, T&& val) noexcept : size(size_), value(std::move(val)) {}
+
+	const value_type value;
+	const size_type size;
 };
 
 inline constexpr zero_t zero{};
@@ -33,6 +85,25 @@ inline constexpr one_t one{};
 
 template<std::size_t Dir>
 unit_t<Dir> unit{};
+
+template<auto V>
+struct constant_t {
+	static constexpr auto value = V;
+	using value_type = decltype(V);
+	using type = constant_t<V>;
+
+	template<class T>
+	constexpr operator T() const noexcept { return V; }
+
+	constexpr operator std::integral_constant<value_type, value>() const noexcept {
+		return std::integral_constant<value_type, value>{};
+	}
+
+	constexpr value_type operator()() const noexcept { return V; }
+};
+
+template<auto V>
+static constexpr auto constant = constant_t<V>{};
 
 using selectable_unused = void;
 
@@ -194,5 +265,68 @@ namespace detail
 
 template<class From, class To>
 inline constexpr bool is_narrowing_conversion = detail::is_narrowing_conversion_impl<From, To>::value;
+
+
+namespace detail
+{
+	template<class Container>
+	struct get_container_impl;
+
+	template<template <class, class...> class Container, class T, class... Parameters>
+	struct get_container_impl<Container<T, Parameters...>>
+	{
+		using type = Container<T, Parameters...>;
+
+		template<class U>
+		using create = Container<U, Parameters...>;
+
+		template<class U, class P>
+		using create_with_parameters = Container<U, Parameters...>;
+
+		using value_type = T;
+		using parameters = std::tuple<Parameters...>;
+	};
+
+	template<class T, class = void>
+	struct has_container_structure_impl : std::false_type {};
+
+	template<class T>
+	struct has_container_structure_impl<T, std::void_t<typename get_container_impl<T>::type>> : std::true_type {};
+}
+
+template<class T>
+using get_container = detail::get_container_impl<T>;
+
+template<class T>
+inline constexpr bool has_container_structure = detail::has_container_structure_impl<T>::value;
+
+template<class Left, class Right>
+constexpr void verify_container_parameters() noexcept {
+	static_assert(std::is_same_v<Left::parameters, Right::parameters>,
+		"The parameters of the containers must be the same");
+}
+
+namespace detail {
+
+	template<class T, class = void>
+	struct get_value_type_impl {
+		static_assert(!sizeof(T*), "T must have a nested \"value_type\" member");
+		using type = void;
+	};
+
+	template<class T>
+	struct get_value_type_impl<T, std::void_t<typename std::decay_t<T>::value_type>> {
+		using type = typename std::decay_t<T>::value_type;
+	};
+}
+
+template<class T>
+using get_value_type = typename detail::get_value_type_impl<T>::type;
+
+
+
+
+
+
 
 AML_NAMESPACE_END
