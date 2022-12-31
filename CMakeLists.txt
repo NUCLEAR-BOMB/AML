@@ -2,13 +2,27 @@ cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
 
 project("AML" CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED true)
+macro(aml_set_option varname default type docstr)
+	if (NOT DEFINED ${varname})
+		set(${varname} ${default} CACHE ${type} ${docstr})
+	else()
+		set(${varname} ${${varname}} CACHE ${type} ${docstr})
+	endif()
+endmacro()
+
+
+aml_set_option(AML_BUILD_DOC 		NO 	BOOL "Build AML doxygen doc")
+aml_set_option(AML_BUILD_UNITTESTS	YES	BOOL "Build AML unittests")
+
+set(AML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
+set(CMAKE_INSTALL_MESSAGE LAZY)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/source/*.cpp")
-file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/include/AML/*.hpp")
+#file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/source/*.cpp")
+file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${AML_INCLUDE_DIR}/AML/*.hpp")
+
+
 
 if (MSVC)
 	add_compile_options(/W4 /WX)
@@ -18,9 +32,17 @@ endif()
 
 add_library("${PROJECT_NAME}" OBJECT ${HEADER_FILES} ${SOURCE_FILES})
 
-target_include_directories("${PROJECT_NAME}" PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_compile_features("${PROJECT_NAME}" PUBLIC cxx_std_17)
+
+target_include_directories("${PROJECT_NAME}" PUBLIC ${AML_INCLUDE_DIR})
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
 
 
-add_subdirectory(unittests)
+if (AML_BUILD_DOC)
+	add_subdirectory(doc)
+endif()
+if (AML_BUILD_UNITTESTS)
+	add_subdirectory(unittests)
+endif()
+

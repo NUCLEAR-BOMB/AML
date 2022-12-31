@@ -1,3 +1,4 @@
+/** @file */
 #pragma once
 
 #include <AML/Iterator.hpp>
@@ -12,20 +13,37 @@
 
 AML_NAMESPACE
 
+/**
+	@brief The main alias for vector's size type
+	@details More created for code readability
+
+	@see Vector
+*/
 using Vectorsize = std::size_t;
 
+/**
+	@brief Namespace for compile-time vector indexes
+	@details Use them to access vector's fields from @ref Vector::operator[](const VI::index<I>) and @ref Vector::operator[](const VI::index<I>) const
+
+	@see Vector
+*/
 namespace VI
 {
+	/**
+		@brief Template type alias to access the vector field at compile time
+
+		@tparam I Index of vector field number
+	*/
 	template<Vectorsize I>
 	using index = std::integral_constant<Vectorsize, I>;
 
-	inline constexpr index<0> X{};
-	inline constexpr index<1> Y{};
-	inline constexpr index<2> Z{};
-	inline constexpr index<3> W{};
-	inline constexpr index<4> V{};
+	inline constexpr index<0> X{}; ///< @c x 1D variable using indexes
+	inline constexpr index<1> Y{}; ///< @c y 2D variable using indexes
+	inline constexpr index<2> Z{}; ///< @c z 3D variable using indexes
+	inline constexpr index<3> W{}; ///< @c w 4D variable using indexes
+	inline constexpr index<4> V{}; ///< @c v 5D variable using indexes
 
-	inline constexpr index<0> first{};
+	inline constexpr index<0> first{}; ///< Index of first vector element
 }
 
 namespace detail
@@ -82,30 +100,58 @@ namespace detail
 	};
 }
 
+
+
+/**
+	@brief The representation of a vector from linear algebra as a template class
+
+	@tparam T The type of the elements
+	@tparam Size The static vector size
+*/
+
 template<class T, Vectorsize Size>
-class Vector : public detail::VectorBase<T, Size>, public detail::VectorStorage<T, Size>
+class Vector 
+/// @cond DOXYGEN_IGNORE
+	: public detail::VectorBase<T, Size>, public detail::VectorStorage<T, Size>
+/// @endcond
 {
 	using Storage = detail::VectorStorage<T, Size>;
-	using Base	  = detail::VectorBase<T, Size>;
+	using Base	  =	   detail::VectorBase<T, Size>;
 public:
-	using size_type			= typename Base::size_type;
-	using value_type		= typename Base::value_type;
 
-	using reference			= typename Base::reference;
-	using const_reference	= typename Base::const_reference;
+	using size_type			= typename Base::size_type;		  ///< The size type that vector uses
+	using value_type		= typename Base::value_type;	  ///< The value type that vector uses
 
+	using reference			= typename Base::reference;		  ///< Type that the non-const index operator returns
+	using const_reference	= typename Base::const_reference; ///< Type that const index operator returns
+
+	/// The return type of the non-const \ref Vector::begin() "begin()" and \ref Vector::end() "end()" functions
 	using iterator			= std::conditional_t<Base::uses_static_array(),		  T*,	   aml::IndexIterator<Vector<T, Size>>>;
+	/// The return type of the const \ref Vector::begin() "begin()", \ref Vector::cbegin() "cbegin()" and \ref Vector::end() "end()", \ref Vector::cend() "cend()" functions
 	using const_iterator	= std::conditional_t<Base::uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
 
 public:
 
+	/// Static compile-time variable defining the size of the vector
 	static constexpr size_type static_size = Size;
 
+	/**
+		@brief Default constructor
+
+		@warning Does not initialize elements
+	*/
 	constexpr
 	Vector() noexcept {
 		
 	}
 
+	/**
+		@brief Initializes the vector using a static constant array
+		@details The size of the input array must match the size of the vector
+
+		@tparam ArraySize Input array size
+		@param Array Input array
+	*/
 	template<std::size_t ArraySize> constexpr
 	Vector(const T (&Array)[ArraySize]) noexcept {
 		static_assert(ArraySize == Size, 
@@ -116,6 +162,13 @@ public:
 		});
 	}
 
+	/**
+		@brief Initializes the vector using variadic arguments
+		@details All variable arguments must be a non-narrowing transformation to a main vector type
+
+		@tparam First,Rest... Variable input variadic templates 
+		@param f,r Variadic arguments
+	*/
 	template<class First, class... Rest> constexpr
 	explicit Vector(First&& f, Rest&&... r) noexcept {
 		static_assert(!(aml::is_narrowing_conversion<T, First> || (aml::is_narrowing_conversion<T, Rest> || ...)), 
@@ -132,6 +185,10 @@ public:
 		}(), ...);
 	}
 
+	/**
+		@brief Initializes the vector with 0
+		@details To call this constructor overload you need to use \ref aml::zero as an first input parameter
+	*/
 	constexpr
 	explicit Vector(const aml::zero_t) noexcept {
 		aml::static_for<Size>([&](const auto i) {
@@ -139,6 +196,10 @@ public:
 		});
 	}
 
+	/**
+		@brief Initializes the vector with 1
+		@details To call this constructor overload you need to use \ref aml::one as an first input parameter
+	*/
 	constexpr
 	explicit Vector(const aml::one_t) noexcept {
 		aml::static_for<Size>([&](const auto i) {
@@ -146,6 +207,10 @@ public:
 		});
 	}
 
+	/**
+		@brief Initializes the unit vector
+		@details To call this constructor overload you need to use \ref aml::unit as an first input parameter
+	*/
 	template<std::size_t Dir> constexpr 
 	explicit Vector(const aml::unit_t<Dir>) noexcept {
 		static_assert(Base::has_index(Dir), "Unit must be in vector's range");
@@ -155,6 +220,12 @@ public:
 		});
 	}
 
+	/**
+		@brief Cast from Vector<U, Size> to Vector<T, Size>
+
+		@tparam U Other from @p T of another vector
+		@param other Another vector from the current
+	*/
 	template<class U> constexpr
 	explicit Vector(const Vector<U, Size>& other) noexcept {
 		aml::static_for<Size>([&](const auto i) {
@@ -162,14 +233,23 @@ public:
 		});
 	}
 
+	/**
+		@brief Initializes the vector from dynamic vector
+
+		@tparam U Value type of dynamic vector
+		@param other Input dynamic vector
+
+		@warning The size of the dynamic vector must be the same as the size of the current vector
+	
+		@see Vector<T, dynamic_extent>
+	*/
 	template<class U> constexpr
-	explicit Vector(const Vector<U, aml::dynamic_extent>& other) noexcept {
+	explicit Vector(const Vector<U, dynamic_extent>& other) noexcept {
 		AML_DEBUG_VERIFY(other.size() == Size, "The dynamic vector must have the same size");
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<T>(other[i]);
 		});
 	}
-
 
 	constexpr
 	Vector(const Vector&) noexcept = default;
@@ -183,11 +263,24 @@ public:
 	constexpr
 	Vector& operator=(Vector&&) noexcept = default;
 
+	/**
+		@return Returns size of the vector
+	*/
 	[[nodiscard]] constexpr static AML_FORCEINLINE
 	size_type size() noexcept {
 		return Size;
 	}
 
+	/**
+		@brief Index operator overload to access field in compile-time 
+		@details To call this operator overload you need to use \ref VI::index as an first input parameter
+
+		@tparam I Compile-time index to the vector's field
+
+		@return @ref reference to vector's field
+
+		@see VI namespace
+	*/
 	template<size_type I> constexpr AML_FORCEINLINE
 	reference operator[](const VI::index<I>) noexcept {
 		if constexpr (Base::uses_static_array()) {
@@ -202,11 +295,28 @@ public:
 		}
 	}
 
+	/**
+		@brief Index operator overload to access field in compile-time
+		@details To call this operator overload you need to use \ref VI::index as an first input parameter
+
+		@tparam I Compile-time index to the vector's field
+
+		@return @ref const_reference to vector's field
+
+		@see VI namespace
+	*/
 	template<size_type I> constexpr AML_FORCEINLINE
 	const_reference operator[](const VI::index<I>) const noexcept {
 		return const_cast<Vector&>(*this)[VI::index<I>{}];
 	}
 
+	/**
+		@brief Index operator overload to access output field in runtime
+
+		@param index Runtime index to the vector's field
+
+		@return @ref reference to vector's field
+	*/
 	constexpr
 	reference operator[](const size_type index) noexcept {
 		if constexpr (Base::uses_static_array()) {
@@ -221,11 +331,21 @@ public:
 		}
 	}
 
+	/**
+		@brief Index operator overload to access output field in runtime
+
+		@param index Runtime index to the vector's field
+
+		@return @ref Vector<T, Size>::const_reference to vector's field
+	*/
 	constexpr
 	const_reference operator[](const size_type index) const noexcept {
 		return const_cast<Vector&>(*this)[index];
 	}
 
+	/**
+		@return Begin @ref Vector<T, Size>::iterator
+	*/
 	[[nodiscard]] constexpr
 	iterator begin() noexcept {
 		if constexpr (Base::uses_static_array()) {
@@ -235,6 +355,9 @@ public:
 		}
 	}
 
+	/**
+		@return End @ref Vector<T, Size>::iterator
+	*/
 	[[nodiscard]] constexpr
 	iterator end() noexcept {
 		if constexpr (Base::uses_static_array()) {
@@ -244,6 +367,9 @@ public:
 		}
 	}
 
+	/**
+		@return Begin @ref Vector<T, Size>::const_iterator
+	*/
 	[[nodiscard]] constexpr
 	const_iterator begin() const noexcept {
 		if constexpr (Base::uses_static_array()) {
@@ -253,6 +379,9 @@ public:
 		}
 	}
 
+	/**
+		@return End @ref Vector<T, Size>::const_iterator
+	*/
 	[[nodiscard]] constexpr
 	const_iterator end() const noexcept {
 		if constexpr (Base::uses_static_array()) {
@@ -262,11 +391,13 @@ public:
 		}
 	}
 
+	/// @copydoc Vector::begin() const
 	[[nodiscard]] constexpr
 	const_iterator cbegin() const noexcept {
 		return begin();
 	}
 
+	/// @copydoc Vector::end() const
 	[[nodiscard]] constexpr
 	const_iterator cend() const noexcept {
 		return end();
