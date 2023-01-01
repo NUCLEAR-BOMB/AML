@@ -8,7 +8,7 @@ set(DOXYGEN_CONFIGURED_INPUT ${DOXYGEN_OUTPUT_DIR}/Doxyfile)
 
 configure_file(${DOXYGEN_INPUT_DIR}/Doxyfile.in ${DOXYGEN_CONFIGURED_INPUT} @ONLY)
 
-add_custom_target(AML-doc ALL
+add_custom_target(doc ALL
 	COMMAND ${CMAKE_COMMAND} -E echo_append "   |   Building AML doc...   |   " 
 	COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIGURED_INPUT}
 	COMMAND ${CMAKE_COMMAND} -E echo_append "   |   Ending building AML doc...   |   "

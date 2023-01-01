@@ -9,7 +9,6 @@
 #include <type_traits>
 #include <algorithm>
 #include <vector>
-#include <iterator>
 
 AML_NAMESPACE
 
@@ -103,20 +102,18 @@ namespace detail
 
 
 /**
-	@brief The representation of a vector from linear algebra as a template class
+	@brief The representation of a vector from linear algebra as a statically allocated template class
 
 	@tparam T The type of the elements
 	@tparam Size The static vector size
-*/
 
+	@see Vector<Container, dynamic_extent>
+*/
 template<class T, Vectorsize Size>
-class Vector 
-/// @cond DOXYGEN_IGNORE
-	: public detail::VectorBase<T, Size>, public detail::VectorStorage<T, Size>
-/// @endcond
+class Vector /** @cond */: public detail::VectorBase<T, Size>, public detail::VectorStorage<T, Size> /** @endcond */
 {
 	using Storage = detail::VectorStorage<T, Size>;
-	using Base	  =	   detail::VectorBase<T, Size>;
+	using Base	  =	detail::VectorBase<T, Size>;
 public:
 
 	using size_type			= typename Base::size_type;		  ///< The size type that vector uses
@@ -125,9 +122,10 @@ public:
 	using reference			= typename Base::reference;		  ///< Type that the non-const index operator returns
 	using const_reference	= typename Base::const_reference; ///< Type that const index operator returns
 
-	/// The return type of the non-const \ref Vector::begin() "begin()" and \ref Vector::end() "end()" functions
+	/// The return type of the non-const \ref begin() and \ref end() "end()" methods
 	using iterator			= std::conditional_t<Base::uses_static_array(),		  T*,	   aml::IndexIterator<Vector<T, Size>>>;
-	/// The return type of the const \ref Vector::begin() "begin()", \ref Vector::cbegin() "cbegin()" and \ref Vector::end() "end()", \ref Vector::cend() "cend()" functions
+
+	/// The return type of the const \ref begin(), \ref cbegin() and \ref end(), \ref cend() methods
 	using const_iterator	= std::conditional_t<Base::uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
 
 public:
@@ -138,7 +136,7 @@ public:
 	/**
 		@brief Default constructor
 
-		@warning Does not initialize elements
+		@warning Does not explicitly initialize elements
 	*/
 	constexpr
 	Vector() noexcept {
@@ -222,9 +220,6 @@ public:
 
 	/**
 		@brief Cast from Vector<U, Size> to Vector<T, Size>
-
-		@tparam U Other from @p T of another vector
-		@param other Another vector from the current
 	*/
 	template<class U> constexpr
 	explicit Vector(const Vector<U, Size>& other) noexcept {
@@ -266,7 +261,7 @@ public:
 	/**
 		@return Returns size of the vector
 	*/
-	[[nodiscard]] constexpr static AML_FORCEINLINE
+	[[nodiscard]] constexpr static /** @cond */ AML_FORCEINLINE /** @endcond */
 	size_type size() noexcept {
 		return Size;
 	}
@@ -281,7 +276,7 @@ public:
 
 		@see VI namespace
 	*/
-	template<size_type I> constexpr AML_FORCEINLINE
+	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 	reference operator[](const VI::index<I>) noexcept {
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array[I];
@@ -305,17 +300,19 @@ public:
 
 		@see VI namespace
 	*/
-	template<size_type I> constexpr AML_FORCEINLINE
+	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 	const_reference operator[](const VI::index<I>) const noexcept {
 		return const_cast<Vector&>(*this)[VI::index<I>{}];
 	}
 
 	/**
-		@brief Index operator overload to access output field in runtime
+		@brief Index operator overload to access the vector's field in runtime
 
-		@param index Runtime index to the vector's field
+		@param index Runtime index for the numbering of the vector field
 
 		@return @ref reference to vector's field
+
+		@see operator[](const VI::index<I>)
 	*/
 	constexpr
 	reference operator[](const size_type index) noexcept {
@@ -332,11 +329,13 @@ public:
 	}
 
 	/**
-		@brief Index operator overload to access output field in runtime
+		@brief Index operator overload to access the vector's field in runtime
 
-		@param index Runtime index to the vector's field
+		@param index Runtime index for the numbering of the vector field
 
-		@return @ref Vector<T, Size>::const_reference to vector's field
+		@return @ref const_reference to vector's field
+
+		@see operator[](const VI::index<I>) const
 	*/
 	constexpr
 	const_reference operator[](const size_type index) const noexcept {
@@ -344,7 +343,7 @@ public:
 	}
 
 	/**
-		@return Begin @ref Vector<T, Size>::iterator
+		@return Begin @ref iterator
 	*/
 	[[nodiscard]] constexpr
 	iterator begin() noexcept {
@@ -356,7 +355,7 @@ public:
 	}
 
 	/**
-		@return End @ref Vector<T, Size>::iterator
+		@return End @ref iterator
 	*/
 	[[nodiscard]] constexpr
 	iterator end() noexcept {
@@ -368,7 +367,7 @@ public:
 	}
 
 	/**
-		@return Begin @ref Vector<T, Size>::const_iterator
+		@return Begin @ref const_iterator
 	*/
 	[[nodiscard]] constexpr
 	const_iterator begin() const noexcept {
@@ -380,7 +379,7 @@ public:
 	}
 
 	/**
-		@return End @ref Vector<T, Size>::const_iterator
+		@return End @ref const_iterator
 	*/
 	[[nodiscard]] constexpr
 	const_iterator end() const noexcept {
@@ -391,13 +390,17 @@ public:
 		}
 	}
 
-	/// @copydoc Vector::begin() const
+	/**
+		@return Begin @ref const_iterator
+	*/
 	[[nodiscard]] constexpr
 	const_iterator cbegin() const noexcept {
 		return begin();
 	}
 
-	/// @copydoc Vector::end() const
+	/**
+		@return End @ref const_iterator
+	*/
 	[[nodiscard]] constexpr
 	const_iterator cend() const noexcept {
 		return end();
@@ -405,30 +408,90 @@ public:
 
 };
 
+/**
+	@brief The representation of a vector from linear algebra as a dynamically allocated template class
+	@details
+		%Vector, that uses dynamically allocated container @n@n
+
+		<b>The Container must have this template layout:</b>
+		@code
+			template<template<class T, class... Parameters> class Container>
+		@endcode
+
+		@c T - vector's value type @n
+
+		@warning 
+				@c T must not affect additional container parameters. @n
+				This also includes default parameters that use <tt>T</tt>. @n
+				For example, @c std::vector will not work because it has a second template parameter that uses its @c T
+
+		@c Parameters... - Additional parameters @n
+
+		<b>An example of a container structure:</b>
+		@code
+			template<class T, class... Parameters>
+			struct Container
+			{
+				using size_type		 = ... ;
+
+				using iterator		 = ... ;
+				using const_iterator = ... ;
+
+				size_type size() const;
+				void resize(size_type new_size);
+
+				iterator begin();
+				iterator end();
+
+				const_iterator begin() const;
+				const_iterator end() const;
+
+				const_iterator cbegin() const;
+				const_iterator cend() const;
+
+				T& front();
+
+				T& operator[](size_type index);
+				const T& operator[](size_type index) const;
+			};
+		@endcode
+
+	@tparam Container The type of container that will be used
+
+	@see @ref Vector "Vector<T, Size>" @n
+		 dynamic_extent
+*/
 template<class Container>
-class Vector<Container, aml::dynamic_extent> : public detail::VectorBase<aml::get_value_type<Container>, aml::dynamic_extent>
+class Vector<Container, dynamic_extent> /** @cond */: public detail::VectorBase<aml::get_value_type<Container>, dynamic_extent> /** @endcond */
 {
 private:
 	friend class Vector;
 
 	using Base = detail::VectorBase<typename Container::value_type, aml::dynamic_extent>;
 public:
+
+	/**
+		@brief The type of container that uses the vector
+	*/
 	using container_type = Container;
 
-	using size_type			= typename Base::size_type;
-	using value_type		= typename Base::value_type;
+	using size_type			= std::common_type_t<typename Base::size_type, typename container_type::size_type>; ///< The size type that vector uses
+	using value_type		= typename Base::value_type; ///< The value type that vector uses
 
-	using reference			= typename Base::reference;
-	using const_reference	= typename Base::const_reference;
+	using reference			= typename Base::reference; ///< Type that the non-const index operator returns
+	using const_reference	= typename Base::const_reference; ///< Type that const index operator returns
 
+	/// The return type of the non - const @ref begin() and @ref end() methods
 	using iterator			= typename container_type::iterator;
+
+	/// The return type of the const \ref begin(), \ref cbegin() and \ref end(), \ref cend() methods
 	using const_iterator	= typename container_type::const_iterator;
 
-	static_assert(std::is_default_constructible_v<container_type>,	"Container must be default constructible");
+	//static_assert(std::is_default_constructible_v<container_type>,	"Container must be default constructible");
 	static_assert(aml::has_container_structure<container_type>,		"Container must have a container structure");
 
 private:
-	using container_size_type = typename container_type::size_type;
+	using container_size_type = aml::get_value_type<container_type>;
 
 	AML_CONSTEXPR_DYNAMIC_ALLOC
 	void container_resize(const size_type new_size) noexcept {
@@ -436,18 +499,39 @@ private:
 	}
 public:
 
-	AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Default constructor
+		@details The container type must also have a default constructor
+
+		@warning Does not explicitly initialize elements
+	*/
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector() noexcept {
 
 	}
 
-	template<std::size_t ArraySize> AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Initializes the vector using a static constant array
+		@details The vector will have the size of the input array
+
+		@tparam ArraySize Input array size
+		@param Array Input array
+	*/
+	template<std::size_t ArraySize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector(const value_type (&Array)[ArraySize]) noexcept {
 		container_resize(ArraySize);
 		std::copy_n(Array, ArraySize, this->container.begin());
 	}
 
-	template<class First, class... Rest> AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Initializes the vector using variadic arguments
+		@details All variable arguments must be a non-narrowing transformation to a main vector type @n
+				 The vector will have the size of the number of variadic arguments
+
+		@tparam First,Rest... Variable input variadic templates
+		@param f,r Variadic arguments
+	*/
+	template<class First, class... Rest> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(First&& f, Rest&&... r) noexcept {
 		static_assert(!(aml::is_narrowing_conversion<value_type, First> || (aml::is_narrowing_conversion<value_type, Rest> || ...)),
 			"Variadic parameter types have a narrowing conversion");
@@ -463,18 +547,37 @@ public:
 		}(), ...);
 	}
 
-	template<std::size_t InitSize> AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Creates the vector with size
+
+		@warning Does not explicitly initialize elements
+
+		@param initsz The size that will be used to create the vector
+
+		@see aml::size_initializer
+	*/
+	template<std::size_t InitSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector(const aml::size_initializer<InitSize> initsz) noexcept {
 		container_resize(initsz.size);
 	}
 
-	template<std::size_t FillSize> AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Creates a vector with size and fills it
+
+		@param fill_with Size and what the vector will be filled with
+
+		@see aml::fill_initializer
+	*/
+	template<std::size_t FillSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector(const aml::fill_initializer<value_type, FillSize> fill_with) noexcept {
 		container_resize(fill_with.size);
 		std::fill(this->container.begin(), this->container.end(), fill_with.value);
 	}
 
-	template<class U> AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Cast from Vector<U, dynamic_extent> to Vector<T, dynamic_extent>
+	*/
+	template<class U> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const Vector<U, aml::dynamic_extent>& other) noexcept 
 	{
 		using other_value_type = aml::get_value_type<decltype(other)>;
@@ -487,7 +590,12 @@ public:
 		);
 	}
 
-	template<class U, Vectorsize OtherSize> AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Creates dynamically allocated vector from statically allocated vector
+
+		@tparam OtherSize The size of the static allocated vector at compile-time
+	*/
+	template<class U, Vectorsize OtherSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const Vector<U, OtherSize>& other) noexcept
 	{
 		using other_value_type = aml::get_value_type<decltype(other)>;
@@ -500,65 +608,100 @@ public:
 		);
 	}
 
-	AML_CONSTEXPR_DYNAMIC_ALLOC
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector(const Vector&) noexcept = default;
 
-	AML_CONSTEXPR_DYNAMIC_ALLOC
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector(Vector&&) noexcept = default;
 
-	AML_CONSTEXPR_DYNAMIC_ALLOC
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector& operator=(const Vector&) noexcept = default;
 
-	AML_CONSTEXPR_DYNAMIC_ALLOC
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector& operator=(Vector&&) noexcept = default;
 
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	size_type size() const noexcept {
 		return static_cast<size_type>(this->container.size());
 	}
 
-	AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Index operator to access the vector's field
+
+		@param index Index for the numbering of the vector field
+
+		@return @ref reference to vector's field
+	*/
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	reference operator[](const size_type index) noexcept {
 		return this->container[index];
 	}
 
-	AML_CONSTEXPR_DYNAMIC_ALLOC
+	/**
+		@brief Index operator to access the vector's field
+
+		@param index Runtime index for the numbering of the vector field
+
+		@return @ref Vector<T, Size>::const_reference to vector's field
+	*/
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	const_reference operator[](const size_type index) const noexcept {
 		return this->container[index];
 	}
 
-
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE
+	/**
+		@return Container %begin()
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	iterator begin() noexcept {
 		return this->container.begin();
 	}
 
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE
+	/**
+		@return Container %end()
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	iterator end() noexcept {
 		return this->container.end();
 	}
 
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE
+	/**
+		@return Container %begin() const
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	const_iterator begin() const noexcept {
 		return this->container.begin();
 	}
 
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE
+	/**
+		@return Container %end() const
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	const_iterator end() const noexcept {
 		return this->container.end();
 	}
 
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE
+	/**
+		@return Container %cbegin() const
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	const_iterator cbegin() const noexcept {t
 		return this->container.cbegin();
 	}
 
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE
+	/**
+		@return Container %cend() const
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	const_iterator cend() const noexcept {
 		return this->container.cend();
 	}
 
 protected:
+	/**
+		@brief %Container member, that uses a vector
+		@details Have the same type as @c Container template parameter
+	*/
 	container_type container;
 };
 
@@ -822,6 +965,13 @@ namespace detail {
 	struct DVector_default_container : std::vector<T> {};
 }
 
+/**
+	@brief Type alias for @ref Vector<Container, dynamic_extent> "dynamic vector" and it container
+	@details A simple @c std::vector in template parameter @c Container will not work. @n
+			 This uses a wrapper around @c std::vector
+
+	@see Vector<Container, dynamic_extent>
+*/
 template<class T>
 using DVector = aml::Vector<detail::DVector_default_container<T>, aml::dynamic_extent>;
 
