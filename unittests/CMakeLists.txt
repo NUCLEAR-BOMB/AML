@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
 
-project("AML-unittests" CXX)
+project("unittests" CXX)
 
 if (MSVC)
 
@@ -25,13 +25,13 @@ file(GLOB_RECURSE ALL_FILES CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/*.hpp"
 )
 
-add_executable("${PROJECT_NAME}" ${ALL_FILES})
+add_executable(${PROJECT_NAME} ${ALL_FILES})
 
-target_link_libraries("${PROJECT_NAME}" GTest::gtest_main AML)
+target_link_libraries(${PROJECT_NAME} GTest::gtest_main AML)
 
 set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "GoogleTest")
 
 include(GoogleTest)
-gtest_discover_tests("${PROJECT_NAME}")
+gtest_discover_tests(${PROJECT_NAME})
 
-set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT "${PROJECT_NAME}")
+set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})

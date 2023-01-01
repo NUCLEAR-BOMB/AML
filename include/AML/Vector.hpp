@@ -185,7 +185,9 @@ public:
 
 	/**
 		@brief Initializes the vector with 0
-		@details To call this constructor overload you need to use \ref aml::zero as an first input parameter
+		@details To call this constructor overload you need to use @ref zero "aml::zero" as an first input parameter
+
+		@see @ref zero "aml::zero"
 	*/
 	constexpr
 	explicit Vector(const aml::zero_t) noexcept {
@@ -196,7 +198,9 @@ public:
 
 	/**
 		@brief Initializes the vector with 1
-		@details To call this constructor overload you need to use \ref aml::one as an first input parameter
+		@details To call this constructor overload you need to use @ref one "aml::one" as an first input parameter
+
+		@see @ref one "aml::one"
 	*/
 	constexpr
 	explicit Vector(const aml::one_t) noexcept {
@@ -207,7 +211,9 @@ public:
 
 	/**
 		@brief Initializes the unit vector
-		@details To call this constructor overload you need to use \ref aml::unit as an first input parameter
+		@details To call this constructor overload you need to use @ref unit "aml::unit" as an first input parameter
+
+		@see @ref unit "aml::unit"
 	*/
 	template<std::size_t Dir> constexpr 
 	explicit Vector(const aml::unit_t<Dir>) noexcept {
@@ -491,11 +497,9 @@ public:
 	static_assert(aml::has_container_structure<container_type>,		"Container must have a container structure");
 
 private:
-	using container_size_type = aml::get_value_type<container_type>;
-
 	AML_CONSTEXPR_DYNAMIC_ALLOC
 	void container_resize(const size_type new_size) noexcept {
-		this->container.resize(static_cast<container_size_type>(new_size));
+		this->container.resize(new_size);
 	}
 public:
 
@@ -719,15 +723,15 @@ protected:
 #define AML_VECTOR_FUNCTION_BODY2(outtype, firstvec, secondvec, dynamic_action, static_action)								\
 	if constexpr (firstvec.is_dynamic() && secondvec.is_dynamic()) {														\
 		AML_DEBUG_VERIFY(left.size() == right.size(), "Dynamic vector's sizes must be equal");								\
-		using left_container = aml::get_container<std::decay_t<decltype(firstvec)>::container_type>;						\
-		using right_container = aml::get_container<std::decay_t<decltype(secondvec)>::container_type>;						\
+		using left_container = aml::get_container_data<std::decay_t<decltype(firstvec)>::container_type>;						\
+		using right_container = aml::get_container_data<std::decay_t<decltype(secondvec)>::container_type>;						\
 		aml::verify_container_parameters<left_container, right_container>();												\
 		aml::Vector<left_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer<>(firstvec.size()));	\
 		dynamic_action																										\
 		return out;																											\
 	} else if constexpr (firstvec.is_dynamic() || secondvec.is_dynamic()) {													\
 		AML_DEBUG_VERIFY(firstvec.size() == secondvec.size(), "Dynamic vector's and static vector's sizes must be equal");	\
-		using container_ = aml::get_container<std::conditional_t<firstvec.is_dynamic(), Left, Right>>;						\
+		using container_ = aml::get_container_data<std::conditional_t<firstvec.is_dynamic(), Left, Right>>;						\
 		aml::Vector<container_::create<outtype>, aml::dynamic_extent> out(aml::size_initializer<>(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\
@@ -764,7 +768,7 @@ protected:
 
 #define AML_OP_BODY3(outtype, vec_, containertype_, isdynamic, action_)												\
 	if constexpr (isdynamic) {																						\
-		using vec_container = aml::get_container<containertype_>;													\
+		using vec_container = aml::get_container_data<containertype_>;													\
 		aml::Vector<vec_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer<>(vec_.size()));	\
 		for (Vectorsize i = 0; i < vec_.size(); ++i) {																\
 			out[i] = action_;																						\

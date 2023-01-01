@@ -1,30 +1,38 @@
+/** @file */
 #pragma once
 
 #include <AML/_AMLCore.hpp>
 
 #include <type_traits>
 #include <tuple>
+#include <functional>
+#include <cstddef>
 
 AML_NAMESPACE
 
-inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1);
+inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1); ///< std::dynamic_extent clone
 
 template<class T>
-using remove_cvref = std::remove_cv_t<std::remove_reference_t<T>>;
+using remove_cvref = std::remove_cv_t<std::remove_reference_t<T>>; ///< C++20 std::remove_cvref clone
 
 template<class T>
-inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>;
+inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>; ///< Checks if @c T is user created
 
+/// @cond
+
+/// Type of @ref zero
 struct zero_t {
 	template<class T>
 	explicit constexpr operator T() const noexcept { return static_cast<T>(0); }
 };
 
+/// Type of @ref one
 struct one_t {
 	template<class T>
 	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
 };
 
+/// Type of @ref unit
 template<std::size_t Direction>
 struct unit_t {
 	static constexpr auto dir = Direction;
@@ -32,6 +40,7 @@ struct unit_t {
 	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
 };
 
+/// Compile-time wrapper around @c std::size_t
 template<std::size_t Size = aml::dynamic_extent>
 struct size_initializer 
 {
@@ -42,6 +51,7 @@ struct size_initializer
 	constexpr operator size_type() const noexcept { return this->size; }
 };
 
+/// Runtime wrapper around @c std::size_t
 template<>
 struct size_initializer<aml::dynamic_extent> 
 {
@@ -54,6 +64,7 @@ struct size_initializer<aml::dynamic_extent>
 	const size_type size;
 };
 
+/// Compile-time wrapper around @c std::size_t and @c T
 template<class T, std::size_t Size = aml::dynamic_extent>
 struct fill_initializer 
 {
@@ -67,6 +78,7 @@ struct fill_initializer
 	const value_type value;
 };
 
+/// Runtime wrapper around @c std::size_t and @c T
 template<class T>
 struct fill_initializer<T, aml::dynamic_extent> 
 {
@@ -80,12 +92,7 @@ struct fill_initializer<T, aml::dynamic_extent>
 	const size_type size;
 };
 
-inline constexpr zero_t zero{};
-inline constexpr one_t one{};
-
-template<std::size_t Dir>
-unit_t<Dir> unit{};
-
+/// Clone of std::integral_constant ?
 template<auto V>
 struct constant_t {
 	static constexpr auto value = V;
@@ -102,11 +109,25 @@ struct constant_t {
 	constexpr value_type operator()() const noexcept { return V; }
 };
 
+/// @endcond
+
+inline constexpr zero_t zero{}; ///< Shortcut for zero_t{}
+inline constexpr one_t one{};	///< Shortcut for one_t{}
+
+template<std::size_t Dir>
+unit_t<Dir> unit{}; ///< Shortcut for unit_t<Dir>{}
+
 template<auto V>
-static constexpr auto constant = constant_t<V>{};
+static constexpr auto constant = constant_t<V>{}; ///< Shortcut for constant_t<V>{}
 
-using selectable_unused = void;
 
+using selectable_unused = void; ///< Used in @ref selectable_convert to ignore cast
+
+/**
+	@brief Used to convert @p In to <tt>Out</tt> if Out isn't @ref selectable_unused type
+
+	@see selectable_type
+*/
 template<class Out, class In> [[nodiscard]] constexpr
 auto selectable_convert(In&& val) noexcept
 {
@@ -117,6 +138,12 @@ auto selectable_convert(In&& val) noexcept
 	}
 }
 
+/**
+	@brief Template type alias that selects type.
+	@details If @p Out isn't @ref selectable_unused then the type alias is <tt>In</tt>, otherwise it will be Out
+
+	@see selectable_convert
+*/
 template<class Out, class In>
 using selectable_type = std::conditional_t<std::is_same_v<Out, selectable_unused>, In, Out>;
 
@@ -128,10 +155,16 @@ namespace detail {
 	struct is_complete_impl<T, decltype(sizeof(T))> : public std::true_type {};
 }
 
+/**
+	@brief Checks if @p T is not forward declarated
+*/
 template<class T>
 inline constexpr bool is_complete = detail::is_complete_impl<T>::value;
 
-
+/**
+	@brief Max recursion level for @ref static_for
+	@details If the value is greater, then runtime for loop is used
+*/
 inline constexpr std::size_t STATIC_FOR_MAX = 30;
 
 namespace detail
@@ -139,23 +172,23 @@ namespace detail
 	template<class FunVal, class Function> constexpr
 	void static_for_impl_call_fun(FunVal&& val, Function&& fun) noexcept
 	{
-		if constexpr (std::is_invocable_v<Function>)
+		if constexpr (std::is_invocable_v<Function>) // checks if function hasn't any arguments
 		{
-			using t = decltype(std::forward<Function>(fun)());
+			using t = decltype(std::invoke(fun));
 			if constexpr (!std::is_void_v<t>) {
 				static_assert(!sizeof(Function*), "Functions/lambda must return void");
 			}
 			else {
-				std::forward<Function>(fun)();
+				std::invoke(fun);
 			}
 		} else 
 		{
-			using t = decltype(std::forward<Function>(fun)(std::forward<FunVal>(val)));
+			using t = decltype(std::invoke(fun, val));
 			if constexpr (!std::is_void_v<t>) {
 				static_assert(!sizeof(Function*), "Functions/lambda must return void");
 			}
 			else {
-				std::forward<Function>(fun)(std::forward<FunVal>(val));
+				std::invoke(fun, val);
 			}
 		}
 	}
@@ -185,18 +218,38 @@ namespace detail
 	}
 }
 
+/**
+	@brief Compile-time for loop
+	@details Calls @p Function @p To - @p From + 1 once or and pass [From, To] (integer closed interval) values
+
+	@tparam From Begin of interval
+	@tparam To End of interval
+	@tparam Function Function type of called function
+
+	@param fun Function, that will be called
+*/
 template<auto From, auto To, class Function> constexpr
 void static_for(Function&& fun) noexcept
 {
 	detail::static_for_impl<From, To>(std::forward<Function>(fun));
 }
 
+/**
+	@brief @copybrief static_for
+	@details Calls @p Function @p To + 1 once or and pass [0, To] (integer closed interval) values
+
+	@tparam To End of interval
+	@tparam Function Function type of called function
+
+	@param fun Function, that will be called
+*/
 template<auto To, class Function> constexpr
 void static_for(Function&& fun) noexcept
 {
 	detail::static_for_impl<static_cast<decltype(To)>(0), To>(std::forward<Function>(fun));
 }
 
+#if 0
 template<class... Args, class Function> constexpr
 void variadic_loop(Args&&... args, Function&& fun) noexcept {
 	static constexpr bool is_return_void = (... && std::is_void_v<decltype(fun(args))>);
@@ -206,6 +259,7 @@ void variadic_loop(Args&&... args, Function&& fun) noexcept {
 		static_assert(!sizeof(Function*), "Functions/lambda must return void");
 	}
 }
+#endif
 
 namespace detail
 {
@@ -233,23 +287,88 @@ namespace detail
 	};
 }
 
+/**
+	@brief Converts a number of @b bytes to a type whose size is no larger than the size of the signed integral
+	@details 
+			If the number of @b bytes is greater than the maximum signed integral type, it will be @c void type. @n@n
 
+			@b Example: @n
+			0..1	&rArr; @c int8  @n
+			2..2	&rArr; @c int16 @n
+			3..4	&rArr; @c int32 @n
+			5..8	&rArr; @c int64 @n
+			>8		&rArr; @c void
+*/
 template<std::size_t Bytes>
 using signed_from_bytes = typename detail::signed_from_bytes_impl<Bytes>::type;
 
+/**
+	@brief Converts a number of @b bytes to a type whose size is no larger than the size of the unsigned integral
+	@details
+			If the number of @b bytes is greater than the maximum unsigned integral type, it will be @c void type. @n@n
+
+			@b Example: @n
+			0..1	&rArr; @c uint8  @n
+			2..2	&rArr; @c uint16 @n
+			3..4	&rArr; @c uint32 @n
+			5..8	&rArr; @c uint64 @n
+			>8		&rArr; @c void
+*/
 template<std::size_t Bytes>
 using unsigned_from_bytes = std::make_unsigned_t<signed_from_bytes<Bytes>>;
 
+/**
+	@brief Converts a number of @b bits to a type whose size is no larger than the size of the signed integral
+	@details
+			If the number of @b bits is greater than the maximum signed integral type, it will be @c void type. @n@n
+
+			@b Example: @n
+			0..8	&rArr; @c int8  @n
+			9..16	&rArr; @c int16 @n
+			17..32	&rArr; @c int32 @n
+			33..64	&rArr; @c int64 @n
+			>64		&rArr; @c void
+
+	@see signed_from_bytes
+*/
 template<std::size_t Bits>
 using signed_from_bits = signed_from_bytes<(Bits + (CHAR_BIT - 1)) / CHAR_BIT>;
 
+/**
+	@brief Converts a number of @b bits to a type whose size is no larger than the size of the unsigned integral
+	@details
+			If the number of @b bits is greater than the maximum unsigned integral type, it will be @c void type. @n@n
+
+			@b Example: @n
+			0..8	&rArr; @c uint8 @n
+			9..16	&rArr; @c uint16 @n
+			17..32	&rArr; @c uint32 @n
+			33..64	&rArr; @c uint64 @n
+			>64		&rArr; @c void
+
+	@see unsigned_from_bytes
+*/
 template<std::size_t Bits>
 using unsigned_from_bits = std::make_unsigned_t<signed_from_bits<Bits>>;
 
+/**
+	@brief Converts a number of @b bytes to a type whose size is no larger than the size of the floating point
+	@details 
+			If the number of @b bytes is greater than the maximum floating point type, it will be @c void type
 
+	@see signed_from_bytes @n
+		 unsigned_from_bytes
+*/
 template<std::size_t Bytes>
 using floating_point_from_bytes = typename detail::floating_point_from_bytes_impl<Bytes>::type;
 
+/**
+	@brief Converts a number of @b bits to a type whose size is no larger than the size of the floating point
+	@details
+			If the number of @b bits is greater than the maximum floating point type, it will be @c void type
+
+	@see floating_point_from_bytes
+*/
 template<std::size_t Bits>
 using floating_point_from_bits = floating_point_from_bytes<(Bits + (CHAR_BIT - 1)) / CHAR_BIT>;
 
@@ -263,43 +382,61 @@ namespace detail
 	struct is_narrowing_conversion_impl<From, To, std::void_t<decltype(To{ std::declval<From>() })>> : std::false_type {};
 }
 
+/**
+	@brief Checks if the @p From type is has a narrowing conversion to the @p To type
+	@details
+			@b Example: @n
+			From,	To		= result @n@n
+			
+			int8,	int16	= false @n
+			uint8,	int16	= false @n
+			float,	double	= false @n
+			double, float	= true  @n
+			int64,	int32	= true
+*/
 template<class From, class To>
 inline constexpr bool is_narrowing_conversion = detail::is_narrowing_conversion_impl<From, To>::value;
 
 
+
+template<class Container>
+struct get_container_data;
+
+/// Contains information about the container
+template<template <class, class...> class Container, class T, class... Parameters>
+struct get_container_data<Container<T, Parameters...>>
+{
+	using type = Container<T, Parameters...>; ///< Container itself
+
+	template<class U>
+	using create = Container<U, Parameters...>; ///< Creating a new container with a replaced value type
+
+	using value_type = T; ///< Container value type
+	using parameters = std::tuple<Parameters...>; ///< Container parameters
+};
+
 namespace detail
 {
-	template<class Container>
-	struct get_container_impl;
-
-	template<template <class, class...> class Container, class T, class... Parameters>
-	struct get_container_impl<Container<T, Parameters...>>
-	{
-		using type = Container<T, Parameters...>;
-
-		template<class U>
-		using create = Container<U, Parameters...>;
-
-		template<class U, class P>
-		using create_with_parameters = Container<U, Parameters...>;
-
-		using value_type = T;
-		using parameters = std::tuple<Parameters...>;
-	};
-
 	template<class T, class = void>
 	struct has_container_structure_impl : std::false_type {};
 
 	template<class T>
-	struct has_container_structure_impl<T, std::void_t<typename get_container_impl<T>::type>> : std::true_type {};
+	struct has_container_structure_impl<T, std::void_t<typename get_container_data<T>::type>> : std::true_type {};
 }
 
-template<class T>
-using get_container = detail::get_container_impl<T>;
-
+/// Checks if @p T has container structure
 template<class T>
 inline constexpr bool has_container_structure = detail::has_container_structure_impl<T>::value;
 
+/**
+	@brief Verifies if @p Left nad @p Right have same parameters
+	@details Creates compile-time if it does not pass assert
+
+	@tparam Left Container data
+	@tparam Right Container data
+
+	@see get_container_data
+*/
 template<class Left, class Right>
 constexpr void verify_container_parameters() noexcept {
 	static_assert(std::is_same_v<Left::parameters, Right::parameters>,
@@ -310,7 +447,7 @@ namespace detail {
 
 	template<class T, class = void>
 	struct get_value_type_impl {
-		static_assert(!sizeof(T*), "T must have a nested \"value_type\" member");
+		static_assert(!sizeof(T*), "T must have a type alias \"value_type\"");
 		using type = void;
 	};
 
@@ -320,13 +457,11 @@ namespace detail {
 	};
 }
 
+/**
+	@brief Get value type of container
+	@details If the type doesn't have an type alias of value_type - creates compile-time error
+*/
 template<class T>
 using get_value_type = typename detail::get_value_type_impl<T>::type;
-
-
-
-
-
-
 
 AML_NAMESPACE_END
