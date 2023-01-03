@@ -22,6 +22,13 @@ TEST(VectorTest, init_using_variadic) {
 	Vector<int, 6> c(1, 2, 3, 4, 5, 6);
 }
 
+TEST(VectorTest, init_filled) {
+	Vector<int, 2> a(aml::fill_initializer(10));
+
+	EXPECT_EQ(a[0], 10);
+	EXPECT_EQ(a[1], 10);
+}
+
 TEST(VectorTest, checkSize) {
 	Vector<int, 1> a({ 200 });
 	EXPECT_EQ(a.size(), 1);
@@ -376,31 +383,54 @@ TEST(DynamicVectorTest, cast) {
 }
 
 TEST(DynamicVectorTest, init_with_size_initializer) {
-	const DVector<int> a(aml::size_initializer<3>{});
+	const DVector<int> a(aml::size_initializer(3));
 
 	ASSERT_EQ(a.size(), 3);
 
-	const DVector<float> b(aml::size_initializer<10>{});
+	const DVector<float> b(aml::size_initializer(10));
 
 	ASSERT_EQ(b.size(), 10);
 }
 
 TEST(DynamicVectorTest, init_with_fill_initializer) 
 {
-	const DVector<int> a(aml::fill_initializer<int>(3, 10));
+	const DVector<int> a(aml::size_initializer(3), aml::fill_initializer<int>(10));
 	ASSERT_EQ(a.size(), 3);
 
 	ASSERT_EQ(a[0], 10);
 	ASSERT_EQ(a[1], 10);
 	ASSERT_EQ(a[2], 10);
 
-	const DVector<int> b(aml::fill_initializer<int, 4>(-3));
+	const DVector<int> b(aml::size_initializer(4), aml::fill_initializer<int>(-3));
 	ASSERT_EQ(b.size(), 4);
 
 	ASSERT_EQ(b[0], -3);
 	ASSERT_EQ(b[1], -3);
 	ASSERT_EQ(b[2], -3);
 	ASSERT_EQ(b[3], -3);
+}
+
+TEST(DynamicVectorTest, init_with_special_modifiers)
+{
+	const DVector<int> a(aml::size_initializer(3), aml::one);
+	ASSERT_EQ(a.size(), 3);
+
+	EXPECT_EQ(a[0], 1);
+	EXPECT_EQ(a[1], 1);
+	EXPECT_EQ(a[2], 1);
+
+	const DVector<int> b(aml::size_initializer(2), aml::zero);
+	ASSERT_EQ(b.size(), 2);
+
+	EXPECT_EQ(b[0], 0);
+	EXPECT_EQ(b[1], 0);
+
+	const DVector<int> c(aml::size_initializer(3), aml::unit<2>);
+	ASSERT_EQ(c.size(), 3);
+
+	EXPECT_EQ(c[0], 0);
+	EXPECT_EQ(c[1], 0);
+	EXPECT_EQ(c[2], 1);
 }
 
 TEST(DynamicVectorTest, operators) {

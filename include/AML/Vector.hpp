@@ -24,7 +24,8 @@ using Vectorsize = std::size_t;
 	@brief Namespace for compile-time vector indexes
 	@details Use them to access vector's fields from @ref Vector::operator[](const VI::index<I>) and @ref Vector::operator[](const VI::index<I>) const
 
-	@see Vector
+	@see @ref Vector<T, Size> @n
+		 #Vector<Container, dynamic_extent>
 */
 namespace VI
 {
@@ -107,7 +108,7 @@ namespace detail
 	@tparam T The type of the elements
 	@tparam Size The static vector size
 
-	@see Vector<Container, dynamic_extent>
+	@see #Vector<Container, dynamic_extent>
 */
 template<class T, Vectorsize Size>
 class Vector /** @cond */: public detail::VectorBase<T, Size>, public detail::VectorStorage<T, Size> /** @endcond */
@@ -235,6 +236,16 @@ public:
 	}
 
 	/**
+		@brief Initializes the filled vector 
+	*/
+	constexpr
+	explicit Vector(const aml::fill_initializer<value_type> fill_with) noexcept {
+		aml::static_for<Size>([&](const auto i) {
+			(*this)[i] = fill_with.value;
+		});
+	}
+
+	/**
 		@brief Initializes the vector from dynamic vector
 
 		@tparam U Value type of dynamic vector
@@ -242,7 +253,7 @@ public:
 
 		@warning The size of the dynamic vector must be the same as the size of the current vector
 	
-		@see Vector<T, dynamic_extent>
+		@see #Vector<T, dynamic_extent>
 	*/
 	template<class U> constexpr
 	explicit Vector(const Vector<U, dynamic_extent>& other) noexcept {
@@ -280,7 +291,7 @@ public:
 
 		@return @ref reference to vector's field
 
-		@see VI namespace
+		@see #VI namespace
 	*/
 	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 	reference operator[](const VI::index<I>) noexcept {
@@ -304,7 +315,7 @@ public:
 
 		@return @ref const_reference to vector's field
 
-		@see VI namespace
+		@see #VI namespace
 	*/
 	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 	const_reference operator[](const VI::index<I>) const noexcept {
@@ -318,7 +329,7 @@ public:
 
 		@return @ref reference to vector's field
 
-		@see operator[](const VI::index<I>)
+		@see #operator[](const VI::index<I>)
 	*/
 	constexpr
 	reference operator[](const size_type index) noexcept {
@@ -341,7 +352,7 @@ public:
 
 		@return @ref const_reference to vector's field
 
-		@see operator[](const VI::index<I>) const
+		@see #operator[](const VI::index<I>) const
 	*/
 	constexpr
 	const_reference operator[](const size_type index) const noexcept {
@@ -417,22 +428,19 @@ public:
 /**
 	@brief The representation of a vector from linear algebra as a dynamically allocated template class
 	@details
-		%Vector, that uses dynamically allocated container @n@n
-
-		<b>The Container must have this template layout:</b>
+	@par Requirement for @p Container:
+		<b>The @p Container must have this template layout:</b>
 		@code
 			template<template<class T, class... Parameters> class Container>
 		@endcode
-
+		@n
 		@c T - vector's value type @n
-
+		@c Parameters... - Additional parameters
 		@warning 
 				@c T must not affect additional container parameters. @n
 				This also includes default parameters that use <tt>T</tt>. @n
 				For example, @c std::vector will not work because it has a second template parameter that uses its @c T
-
-		@c Parameters... - Additional parameters @n
-
+		@par
 		<b>An example of a container structure:</b>
 		@code
 			template<class T, class... Parameters>
@@ -455,8 +463,6 @@ public:
 				const_iterator cbegin() const;
 				const_iterator cend() const;
 
-				T& front();
-
 				T& operator[](size_type index);
 				const T& operator[](size_type index) const;
 			};
@@ -465,7 +471,7 @@ public:
 	@tparam Container The type of container that will be used
 
 	@see @ref Vector "Vector<T, Size>" @n
-		 dynamic_extent
+		 #dynamic_extent
 */
 template<class Container>
 class Vector<Container, dynamic_extent> /** @cond */: public detail::VectorBase<aml::get_value_type<Container>, dynamic_extent> /** @endcond */
@@ -482,10 +488,10 @@ public:
 	using container_type = Container;
 
 	using size_type			= std::common_type_t<typename Base::size_type, typename container_type::size_type>; ///< The size type that vector uses
-	using value_type		= typename Base::value_type; ///< The value type that vector uses
+	using value_type		= typename Base::value_type;		///< The value type that vector uses
 
-	using reference			= typename Base::reference; ///< Type that the non-const index operator returns
-	using const_reference	= typename Base::const_reference; ///< Type that const index operator returns
+	using reference			= typename Base::reference;			///< Type that the non-const index operator returns
+	using const_reference	= typename Base::const_reference;	///< Type that const index operator returns
 
 	/// The return type of the non - const @ref begin() and @ref end() methods
 	using iterator			= typename container_type::iterator;
@@ -496,11 +502,6 @@ public:
 	//static_assert(std::is_default_constructible_v<container_type>,	"Container must be default constructible");
 	static_assert(aml::has_container_structure<container_type>,		"Container must have a container structure");
 
-private:
-	AML_CONSTEXPR_DYNAMIC_ALLOC
-	void container_resize(const size_type new_size) noexcept {
-		this->container.resize(new_size);
-	}
 public:
 
 	/**
@@ -522,8 +523,8 @@ public:
 		@param Array Input array
 	*/
 	template<std::size_t ArraySize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector(const value_type (&Array)[ArraySize]) noexcept {
-		container_resize(ArraySize);
+	Vector(const value_type (&Array)[ArraySize]) noexcept 
+		: Vector(aml::size_initializer(ArraySize)) {
 		std::copy_n(Array, ArraySize, this->container.begin());
 	}
 
@@ -536,19 +537,17 @@ public:
 		@param f,r Variadic arguments
 	*/
 	template<class First, class... Rest> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(First&& f, Rest&&... r) noexcept {
+	explicit Vector(First&& f, Rest&&... r) noexcept 
+		: Vector(aml::size_initializer(1 + sizeof...(r))) 
+	{
 		static_assert(!(aml::is_narrowing_conversion<value_type, First> || (aml::is_narrowing_conversion<value_type, Rest> || ...)),
 			"Variadic parameter types have a narrowing conversion");
-
-		container_resize(1 + sizeof...(r));
 		
-		this->container.front() = std::forward<First>(f);
+		container[0] = std::forward<First>(f);
 
 		Vectorsize i = 1;
-		([&] {
-			this->container[i] = std::forward<Rest>(r);
-			++i;
-		}(), ...);
+		// fold expression
+		((container[i++] = std::forward<Rest>(r)), ...);
 	}
 
 	/**
@@ -558,11 +557,42 @@ public:
 
 		@param initsz The size that will be used to create the vector
 
-		@see aml::size_initializer
+		@see #size_initializer
 	*/
-	template<std::size_t InitSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector(const aml::size_initializer<InitSize> initsz) noexcept {
-		container_resize(initsz.size);
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	explicit Vector(const aml::size_initializer initsz) noexcept {
+		this->container.resize(initsz.size);
+	}
+
+	/**
+		@brief Creates the vector with size and fills it with 0
+
+		@see #zero
+	*/
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	explicit Vector(const aml::size_initializer initsz, const aml::zero_t) noexcept 
+		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(0))) {
+	}
+
+	/**
+		@brief Creates the vector with size and fills it with 1
+
+		@see #one
+	*/
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+		explicit Vector(const aml::size_initializer initsz, const aml::one_t) noexcept
+		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(1))) {
+	}
+
+	/**
+		@brief Creates the unit vector
+
+		@see #unit
+	*/
+	template<std::size_t Dir> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	explicit Vector(const aml::size_initializer initsz, const aml::unit_t<Dir>) noexcept
+		: Vector(initsz, aml::zero) {
+		this->container[Dir] = static_cast<value_type>(1);
 	}
 
 	/**
@@ -570,11 +600,11 @@ public:
 
 		@param fill_with Size and what the vector will be filled with
 
-		@see aml::fill_initializer
+		@see #fill_initializer
 	*/
-	template<std::size_t FillSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector(const aml::fill_initializer<value_type, FillSize> fill_with) noexcept {
-		container_resize(fill_with.size);
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	explicit Vector(const aml::size_initializer initsz, const aml::fill_initializer<value_type> fill_with) noexcept 
+		: Vector(initsz) {
 		std::fill(this->container.begin(), this->container.end(), fill_with.value);
 	}
 
@@ -583,9 +613,9 @@ public:
 	*/
 	template<class U> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const Vector<U, aml::dynamic_extent>& other) noexcept 
+		: Vector(aml::size_initializer(other.size())) 
 	{
 		using other_value_type = aml::get_value_type<decltype(other)>;
-		container_resize(other.size());
 
 		std::transform(other.container.cbegin(), other.container.cend(), this->container.begin(),
 			[](const other_value_type& val) {
@@ -601,9 +631,9 @@ public:
 	*/
 	template<class U, Vectorsize OtherSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const Vector<U, OtherSize>& other) noexcept
+		: Vector(aml::size_initializer(other.static_size))
 	{
 		using other_value_type = aml::get_value_type<decltype(other)>;
-		container_resize(other.static_size);
 
 		std::transform(other.cbegin(), other.cend(), this->container.begin(),
 			[](const other_value_type& val) {
@@ -624,6 +654,9 @@ public:
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	Vector& operator=(Vector&&) noexcept = default;
 
+	/**
+		@return Returns size of the vector
+	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	size_type size() const noexcept {
 		return static_cast<size_type>(this->container.size());
@@ -701,10 +734,27 @@ public:
 		return this->container.cend();
 	}
 
+	/**
+		@return Raw vector's %container
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	container_type& get_container() noexcept {
+		return this->container;
+	}
+
+	/**
+		@return Raw vector's %container
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	const container_type& get_container() const noexcept {
+		return this->container;
+	}
+
+
 protected:
 	/**
 		@brief %Container member, that uses a vector
-		@details Have the same type as @c Container template parameter
+		@details Have the same type as @c %Container template parameter
 	*/
 	container_type container;
 };
@@ -726,13 +776,13 @@ protected:
 		using left_container = aml::get_container_data<std::decay_t<decltype(firstvec)>::container_type>;						\
 		using right_container = aml::get_container_data<std::decay_t<decltype(secondvec)>::container_type>;						\
 		aml::verify_container_parameters<left_container, right_container>();												\
-		aml::Vector<left_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer<>(firstvec.size()));	\
+		aml::Vector<left_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));	\
 		dynamic_action																										\
 		return out;																											\
 	} else if constexpr (firstvec.is_dynamic() || secondvec.is_dynamic()) {													\
 		AML_DEBUG_VERIFY(firstvec.size() == secondvec.size(), "Dynamic vector's and static vector's sizes must be equal");	\
 		using container_ = aml::get_container_data<std::conditional_t<firstvec.is_dynamic(), Left, Right>>;						\
-		aml::Vector<container_::create<outtype>, aml::dynamic_extent> out(aml::size_initializer<>(firstvec.size()));		\
+		aml::Vector<container_::create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\
 	} else {																												\
@@ -761,15 +811,16 @@ protected:
 			action_;											\
 		}														\
 	} else {													\
-		aml::static_for<LeftSize>([&](const auto i) {			\
+		aml::static_for<left.static_size>([&](const auto i) {	\
 			action_;											\
 		});														\
-	}
+	}															\
+	return left;
 
 #define AML_OP_BODY3(outtype, vec_, containertype_, isdynamic, action_)												\
 	if constexpr (isdynamic) {																						\
-		using vec_container = aml::get_container_data<containertype_>;													\
-		aml::Vector<vec_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer<>(vec_.size()));	\
+		using vec_container = aml::get_container_data<containertype_>;												\
+		aml::Vector<vec_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer(vec_.size()));	\
 		for (Vectorsize i = 0; i < vec_.size(); ++i) {																\
 			out[i] = action_;																						\
 		}																											\
@@ -782,7 +833,17 @@ protected:
 		return out;																									\
 	}
 
+/**
+	@brief Sums up the two vectors
+	@details @f$   \vec{a} + \vec{b} 
+				 = (\vec{a}_x, \vec{a}_y, ...) + (\vec{b}_x, \vec{b}_y, ...) 
+				 = (\vec{a}_x + \vec{b}_x, \vec{a}_y + \vec{b}_y, ...) @f$
 
+	@param left A vector that will be summed up with @p right vector
+	@param right A vector that will be summed up with @p left vector
+
+	@return A new vector which is the result of summation
+*/
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator+(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
 	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() + 
@@ -790,11 +851,31 @@ auto operator+(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize
 	AML_OP_BODY1(out_type, left[i] + right[i]);
 }
 
+/**
+	@brief Sums up the @p left vector with the @p right vector
+	@details @f$ (\vec{a}_x, \vec{a}_y, ...) += (\vec{b}_x, \vec{b}_y, ...) 
+				 = (\vec{a}_x += \vec{b}_x, \vec{a}_y += \vec{b}_y, ...) @f$
+
+	@param[in,out] left %Vector, which will be summed with @p right, and the result will be written in this vector
+	@param[in] right A vector that will be summed up with @p left
+
+	@return Reference to summed @p left
+*/
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
-auto operator+=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
+auto& operator+=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
 	AML_OP_BODY2(left.is_dynamic() || right.is_dynamic(), left[i] += right[i]);
 }
 
+/**
+	@brief Subtracts two vectors
+	@details @f$ \vec{a} - \vec{b} = (\vec{a}_x, \vec{a}_y, ...) - (\vec{b}_x, \vec{b}_y, ...) 
+				 = (\vec{a}_x - \vec{b}_x, \vec{a}_y - \vec{b}_y, ...) @f$
+
+	@param left A vector that will be subtracted with @p right vector
+	@param right A vector that will be subtracted with @p left vector
+
+	@return A new vector which is the result of subtraction
+*/
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator-(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
 	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() -
@@ -802,11 +883,34 @@ auto operator-(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize
 	AML_OP_BODY1(out_type, left[i] - right[i]);
 }
 
+/**
+	@brief Subtracts the @p left vector with the @p right vector
+	@details @f$ (\vec{a}_x, \vec{a}_y, ...) -= (\vec{b}_x, \vec{b}_y, ...) 
+				 = (\vec{a}_x -= \vec{b}_x, \vec{a}_y -= \vec{b}_y, ...) @f$
+
+	@param[in,out] left %Vector, which will be subtracted with @p right, and the result will be written in this vector
+	@param[in] right A vector that will be subtracted with @p left
+
+	@return Reference to subtracted @p left
+*/
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
-auto operator-=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
+auto& operator-=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
 	AML_OP_BODY2(left.is_dynamic() || right.is_dynamic(), left[i] -= right[i]);
 }
 
+/**
+	@brief Multiplies vector by scalar
+	@details @f$ \vec{a} * s = (\vec{a}_x, \vec{a}_y, ...) * s 
+			     = s * (\vec{a}_x, \vec{a}_y, ...) 
+				 = (\vec{a}_x * s, \vec{a}_y * s, ...) @f$
+
+	@param left A vector that will be multiplied by @p right scalar
+	@param right Scalar to be multiplied with the @p left vector
+
+	@return A new vector which is the result of multiplication
+
+	@see #operator*(const Left&, const Vector<Right, RightSize>&)
+*/
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator*(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
 	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() * 
@@ -814,16 +918,53 @@ auto operator*(const Vector<Left, LeftSize>& left, const Right& right) noexcept 
 	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] * right);
 }
 
+/**
+	@brief Multiplies vector by scalar
+	@details @f$ s * \vec{a} 
+			 = s * (\vec{a}_x, \vec{a}_y, ...) 
+			 = (\vec{a}_x, \vec{a}_y, ...) * s 
+			 = (\vec{a}_x * s, \vec{a}_y * s, ...) @f$
+
+	@param left Scalar to be multiplied with the @p right vector
+	@param right A vector that will be multiplied by @p left scalar
+
+	@return A new vector which is the result of multiplication
+
+	@see #operator*(const Vector<Left, LeftSize>&, const Right&)
+*/
 template<class Left, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator*(const Left& left, const Vector<Right, RightSize>& right) noexcept {
 	return (right * left);
 }
 
+/**
+	@brief Multiplies the @p left vector with the @p right scalar
+	@details @f$ (\vec{a}_x, \vec{a}_y, ...) *= s 
+				 = (\vec{a}_x *= s, \vec{a}_y *= s, ...) @f$
+
+	@param[in,out] left %Vector, which will be multiplied with @p right scalar, and the result will be written in this vector
+	@param[in] right A scalar that will be multiplied with @p left vector
+
+	@return Reference to multiplied @p left
+*/
 template<class Left, Vectorsize LeftSize, class Right> constexpr
-auto operator*=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
+auto& operator*=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
 	AML_OP_BODY2(left.is_dynamic(), left[i] *= right);
 }
 
+/**
+	@brief Divides vector by scalar
+	@details @f$ \vec{a} / s 
+			 = (\vec{a}_x, \vec{a}_y, ...) / s 
+			 = (\vec{a}_x / s, \vec{a}_y / s, ...) @f$
+
+	@param left A vector that will be divided by @p right scalar
+	@param right Scalar to be divided with the @p left vector
+
+	@return A new vector which is the result of division
+
+	@see #operator/(const Left&, const Vector<Right, RightSize>&)
+*/
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
 	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() / 
@@ -831,6 +972,19 @@ auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept 
 	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] / right);
 }
 
+/**
+	@brief Divides vector by scalar
+	@details @f$ s / \vec{a} 
+				 = s / (\vec{a}_x, \vec{a}_y, ...) 
+				 = (s / \vec{a}_x, s / \vec{a}_y, ...) @f$
+
+	@param left Scalar to be divided with the @p right vector
+	@param right A vector that will be divided by @p left scalar
+
+	@return A new vector which is the result of division
+
+	@see #operator/(const Vector<Left, LeftSize>&, const Right&)
+*/
 template<class Left, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator/(const Left& left, const Vector<Right, RightSize>& right) noexcept {
 	using out_type = decltype(std::declval<Left>() / 
@@ -838,31 +992,72 @@ auto operator/(const Left& left, const Vector<Right, RightSize>& right) noexcept
 	AML_OP_BODY3(out_type, right, Right, right.is_dynamic(), left / right[i]);
 }
 
+/**
+	@brief Divides the @p left vector with the @p right scalar
+	@details @f$ (\vec{a}_x, \vec{a}_y, ...) /= s 
+				 = (\vec{a}_x /= s, \vec{a}_y /= s, ...) @f$
+
+	@param[in,out] left %Vector, which will be divided with @p right scalar, and the result will be written in this vector
+	@param[in] right A scalar that will be divided with @p left vector
+
+	@return Reference to divided @p left
+*/
 template<class Left, Vectorsize LeftSize, class Right> constexpr
-auto operator/=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
+auto& operator/=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
 	AML_OP_BODY2(left.is_dynamic(), left[i] /= right);
 }
 
+/**
+	@brief Negates the vector
+	@details @f$ -\vec{a} 
+				 = -(\vec{a}_x, \vec{a}_y, ...) 
+				 = (-\vec{a}_x, -\vec{a}_y, ...) @f$ @n
+
+	@param left A vector that will be negatived
+
+	@return New negatived vector
+*/
 template<class Left, Vectorsize LeftSize> [[nodiscard]] constexpr
 auto operator-(const Vector<Left, LeftSize>& left) noexcept {
 	using out_type = aml::get_value_type<Vector<Left, LeftSize>>;
 	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), -left[i]);
 }
 
+/**
+	@brief Do not use. Use @ref dot and @ref cross to apply vector multiplication
+
+	@see #dot @n
+		 #cross
+*/
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
+/** @copydoc operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
-auto operator*=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
-
+auto& operator*=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
+/** @copydoc operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator/(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
+/** @copydoc operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
-auto operator/=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
+auto& operator/=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
 
 #undef AML_OP_BODY1
 #undef AML_OP_BODY2
 #undef AML_OP_BODY3
 
+/**
+	@brief Checks if the vectors are equal
+
+	@attention 
+			The size of the @p left and @p right can be different and this also affects the result
+
+	@param left Compares with @p right vector
+	@param right Compares with @p left vector
+
+	@return Is the @p left and @p right are equal
+
+	@see #operator!=(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&)
+*/
 template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
 bool operator==(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept 
 {
@@ -874,13 +1069,35 @@ bool operator==(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 	return true;
 }
 
+/**
+	@brief Checks if the vectors are not equal
+
+	@attention
+			The size of the @p left and @p right can be different and this also affects the result
+
+	@param left Compares with @p right vector
+	@param right Compares with @p left vector
+
+	@return Is the @p left and @p right are not equal
+
+	@see #operator==(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&)
+*/
 template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
-bool operator!=(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept {
+bool operator!=(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
 	return !(left == right);
 }
 
+/**
+	@brief Vector distance, lenght, norm. @f$ || \vec{a} || @f$
+	@details @f$ = \sqrt{{\vec{a}_x}^{2}+{\vec{a}_y}^{2}+{\vec{a}_z}^{2}+...} @f$
 
-template<class OutType = aml::selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
+	@param vec A vector from which its length will be calculated
+
+	@note
+		The return value type will be @c float, or <tt>value type</tt> if more precisely @c float
+
+*/
+template<class OutType = selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
 auto dist(const aml::Vector<T, Size>& vec) noexcept 
 {
 	using outtype = std::common_type_t<float, aml::get_value_type<decltype(vec)>>;
@@ -893,8 +1110,14 @@ auto dist(const aml::Vector<T, Size>& vec) noexcept
 	return aml::selectable_convert<OutType>(aml::sqrt(out));
 }
 
-template<class OutType = aml::selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
-auto sum_of(const aml::Vector<T, Size>& vec) noexcept 
+/**
+	@brief Sum of all vector's elements. @f$ \sum_{i=0}^{n} \vec{a}_{i} @f$
+	@details @f$ = \vec{a}_x + \vec{a}_y + \vec{a}_ z + ... @f$
+
+	@param vec A vector from which the sum of all its elements will be calculated
+*/
+template<class OutType = selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
+auto sum_of(const Vector<T, Size>& vec) noexcept 
 {
 	auto out = vec[VI::first];
 
@@ -905,13 +1128,32 @@ auto sum_of(const aml::Vector<T, Size>& vec) noexcept
 	return aml::selectable_convert<OutType>(out);
 }
 
-template<class OutType = aml::selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
-auto dist_between(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept {
+/**
+	@brief Distance between vectors. @f$ || \vec{a} - \vec{b} || @f$
+	@details @f$ = \sqrt{(x_1-x_2)^2+(y_1-y_2)^2+...} @f$
+
+	@see #dist(const aml::Vector<T, Size>&)
+*/
+template<class OutType = selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
+auto dist_between(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
 	return aml::dist<OutType>(left - right);
 }
 
-template<class OutType = aml::selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
-auto dot(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept
+/**
+	@brief Linearly algebraic scalar product, dot product of vectors. @f$ \vec{a} \cdot \vec{b} @f$
+	@details @f$ = \sum_{i=0}^{n} \vec{a}_i \vec{b}_i 
+				 = \vec{a}_x \vec{b}_x + \vec{a}_y * \vec{b}_y + ... @f$
+
+			 [Wikipedia page](https://en.wikipedia.org/wiki/Dot_product)
+
+	@note
+			The size of the vectors must be equal
+
+	@see @ref Vector<T, Size> @n
+		 @ref Vector<Container, dynamic_extent>
+*/
+template<class OutType = selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
+auto dot(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
 {
 	auto out = (left[VI::first] * right[VI::first]);
 
@@ -930,8 +1172,28 @@ auto dot(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, Right
 	return aml::selectable_convert<OutType>(out);
 }
 
+/**
+	@brief Linearly algebraic cross product of vectors. @f$ \vec{a} \times \vec{b} @f$
+	@details @f$ = (\vec{a}_y \vec{b}_z - \vec{a}_z \vec{b}_y,
+				    \vec{a}_z \vec{b}_x - \vec{a}_x \vec{b}_z,
+				    \vec{a}_x \vec{b}_y - \vec{a}_y \vec{b}_x) 
+				 = \begin{vmatrix}
+				       \hat{i} & \hat{j} & \hat{k} \\
+					   \vec{a}_x & \vec{a}_y & \vec{a}_z \\
+					   \vec{b}_x & \vec{b}_y & \vec{b}_z
+				   \end{vmatrix} @f$
+
+			[Wikipedia page](https://en.wikipedia.org/wiki/Cross_product)
+
+	@attention
+				The size of the vectors must be equal to 3
+
+	@todo 
+				Add seven-dimensional cross product @n
+				https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
+*/
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
-auto cross(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, RightSize>& right) noexcept
+auto cross(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
 {
 	if constexpr (left.is_dynamic() || right.is_dynamic()) {
 		AML_DEBUG_VERIFY((left.size() == right.size()) && (left.size() == 3), "The size of the vectors must be equal to 3");
@@ -955,8 +1217,11 @@ auto cross(const aml::Vector<Left, LeftSize>& left, const aml::Vector<Right, Rig
 	);
 }
 
+/**
+	@brief Normalizes the vector. @f$ \frac{\vec{a}}{ || \vec{a} || } @f$
+*/
 template<class T, Vectorsize Size> [[nodiscard]] constexpr
-auto normalize(const aml::Vector<T, Size>& vec) noexcept 
+auto normalize(const Vector<T, Size>& vec) noexcept 
 {
 	using disttype = decltype(aml::dist(vec));
 
@@ -974,10 +1239,10 @@ namespace detail {
 	@details A simple @c std::vector in template parameter @c Container will not work. @n
 			 This uses a wrapper around @c std::vector
 
-	@see Vector<Container, dynamic_extent>
+	@see #Vector<Container, dynamic_extent>
 */
 template<class T>
-using DVector = aml::Vector<detail::DVector_default_container<T>, aml::dynamic_extent>;
+using DVector = Vector<detail::DVector_default_container<T>, aml::dynamic_extent>;
 
 
 AML_NAMESPACE_END

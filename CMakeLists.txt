@@ -13,6 +13,8 @@ endmacro()
 
 aml_set_option(AML_BUILD_DOC 		NO 	BOOL "Build AML doxygen doc")
 aml_set_option(AML_BUILD_UNITTESTS	YES	BOOL "Build AML unittests")
+aml_set_option(AML_DOC_LATEX		NO	BOOL "Generate doxygen LaTeX")
+aml_set_option(AML_DOC_HTML			YES	BOOL "Generate doxygen HTML")
 
 set(AML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 set(CMAKE_INSTALL_MESSAGE LAZY)

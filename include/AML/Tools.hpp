@@ -18,6 +18,31 @@ using remove_cvref = std::remove_cv_t<std::remove_reference_t<T>>; ///< C++20 st
 template<class T>
 inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>; ///< Checks if @c T is user created
 
+
+/// Wrapper around @c std::size_t
+struct size_initializer
+{
+	using size_type = std::size_t;
+
+	constexpr size_initializer(const size_type size_) noexcept : size(size_) {}
+	
+	constexpr operator size_type() const noexcept { return this->size; }
+
+	const size_type size;
+};
+
+/// Wrapper around @c T
+template<class T>
+struct fill_initializer
+{
+	using value_type = T;
+
+	constexpr fill_initializer(const T& val) noexcept : value(val) {}
+	constexpr fill_initializer(T&& val) noexcept : value(std::move(val)) {}
+
+	const value_type value;
+};
+
 /// @cond
 
 /// Type of @ref zero
@@ -38,58 +63,6 @@ struct unit_t {
 	static constexpr auto dir = Direction;
 	template<class T>
 	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
-};
-
-/// Compile-time wrapper around @c std::size_t
-template<std::size_t Size = aml::dynamic_extent>
-struct size_initializer 
-{
-	using size_type = std::size_t;
-
-	static constexpr size_type size = Size;
-
-	constexpr operator size_type() const noexcept { return this->size; }
-};
-
-/// Runtime wrapper around @c std::size_t
-template<>
-struct size_initializer<aml::dynamic_extent> 
-{
-	using size_type = std::size_t;
-
-	size_initializer(const size_type size_) noexcept : size(size_) {}
-	
-	constexpr operator size_type() const noexcept { return this->size; }
-
-	const size_type size;
-};
-
-/// Compile-time wrapper around @c std::size_t and @c T
-template<class T, std::size_t Size = aml::dynamic_extent>
-struct fill_initializer 
-{
-	using value_type = T;
-	using size_type = std::size_t;
-
-	constexpr fill_initializer(const T& val) noexcept : value(val) {}
-	constexpr fill_initializer(T&& val) noexcept : value(std::move(val)) {}
-
-	static constexpr size_type size = Size;
-	const value_type value;
-};
-
-/// Runtime wrapper around @c std::size_t and @c T
-template<class T>
-struct fill_initializer<T, aml::dynamic_extent> 
-{
-	using value_type = T;
-	using size_type = std::size_t;
-
-	constexpr fill_initializer(const size_type size_, const T& val) noexcept : size(size_), value(val) {}
-	constexpr fill_initializer(const size_type size_, T&& val) noexcept : size(size_), value(std::move(val)) {}
-
-	const value_type value;
-	const size_type size;
 };
 
 /// Clone of std::integral_constant ?
