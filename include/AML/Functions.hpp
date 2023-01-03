@@ -19,12 +19,12 @@ bool is_big_endian() noexcept {
 }
 
 template<class OutType = aml::selectable_unused, class First> [[nodiscard]] constexpr
-auto max(First&& first) noexcept {
+decltype(auto) max(First&& first) noexcept {
 	return aml::selectable_convert<OutType>(std::forward<First>(first));
 }
 
 template<class OutType = aml::selectable_unused, class First, class Second> [[nodiscard]] constexpr
-auto max(First&& first, Second&& second) noexcept {
+decltype(auto) max(First&& first, Second&& second) noexcept {
 	return aml::selectable_convert<OutType>((first > second) ? (std::forward<First>(first)) : (std::forward<Second>(second)));
 }
 
@@ -32,7 +32,7 @@ auto max(First&& first, Second&& second) noexcept {
 	@brief Maximum element from input variadic arguments
 */
 template<class OutType = aml::selectable_unused, class First, class Second, class... Rest> [[nodiscard]] constexpr
-auto max(First&& first, Second&& second, Rest&&... rest) noexcept 
+decltype(auto) max(First&& first, Second&& second, Rest&&... rest) noexcept 
 {
 	using outtype = std::common_type_t<First, Second, Rest...>;
 
@@ -49,7 +49,7 @@ auto max(First&& first, Second&& second, Rest&&... rest) noexcept
 	@brief The sum of the input variadic arguments
 */
 template<class OutType = aml::selectable_unused, class First, class... Rest> [[nodiscard]] constexpr
-auto sum_of(const First& first, const Rest&... rest) noexcept {
+decltype(auto) sum_of(const First& first, const Rest&... rest) noexcept {
 	decltype(first + (rest + ...)) out = first;
 	([&] {
 		out += rest;
@@ -69,7 +69,7 @@ auto sqr(const T& val) noexcept {
 	@brief Absolute value or modulus of a number. @f$ |x| @f$
 */
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
-auto abs(T&& val) noexcept {
+decltype(auto) abs(T&& val) noexcept {
 	if constexpr (std::is_unsigned_v<T>) {
 		return aml::selectable_convert<OutType>(std::forward<T>(val));
 	} else {
@@ -167,7 +167,7 @@ bool positive(const T& val) noexcept {
 	@brief Rounds down the @p val
 */
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
-auto floor(const T& val) noexcept 
+decltype(auto) floor(T&& val) noexcept
 {
 	if constexpr (std::is_integral_v<T>) { 
 		return aml::selectable_convert<OutType>(val);
@@ -186,7 +186,7 @@ auto floor(const T& val) noexcept
 	@brief Rounds up the @p val
 */
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
-auto ceil(const T& val) noexcept 
+decltype(auto) ceil(T&& val) noexcept
 {
 	if constexpr (std::is_integral_v<T>) {
 		return aml::selectable_convert<OutType>(val);
@@ -205,7 +205,7 @@ auto ceil(const T& val) noexcept
 	@brief Rounds @p val to the nearest value
 */
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
-auto round(const T& val) noexcept 
+decltype(auto) round(T&& val) noexcept
 {
 	if constexpr (std::is_integral_v<T>) {
 		return aml::selectable_convert<OutType>(val);

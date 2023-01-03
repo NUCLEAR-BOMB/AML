@@ -102,14 +102,16 @@ using selectable_unused = void; ///< Used in @ref selectable_convert to ignore c
 	@see selectable_type
 */
 template<class Out, class In> [[nodiscard]] constexpr
-auto selectable_convert(In&& val) noexcept
-{
-	if constexpr (std::is_same_v<Out, selectable_unused>) {
-		return std::forward<In>(val);
-	} else {
-		return static_cast<Out>(val);
-	}
+std::enable_if_t<std::is_same_v<Out, selectable_unused>, In&&> selectable_convert(In&& val) noexcept {
+	return std::forward<In>(val);
 }
+
+template<class Out, class In> [[nodiscard]] constexpr
+std::enable_if_t<!std::is_same_v<Out, selectable_unused>, Out> selectable_convert(const In& val) noexcept {
+	return static_cast<Out>(val);
+}
+
+
 
 /**
 	@brief Template type alias that selects type.
