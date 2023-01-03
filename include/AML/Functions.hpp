@@ -1,10 +1,14 @@
+/** @file */
 #pragma once
 
 #include <AML/Tools.hpp>
 #include <limits>
 
-AML_NAMESPACE
+/** @cond */ AML_NAMESPACE /** @endcond */
 
+/**
+	@brief Checks if the processor has a big endianness
+*/
 inline
 bool is_big_endian() noexcept {
 	static const union {
@@ -24,6 +28,9 @@ auto max(First&& first, Second&& second) noexcept {
 	return aml::selectable_convert<OutType>((first > second) ? (std::forward<First>(first)) : (std::forward<Second>(second)));
 }
 
+/**
+	@brief Maximum element from input variadic arguments
+*/
 template<class OutType = aml::selectable_unused, class First, class Second, class... Rest> [[nodiscard]] constexpr
 auto max(First&& first, Second&& second, Rest&&... rest) noexcept 
 {
@@ -38,6 +45,9 @@ auto max(First&& first, Second&& second, Rest&&... rest) noexcept
 	return aml::selectable_convert<OutType>(std::forward<outtype>(out));
 }
 
+/**
+	@brief The sum of the input variadic arguments
+*/
 template<class OutType = aml::selectable_unused, class First, class... Rest> [[nodiscard]] constexpr
 auto sum_of(const First& first, const Rest&... rest) noexcept {
 	decltype(first + (rest + ...)) out = first;
@@ -47,11 +57,17 @@ auto sum_of(const First& first, const Rest&... rest) noexcept {
 	return out;
 }
 
+/**
+	@brief Square the number. @f$ x^2 @f$
+*/
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto sqr(const T& val) noexcept {
 	return aml::selectable_convert<OutType>(val * val);
 }
 
+/**
+	@brief Absolute value or modulus of a number. @f$ |x| @f$
+*/
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto abs(T&& val) noexcept {
 	if constexpr (std::is_unsigned_v<T>) {
@@ -61,47 +77,76 @@ auto abs(T&& val) noexcept {
 	}
 }
 
+/**
+	@brief Checks if the @p left and @p right are equal
+	@details Can compare a floating point value
+
+	@see #not_equal
+*/
 template<class Left, class Right> [[nodiscard]] constexpr
-bool equal(const Left& left, const Right& right) noexcept {
-	if constexpr (std::is_floating_point_v<Left> && std::is_floating_point_v<Right>) {
+bool equal(const Left& left, const Right& right) noexcept 
+{
+	if constexpr (std::is_floating_point_v<Left> && std::is_floating_point_v<Right>) 
+	{
 		using type = std::common_type_t<Left, Right>;
 
 		const type m = aml::max<type>(static_cast<type>(1), aml::abs<type>(left), aml::abs<type>(right));
 		return (aml::abs(left - right)) <= (std::numeric_limits<type>::epsilon() * m);
-	} else {
+	} 
+	else {
 		return (left == right);
 	}
 }
 
+/**
+	@brief Checks if the @p left and @p right are not equal
+
+	@see #equal
+*/
 template<class Left, class Right> [[nodiscard]] constexpr
 bool not_equal(const Left& left, const Right& right) noexcept {
 	return !aml::equal(left, right);
 }
 
+/**
+	@brief Checks if the @p val is zero
+	@details Can also check types that casts to @ref #zero "aml::zero"
+*/
 template<class T> [[nodiscard]] constexpr
 bool is_zero(const T& val) noexcept {
-	return aml::equal(val, static_cast<T>(0));
+	return aml::equal(val, static_cast<T>(aml::zero));
 }
 
+/**
+	@brief Distance between scalars
+*/
 template<class OutType = aml::selectable_unused, class Left, class Right> [[nodiscard]] constexpr
 auto dist_between(const Left& left, const Right& right) noexcept {
 	return aml::abs<OutType>(left - right);
 }
 
-
-template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+/**
+	@brief Checks if @p val is odd
+*/
+template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 bool odd(const T& val) noexcept 
 {
 	static_assert(!std::is_floating_point_v<T>, "T must not be a floating point number");
 	return static_cast<bool>((val % static_cast<T>(2)) != static_cast<T>(0));
 }
 
-template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+/**
+	@brief Checks if @p val is even
+*/
+template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 bool even(const T& val) noexcept {
 	return !aml::odd(val);
 }
 
-template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+/**
+	@brief Checks if @p val is negative
+*/
+template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 bool negative(const T& val) noexcept {
 	if constexpr (std::is_unsigned_v<T>) {
 		return false;
@@ -110,11 +155,17 @@ bool negative(const T& val) noexcept {
 	}
 }
 
-template<class T> [[nodiscard]] constexpr AML_FORCEINLINE
+/**
+	@brief Checks if @p val is positive
+*/
+template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 bool positive(const T& val) noexcept {
 	return !aml::negative(val);
 }
 
+/**
+	@brief Rounds down the @p val
+*/
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto floor(const T& val) noexcept 
 {
@@ -131,6 +182,9 @@ auto floor(const T& val) noexcept
 	}
 }
 
+/**
+	@brief Rounds up the @p val
+*/
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto ceil(const T& val) noexcept 
 {
@@ -147,6 +201,9 @@ auto ceil(const T& val) noexcept
 	}
 }
 
+/**
+	@brief Rounds @p val to the nearest value
+*/
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto round(const T& val) noexcept 
 {
