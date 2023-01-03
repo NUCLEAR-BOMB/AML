@@ -6,5 +6,6 @@
 !source/
 !unittests/
 !doc/
+!examples/
 !CMakeLists.txt
 !LICENSE

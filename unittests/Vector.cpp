@@ -325,6 +325,19 @@ TEST(VectorTest, cross) {
 
 	const Vector<int, 3> result(-3, 6, -3);
 	ASSERT_EQ(r, result);
+
+	const Vector<int, 3> i(aml::unit<0>);
+	const Vector<int, 3> j(aml::unit<1>);
+	const Vector<int, 3> k(aml::unit<2>);
+
+	const auto i_cross_j = aml::cross(i, j);
+	EXPECT_EQ(i_cross_j, k);
+
+	const auto j_cross_k = aml::cross(j, k);
+	EXPECT_EQ(j_cross_k, i);
+
+	const auto k_cross_i = aml::cross(k, i);
+	EXPECT_EQ(k_cross_i, j);
 }
 
 TEST(VectorTest, zerovector) {

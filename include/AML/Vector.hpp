@@ -100,8 +100,6 @@ namespace detail
 	};
 }
 
-
-
 /**
 	@brief The representation of a vector from linear algebra as a statically allocated template class
 
@@ -424,6 +422,12 @@ public:
 	}
 
 };
+/**
+	@example Vector.cpp
+	
+	An example of basic use of @ref Vector<T, Size>
+*/
+
 
 /**
 	@brief The representation of a vector from linear algebra as a dynamically allocated template class
@@ -598,6 +602,7 @@ public:
 	/**
 		@brief Creates a vector with size and fills it
 
+		@param initsz The size that will be used to create the vector
 		@param fill_with Size and what the vector will be filled with
 
 		@see #fill_initializer
@@ -1235,7 +1240,7 @@ namespace detail {
 }
 
 /**
-	@brief Type alias for @ref Vector<Container, dynamic_extent> "dynamic vector" and it container
+	@brief Type alias for #Vector<Container, dynamic_extent> and it container
 	@details A simple @c std::vector in template parameter @c Container will not work. @n
 			 This uses a wrapper around @c std::vector
 
