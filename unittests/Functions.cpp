@@ -16,7 +16,9 @@ TEST(FunctionsTest, sqr)
 TEST(FunctionsTest, abs)
 {
 	ASSERT_EQ(aml::abs(int(0)), 0);
-	ASSERT_EQ(aml::abs(int(-10)), 10);
+
+	auto a = aml::abs(int(-10));
+	ASSERT_EQ(a, 10);
 
 	ASSERT_EQ(aml::abs(unsigned(2)), unsigned(2));
 	ASSERT_EQ(aml::abs(unsigned(5)), unsigned(5));
@@ -38,7 +40,8 @@ TEST(FunctionsTest, max)
 	ASSERT_EQ(aml::max(-7, 7), 7);
 	ASSERT_EQ(aml::max(14, 7), 14);
 
-	ASSERT_EQ(aml::max(1, 2, 3), 3);
+	auto a = aml::max(1, 2, 3);
+	ASSERT_EQ(a, 3);
 	ASSERT_EQ(aml::max(1, 2, 3, 4, 5, 6, 7, 8, 9, 0), 9);
 
 	ASSERT_FLOAT_EQ(aml::max(1.f, 2.f, -100000.f), 2.f);
