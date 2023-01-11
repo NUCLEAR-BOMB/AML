@@ -92,7 +92,7 @@ using error_file_str_type	= std::decay_t<decltype(__FILE__)>;
 
 using error_string_type		= const char*; // std::string?
 
-inline
+[[noreturn]] inline
 void logerror(error_string_type msg, error_file_str_type file, error_line_type line) noexcept {
 	std::cerr << "\n\tAML RUNTIME ERROR | " << file << "(" << line << "): " << msg << '\n';
 	std::terminate();
