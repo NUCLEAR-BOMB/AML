@@ -754,17 +754,25 @@ public:
 	/**
 		@return Raw vector's container
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	container_type& get_container() noexcept {
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	container_type& get_container() & noexcept {
 		return this->container;
 	}
 
 	/**
-		@return Raw vector's container
+		@copydoc get_container()
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	const container_type& get_container() const noexcept {
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	const container_type& get_container() const & noexcept {
 		return this->container;
+	}
+
+	/**
+		@copydoc get_container()
+	*/
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	container_type&& get_container() && noexcept {
+		return std::move(this->container);
 	}
 
 
