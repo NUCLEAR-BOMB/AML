@@ -276,7 +276,7 @@ public:
 	/**
 		@return Returns size of the vector
 	*/
-	[[nodiscard]] constexpr static /** @cond */ AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] AML_CONSTEVAL static /** @cond */ AML_FORCEINLINE /** @endcond */
 	size_type size() noexcept {
 		return Size;
 	}
@@ -739,7 +739,7 @@ public:
 		@return Container %cbegin() const
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	const_iterator cbegin() const noexcept {t
+	const_iterator cbegin() const noexcept {
 		return this->container.cbegin();
 	}
 

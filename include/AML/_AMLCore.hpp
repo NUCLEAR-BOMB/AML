@@ -38,6 +38,12 @@
 	#define AML_CONSTEXPR_DYNAMIC_ALLOC
 #endif
 
+#ifdef __cpp_consteval
+	#define AML_CONSTEVAL consteval
+#else
+	#define AML_CONSTEVAL constexpr
+#endif
+
 #ifdef NDEBUG
 	#define AML_DEBUG 0
 #else
