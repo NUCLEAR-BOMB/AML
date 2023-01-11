@@ -1289,5 +1289,40 @@ namespace detail
 template<class T>
 inline constexpr bool is_vector = detail::is_vector_impl<T>::value;
 
+/**
+	@brief Namespace for short aliases of the #Vector type
+
+	@details Usage: @n
+			 @code
+				using namespace aml::short_vector_alias;
+			 @endcode
+*/
+namespace short_vector_alias
+{
+	template<class T> using vec2 = aml::Vector<T, 2>;
+	template<class T> using vec3 = aml::Vector<T, 3>;
+	template<class T> using vec4 = aml::Vector<T, 4>;
+	template<class T> using vec5 = aml::Vector<T, 5>;
+
+	using vec2i = vec2<int>;
+	using vec2u = vec2<unsigned>;
+	using vec2f = vec2<float>;
+	using vec2d = vec2<double>;
+
+	using vec3i = vec3<int>;
+	using vec3u = vec3<unsigned>;
+	using vec3f = vec3<float>;
+	using vec3d = vec3<double>;
+
+	using vec4i = vec4<int>;
+	using vec4u = vec4<unsigned>;
+	using vec4f = vec4<float>;
+	using vec4d = vec4<double>;
+
+	using vec5i = vec5<int>;
+	using vec5u = vec5<unsigned>;
+	using vec5f = vec5<float>;
+	using vec5d = vec5<double>;
+}
 
 AML_NAMESPACE_END
