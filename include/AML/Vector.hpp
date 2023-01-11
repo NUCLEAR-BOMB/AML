@@ -668,6 +668,18 @@ public:
 	}
 
 	/**
+		@brief Changes size of the vector
+
+		@param new_size New vector size
+
+		@warning If the size changes by more than it was, the new vector elements will not be explicitly initialized 
+	*/
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	void resize(const size_type new_size) noexcept {
+		this->container.resize(new_size);
+	}
+
+	/**
 		@brief Index operator to access the vector's field
 
 		@param index Index for the numbering of the vector field
@@ -740,7 +752,7 @@ public:
 	}
 
 	/**
-		@return Raw vector's %container
+		@return Raw vector's container
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	container_type& get_container() noexcept {
@@ -748,7 +760,7 @@ public:
 	}
 
 	/**
-		@return Raw vector's %container
+		@return Raw vector's container
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
 	const container_type& get_container() const noexcept {
@@ -758,7 +770,7 @@ public:
 
 protected:
 	/**
-		@brief %Container member, that uses a vector
+		@brief Container member, that uses a vector
 		@details Have the same type as @c %Container template parameter
 	*/
 	container_type container;
