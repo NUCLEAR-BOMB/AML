@@ -594,5 +594,8 @@ TEST(DynamicAndStaticVectorTest, functions)
 	EXPECT_FLOAT_EQ(dist_between_a_b, dist_between_a_b_ans);
 }
 
+static_assert(aml::is_vector<Vector<int, 3>>);
+static_assert(aml::is_vector<DVector<int>>);
+static_assert(!aml::is_vector<int>);
 
 }

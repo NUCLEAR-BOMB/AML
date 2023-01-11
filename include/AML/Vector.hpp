@@ -1262,4 +1262,24 @@ template<class T>
 using DVector = Vector<detail::DVector_default_container<T>, aml::dynamic_extent>;
 
 
+namespace detail
+{
+	template<class>
+	struct is_vector_impl
+		: std::false_type {};
+
+	template<class T, Vectorsize Size>
+	struct is_vector_impl<Vector<T, Size>>
+		: std::true_type {};
+
+	template<class Container>
+	struct is_vector_impl<Vector<Container, aml::dynamic_extent>>
+		: std::true_type {};
+}
+
+/// Checks if @p T is a vector from linear algebra
+template<class T>
+inline constexpr bool is_vector = detail::is_vector_impl<T>::value;
+
+
 AML_NAMESPACE_END
