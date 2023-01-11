@@ -12,7 +12,7 @@ endmacro()
 
 
 aml_set_option(AML_BUILD_DOC 		NO 	BOOL "Build AML doxygen doc")
-aml_set_option(AML_BUILD_UNITTESTS	YES	BOOL "Build AML unittests")
+aml_set_option(AML_BUILD_TESTS		YES	BOOL "Build AML unittests")
 aml_set_option(AML_DOC_LATEX		NO	BOOL "Generate doxygen LaTeX")
 aml_set_option(AML_DOC_HTML			YES	BOOL "Generate doxygen HTML")
 
@@ -32,19 +32,20 @@ else()
 	add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
-add_library("${PROJECT_NAME}" OBJECT ${HEADER_FILES} ${SOURCE_FILES})
+add_library("${PROJECT_NAME}" INTERFACE ${HEADER_FILES})
 
-target_compile_features("${PROJECT_NAME}" PUBLIC cxx_std_17)
+target_compile_features("${PROJECT_NAME}" INTERFACE "cxx_std_17")
 
-target_include_directories("${PROJECT_NAME}" PUBLIC ${AML_INCLUDE_DIR})
+target_include_directories("${PROJECT_NAME}" INTERFACE ${AML_INCLUDE_DIR})
 
-set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
+#set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
 
 
 if (AML_BUILD_DOC)
 	add_subdirectory(doc)
 endif()
-if (AML_BUILD_UNITTESTS)
+
+if (AML_BUILD_TESTS)
+	enable_testing()
 	add_subdirectory(unittests)
 endif()
-
