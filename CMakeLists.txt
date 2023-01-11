@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
+include(aml_functions)
+
 project("AML" CXX)
 
 macro(aml_set_option varname default type docstr)
@@ -16,15 +19,13 @@ aml_set_option(AML_BUILD_TESTS		YES	BOOL "Build AML unittests")
 aml_set_option(AML_DOC_LATEX		NO	BOOL "Generate doxygen LaTeX")
 aml_set_option(AML_DOC_HTML			YES	BOOL "Generate doxygen HTML")
 
-set(AML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
+set(AML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/")
 set(CMAKE_INSTALL_MESSAGE LAZY)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 #file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/source/*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${AML_INCLUDE_DIR}/AML/*.hpp")
-
-
 
 if (MSVC)
 	add_compile_options(/W4 /WX)
@@ -40,6 +41,7 @@ target_include_directories("${PROJECT_NAME}" INTERFACE ${AML_INCLUDE_DIR})
 
 #set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
 
+aml_add_native_visualizer()
 
 if (AML_BUILD_DOC)
 	add_subdirectory(doc)

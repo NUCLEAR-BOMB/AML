@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	
+	<!-- 1D Vector (x) -->
+	<Type Name="aml::Vector&lt;*, 1&gt;">
+		<DisplayString>{{{x,g}}}</DisplayString>
+		<Expand>
+			<Item Name="x">x</Item>
+		</Expand>
+	</Type>
+	<!-- 2D Vector (x,y) -->
+	<Type Name="aml::Vector&lt;*, 2&gt;">
+		<DisplayString>{{{x,g}, {y,g}}}</DisplayString>
+		<Expand>
+			<Item Name="x">x</Item><Item Name="y">y</Item>
+		</Expand>
+	</Type>
+	<!-- 3D Vector (x,y,z) -->
+	<Type Name="aml::Vector&lt;*, 3&gt;">
+		<DisplayString>{{{x,g}, {y,g}, {z,g}}}</DisplayString>
+		<Expand>
+			<Item Name="x">x</Item><Item Name="y">y</Item><Item Name="z">z</Item>
+		</Expand>
+	</Type>
+	<!-- 4D Vector (x,y,z,w) -->
+	<Type Name="aml::Vector&lt;*, 4&gt;">
+		<DisplayString>{{{x,g}, {y,g}, {z,g}, {w,g}}}</DisplayString>
+		<Expand>
+			<Item Name="x">x</Item><Item Name="y">y</Item><Item Name="z">z</Item><Item Name="w">w</Item>
+		</Expand>
+	</Type>
+	<!-- 5D Vector (x,y,z,w,v) -->
+	<Type Name="aml::Vector&lt;*, 5&gt;">
+		<DisplayString>{{{x,g}, {y,g}, {z,g}, {w,g}, {v,g}}}</DisplayString>
+		<Expand>
+			<Item Name="x">x</Item><Item Name="y">y</Item><Item Name="z">z</Item><Item Name="w">w</Item><Item Name="v">v</Item>
+		</Expand>
+	</Type>
+	<!-- N-D (>5) Vector (...) -->
+	<Type Name="aml::Vector&lt;*, *&gt;">
+		<Expand>
+			<ArrayItems>
+				<Size>$T2</Size>
+				<ValuePointer>array,g</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<!-- Dynamic (-1) Vector (...) -->
+	<Type Name="aml::Vector&lt;*, -1&gt;">
+		<Expand>
+			<IndexListItems>
+				<Size>container.size()</Size>
+				<ValueNode>container[$i],g</ValueNode>
+			</IndexListItems>
+		</Expand>
+	</Type>
+	
+</AutoVisualizer>
