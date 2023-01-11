@@ -8,25 +8,61 @@
 // #define AML_NAMESPACE namespace aml {
 // #define AML_NAMESPACE_END }
 
+#if defined(__INTEL_COMPILER )
+	#define AML_INTEL 1
+#else
+	#define AML_INTEL 0
+#endif
+
+#if defined(__clang__)
+	#define AML_CLANG 1
+#else
+	#define AML_CLANG 0
+#endif
+
+#if defined(__GNUC__) || defined(__GNUG__)
+	#define AML_GCC 1
+#else
+	#define AML_GCC 0
+#endif
+
+#if (AML_GCC && !AML_CLANG && !AML_INTEL)
+	#define AML_ONLY_GCC 1
+#else
+	#define AML_ONLY_GCC 0
+#endif
+
 #if defined(_MSC_VER)
 	#define AML_MSVC 1
 #else
 	#define AML_MSVC 0
 #endif
 
-#if AML_MSVC
+#if AML_CLANG
+	#define AML_ASSUME(expression) __builtin_assume(expression)
+#elif AML_GCC 
+	#define AML_ASSUME(expression) if (!(expression)) __builtin_unreachable()
+#elif AML_MSVC
 	#define AML_ASSUME(expression) __assume(expression)
 #else
-	#define AML_ASSUME(expression)
+	#include <cassert>
+	#define AML_ASSUME(expression) assert((expression))
 #endif
 
-#if AML_MSVC
+#if AML_GCC || AML_CLANG
+	#define AML_UNREACHABLE __builtin_unreachable()
+#elif AML_MSVC
 	#define AML_UNREACHABLE __assume(0)
 #else
-	#define AML_UNREACHABLE __builtin_unreachable()
+	#include <cassert>
+	#define AML_UNREACHABLE assert(0)
 #endif
 
-#if AML_MSVC
+#if AML_CLANG
+	#define AML_FORCEINLINE [[gnu::always_inline]] [[gnu::gnu_inline]] extern inline
+#elif AML_GCC
+	#define AML_FORCEINLINE [[gnu::always_inline]] inline
+#elif AML_MSVC
 	#define AML_FORCEINLINE __forceinline
 #else
 	#AML_FORCEINLINE inline
