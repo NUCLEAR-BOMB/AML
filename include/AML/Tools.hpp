@@ -8,7 +8,7 @@
 #include <functional>
 #include <cstddef>
 
-AML_NAMESPACE
+namespace aml {
 
 inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1); ///< std::dynamic_extent clone
 
@@ -439,4 +439,4 @@ namespace detail {
 template<class T>
 using get_value_type = typename detail::get_value_type_impl<T>::type;
 
-AML_NAMESPACE_END
+}

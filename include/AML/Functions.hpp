@@ -4,7 +4,7 @@
 #include <AML/Tools.hpp>
 #include <limits>
 
-/** @cond */ AML_NAMESPACE /** @endcond */
+namespace aml {
 
 /**
 	@brief Checks if the processor has a big endianness
@@ -220,6 +220,4 @@ decltype(auto) round(T&& val) noexcept
 	}
 }
 
-
-
-AML_NAMESPACE_END
+}

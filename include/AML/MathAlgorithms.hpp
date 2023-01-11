@@ -3,7 +3,7 @@
 #include <AML/Functions.hpp>
 #include <cstring>
 
-AML_NAMESPACE
+namespace aml {
 
 namespace algorithms
 {
@@ -51,4 +51,4 @@ namespace algorithms
 
 }
 
-AML_NAMESPACE_END
+}

@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <iterator>
 
-AML_NAMESPACE
+namespace aml {
 
 template<class Object, class Difference = std::ptrdiff_t>
 class IndexIterator
@@ -139,5 +139,4 @@ private:
 template<class Object, class Difference = std::ptrdiff_t>
 using ConstIndexIterator = aml::IndexIterator<const Object, Difference>;
 
-
-AML_NAMESPACE_END
+}

@@ -2,7 +2,7 @@
 
 #include <AML/MathAlgorithms.hpp>
 
-AML_NAMESPACE
+namespace aml {
 
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto sqrt(const T& val) noexcept 
@@ -40,6 +40,4 @@ bool in_range(const Range& range, const First& first, const Rest&... rest) noexc
 	return (aml::dist(first, rest...) < range);
 }
 
-
-
-AML_NAMESPACE_END
+}

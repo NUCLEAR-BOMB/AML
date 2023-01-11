@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <vector>
 
-AML_NAMESPACE
+namespace aml {
 
 /**
 	@brief The main alias for vector's size type
@@ -1260,7 +1260,7 @@ namespace detail {
 }
 
 /**
-	@brief Type alias for #Vector<Container, dynamic_extent> and it container
+	@brief Type alias for #aml::Vector<Container, dynamic_extent> and it container
 	@details A simple @c std::vector in template parameter @c Container will not work. @n
 			 This uses a wrapper around @c std::vector
 
@@ -1290,7 +1290,7 @@ template<class T>
 inline constexpr bool is_vector = detail::is_vector_impl<T>::value;
 
 /**
-	@brief Namespace for short aliases of the #Vector type
+	@brief Namespace for short aliases of the @ref aml::Vector<T, Size> type
 
 	@details Usage: @n
 			 @code
@@ -1325,4 +1325,4 @@ namespace short_vector_alias
 	using vec5d = vec5<double>;
 }
 
-AML_NAMESPACE_END
+}

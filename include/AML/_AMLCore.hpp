@@ -5,8 +5,8 @@
 #include <iostream>
 #include <type_traits>
 
-#define AML_NAMESPACE namespace aml {
-#define AML_NAMESPACE_END }
+// #define AML_NAMESPACE namespace aml {
+// #define AML_NAMESPACE_END }
 
 #if defined(_MSC_VER)
 	#define AML_MSVC 1
@@ -50,7 +50,7 @@
 	#define AML_DEBUG 1
 #endif
 
-AML_NAMESPACE
+namespace aml {
 
 using error_line_type		= std::decay_t<decltype(__LINE__)>;
 using error_file_str_type	= std::decay_t<decltype(__FILE__)>;
@@ -86,5 +86,4 @@ void logerror(error_string_type msg, error_file_str_type file, error_line_type l
 	#define AML_DEBUG_VERIFY(expression, errmsg)
 #endif
 
-AML_NAMESPACE_END
-
+}
