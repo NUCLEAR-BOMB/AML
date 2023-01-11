@@ -1,14 +1,12 @@
 #pragma once
 
-/** @file */
-
 #include <iostream>
 #include <type_traits>
 
 // #define AML_NAMESPACE namespace aml {
 // #define AML_NAMESPACE_END }
 
-#if defined(__INTEL_COMPILER )
+#if defined(__INTEL_COMPILER)
 	#define AML_INTEL 1
 #else
 	#define AML_INTEL 0
@@ -41,12 +39,13 @@
 #if AML_CLANG
 	#define AML_ASSUME(expression) __builtin_assume(expression)
 #elif AML_GCC 
-	#define AML_ASSUME(expression) if (!(expression)) __builtin_unreachable()
+	#define AML_ASSUME(expression) \
+		do { if (expression) {} else { __builtin_unreachable(); } } while (0)
 #elif AML_MSVC
 	#define AML_ASSUME(expression) __assume(expression)
 #else
-	#include <cassert>
-	#define AML_ASSUME(expression) assert((expression))
+#include <cassert>
+	#define AML_ASSUME(expression) assert(expression)
 #endif
 
 #if AML_GCC || AML_CLANG
@@ -54,7 +53,7 @@
 #elif AML_MSVC
 	#define AML_UNREACHABLE __assume(0)
 #else
-	#include <cassert>
+#include <cassert>
 	#define AML_UNREACHABLE assert(0)
 #endif
 
@@ -101,25 +100,24 @@ void logerror(error_string_type msg, error_file_str_type file, error_line_type l
 
 #if AML_DEBUG
 	#define AML_DEBUG_ERROR(errmsg) ::aml::logerror(errmsg, __FILE__, __LINE__)
-	#define AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_) ::aml::logerror(errmsg, file_, line_)
+	//#define AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_) ::aml::logerror(errmsg, file_, line_)
 #else
-	#define AML_DEBUG_ERROR(errmsg)
+	#define AML_DEBUG_ERROR(errmsg) ((void)0)
 #endif
 
 #if AML_DEBUG
 	#define AML_DEBUG_VERIFY(expression, errmsg)	\
-		if (expression) {}							\
-		else {										\
-			AML_DEBUG_ERROR(errmsg);				\
-		}
+		do { if (expression) {} else { AML_DEBUG_ERROR(errmsg); } } while (0)
 
+	/*
 	#define AML_DEBUG_VERIFY_LOCATION(expression, errmsg, file_, line_) \
 		if (expression) {}												\
 		else {															\
 			AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_);				\
 		}
+	*/
 #else
-	#define AML_DEBUG_VERIFY(expression, errmsg)
+	#define AML_DEBUG_VERIFY(expression, errmsg) ((void)0)
 #endif
 
 }
