@@ -44,8 +44,7 @@
 #elif AML_MSVC
 	#define AML_ASSUME(expression) __assume(expression)
 #else
-#include <cassert>
-	#define AML_ASSUME(expression) assert(expression)
+	#define AML_ASSUME(expression) ((void)0)
 #endif
 
 #if AML_GCC || AML_CLANG
@@ -53,8 +52,7 @@
 #elif AML_MSVC
 	#define AML_UNREACHABLE __assume(0)
 #else
-#include <cassert>
-	#define AML_UNREACHABLE assert(0)
+	#define AML_UNREACHABLE ((void)0)
 #endif
 
 #if AML_CLANG
@@ -83,6 +81,27 @@
 	#define AML_DEBUG 0
 #else
 	#define AML_DEBUG 1
+#endif
+
+#if defined(_MSVC_LANG) && (_MSVC_LANG > __cplusplus)
+	#define AML_CXX_STL _MSVC_LANG
+#else
+	#define AML_CXX_STL __cplusplus
+#endif
+
+#if AML_CXX_STL >= 202002L
+	#define AML_CXX20 1
+	#define AML_CXX17 1
+#elif AML_CXX_STL >= 201703L
+	#define AML_CXX20 0
+	#define AML_CXX17 1
+#else
+	#define AML_CXX20 0
+	#define AML_CXX17 0
+#endif
+
+#if !AML_CXX17
+	#error C++17 or higher is required
 #endif
 
 namespace aml {

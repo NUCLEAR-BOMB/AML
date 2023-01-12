@@ -12,8 +12,13 @@ namespace aml {
 
 inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1); ///< std::dynamic_extent clone
 
+#if !AML_CXX20
 template<class T>
-using remove_cvref = std::remove_cv_t<std::remove_reference_t<T>>; ///< C++20 std::remove_cvref clone
+using remove_cvref = std::remove_cv_t<typename std::template remove_reference_t<T>>; ///< C++20 std::remove_cvref clone
+#else
+template<class T>
+using remove_cvref = std::remove_cvref_t<T>;
+#endif
 
 template<class T>
 inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>; ///< Checks if @c T is user created
@@ -275,7 +280,7 @@ namespace detail
 			>8		&rArr; @c void
 */
 template<std::size_t Bytes>
-using signed_from_bytes = typename detail::signed_from_bytes_impl<Bytes>::type;
+using signed_from_bytes = typename detail::template signed_from_bytes_impl<Bytes>::type;
 
 /**
 	@brief Converts a number of @b bytes to a type whose size is no larger than the size of the unsigned integral
@@ -335,7 +340,7 @@ using unsigned_from_bits = std::make_unsigned_t<signed_from_bits<Bits>>;
 		 unsigned_from_bytes
 */
 template<std::size_t Bytes>
-using floating_point_from_bytes = typename detail::floating_point_from_bytes_impl<Bytes>::type;
+using floating_point_from_bytes = typename detail::template floating_point_from_bytes_impl<Bytes>::type;
 
 /**
 	@brief Converts a number of @b bits to a type whose size is no larger than the size of the floating point
@@ -351,10 +356,12 @@ using floating_point_from_bits = floating_point_from_bytes<(Bits + (CHAR_BIT - 1
 namespace detail
 {
 	template<typename From, typename To, typename = void>
-	struct is_narrowing_conversion_impl : std::true_type {};
+	struct is_narrowing_conversion_impl 
+		: std::true_type {};
 
 	template<typename From, typename To>
-	struct is_narrowing_conversion_impl<From, To, std::void_t<decltype(To{ std::declval<From>() })>> : std::false_type {};
+	struct is_narrowing_conversion_impl<From, To, std::void_t<decltype(To{ std::declval<From>() })>> 
+		: std::false_type {};
 }
 
 /**
@@ -370,8 +377,7 @@ namespace detail
 			int64,	int32	= true
 */
 template<class From, class To>
-inline constexpr bool is_narrowing_conversion = detail::is_narrowing_conversion_impl<From, To>::value;
-
+inline constexpr bool is_narrowing_conversion = detail::template is_narrowing_conversion_impl<From, To>::value;
 
 
 template<class Container>
@@ -401,7 +407,7 @@ namespace detail
 
 /// Checks if @p T has container structure
 template<class T>
-inline constexpr bool has_container_structure = detail::has_container_structure_impl<T>::value;
+inline constexpr bool has_container_structure = detail::template has_container_structure_impl<T>::value;
 
 /**
 	@brief Verifies if @p Left nad @p Right have same parameters
@@ -414,7 +420,7 @@ inline constexpr bool has_container_structure = detail::has_container_structure_
 */
 template<class Left, class Right>
 constexpr void verify_container_parameters() noexcept {
-	static_assert(std::is_same_v<Left::parameters, Right::parameters>,
+	static_assert(std::is_same_v<typename Left::parameters, typename Right::parameters>,
 		"The parameters of the containers must be the same");
 }
 
@@ -427,8 +433,8 @@ namespace detail {
 	};
 
 	template<class T>
-	struct get_value_type_impl<T, std::void_t<typename std::decay_t<T>::value_type>> {
-		using type = typename std::decay_t<T>::value_type;
+	struct get_value_type_impl<T, std::void_t<typename std::template decay_t<T>::value_type>> {
+		using type = typename std::template decay_t<T>::value_type;
 	};
 }
 
@@ -437,6 +443,6 @@ namespace detail {
 	@details If the type doesn't have an type alias of value_type - creates compile-time error
 */
 template<class T>
-using get_value_type = typename detail::get_value_type_impl<T>::type;
+using get_value_type = typename detail::template get_value_type_impl<T>::type;
 
 }

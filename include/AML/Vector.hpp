@@ -9,106 +9,144 @@
 #include <type_traits>
 #include <algorithm>
 #include <vector>
+#include <utility>
+
+#if AML_CXX20
+#include <concepts>
+#endif
 
 namespace aml {
 
-/**
-	@brief The main alias for vector's size type
-	@details More created for code readability
-
-	@see Vector
-*/
-using Vectorsize = std::size_t;
-
-/**
-	@brief Namespace for compile-time vector indexes
-	@details Use them to access vector's fields from @ref Vector::operator[](const VI::index<I>) and @ref Vector::operator[](const VI::index<I>) const
-
-	@see @ref Vector<T, Size> @n
-		 #Vector<Container, dynamic_extent>
-*/
-namespace VI
-{
 	/**
-		@brief Template type alias to access the vector field at compile time
+		@brief The main alias for vector's size type
+		@details More created for code readability
 
-		@tparam I Index of vector field number
+		@see Vector
 	*/
-	template<Vectorsize I>
-	using index = std::integral_constant<Vectorsize, I>;
+	using Vectorsize = std::size_t;
 
-	inline constexpr index<0> X{}; ///< @c x 1D variable using indexes
-	inline constexpr index<1> Y{}; ///< @c y 2D variable using indexes
-	inline constexpr index<2> Z{}; ///< @c z 3D variable using indexes
-	inline constexpr index<3> W{}; ///< @c w 4D variable using indexes
-	inline constexpr index<4> V{}; ///< @c v 5D variable using indexes
+	/**
+		@brief Namespace for compile-time vector indexes
+		@details Use them to access vector's fields from @ref Vector::operator[](const VI::index<I>) and @ref Vector::operator[](const VI::index<I>) const
 
-	inline constexpr index<0> first{}; ///< Index of first vector element
-}
-
-namespace detail
-{
-	template<class T, Vectorsize S>
-	struct VectorStorage {
-	protected:
-		T array[S];
-	};
-
-	template<class T>
-	struct VectorStorage<T, 1> {
-		T x;
-	};
-
-	template<class T>
-	struct VectorStorage<T, 2> {
-		T x, y;
-	};
-
-	template<class T>
-	struct VectorStorage<T, 3> {
-		T x, y, z;
-	};
-
-	template<class T>
-	struct VectorStorage<T, 4> {
-		T x, y, z, w;
-	};
-
-	template<class T>
-	struct VectorStorage<T, 5> {
-		T x, y, z, w, v;
-	};
-
-	template<class T, Vectorsize Size>
-	struct VectorBase
+		@see @ref Vector<T, Size> @n
+			 #Vector<Container, dynamic_extent>
+	*/
+	namespace VI
 	{
-		static_assert(std::is_object_v<T>,		"A vector's T must be an object type");
-		static_assert(!std::is_abstract_v<T>,	"A vector's T cannot be an abstract class type");
-		static_assert(aml::is_complete<T>,		"A vector's T must be a complete type");
+		/**
+			@brief Template type alias to access the vector field at compile time
 
-		using size_type = Vectorsize;
-		using value_type = T;
+			@tparam I Index of vector field number
+		*/
+		template<Vectorsize I>
+		using index = std::integral_constant<Vectorsize, I>;
 
-		using reference = T&;
-		using const_reference = const T&;
+		inline constexpr index<0> X{}; ///< @c x 1D variable using indexes
+		inline constexpr index<1> Y{}; ///< @c y 2D variable using indexes
+		inline constexpr index<2> Z{}; ///< @c z 3D variable using indexes
+		inline constexpr index<3> W{}; ///< @c w 4D variable using indexes
+		inline constexpr index<4> V{}; ///< @c v 5D variable using indexes
 
-		static constexpr bool is_dynamic() noexcept				  { return (Size == aml::dynamic_extent); }
-		static constexpr bool uses_static_array() noexcept		  { return (Size > 5) && !is_dynamic(); }
-		static constexpr bool has_index(size_type index) noexcept { return (Size > index); }
+		inline constexpr index<0> first{}; ///< Index of first vector element
+	}
 
-		static constexpr Vectorsize extent = aml::dynamic_extent;
-	};
-}
+	namespace detail
+	{
+		template<class T, Vectorsize S>
+		struct VectorStorage {
+		protected:
+			T array[S];
+		};
 
-/**
-	@brief The representation of a vector from linear algebra as a statically allocated template class
+		template<class T>
+		struct VectorStorage<T, 1> {
+			T x;
+		};
 
-	@tparam T The type of the elements
-	@tparam Size The static vector size
+		template<class T>
+		struct VectorStorage<T, 2> {
+			T x, y;
+		};
 
-	@see #Vector<Container, dynamic_extent>
-*/
+		template<class T>
+		struct VectorStorage<T, 3> {
+			T x, y, z;
+		};
+
+		template<class T>
+		struct VectorStorage<T, 4> {
+			T x, y, z, w;
+		};
+
+		template<class T>
+		struct VectorStorage<T, 5> {
+			T x, y, z, w, v;
+		};
+
+		template<class T, Vectorsize Size>
+		struct VectorBase
+		{
+			static_assert(std::is_object_v<T>, "A vector's T must be an object type");
+			static_assert(!std::is_abstract_v<T>, "A vector's T cannot be an abstract class type");
+			static_assert(aml::is_complete<T>, "A vector's T must be a complete type");
+
+			using size_type = Vectorsize;
+			using value_type = T;
+
+			using reference = T&;
+			using const_reference = const T&;
+
+			static constexpr bool is_dynamic() noexcept { return (Size == aml::dynamic_extent); }
+			static constexpr bool uses_static_array() noexcept { return (Size > 5) && !is_dynamic(); }
+			static constexpr bool has_index(const size_type index) noexcept { return (Size > index); }
+
+			static constexpr Vectorsize extent = aml::dynamic_extent;
+		};
+	}
+
+#if AML_CXX20
+	template<class Container>
+	concept is_support_dynamic_vector_container = requires(Container& cont, const Container& ccont, const Vectorsize vecsize)
+	{
+		typename Container::value_type;
+		typename Container::size_type;
+
+		typename Container::iterator;
+		typename Container::const_iterator;
+
+		typename Container::reference;
+		typename Container::const_reference;
+
+		{ cont.size() } -> std::same_as<typename Container::size_type>;
+		{ cont.resize(vecsize) };
+
+		{ cont.begin() }	-> std::same_as<typename Container::iterator>;
+		{ ccont.begin() }	-> std::same_as<typename Container::const_iterator>;
+		{ cont.begin() }    -> std::same_as<typename Container::iterator>;
+		{ ccont.end() }		-> std::same_as<typename Container::const_iterator>;
+
+		{ ccont.cbegin() }	-> std::same_as<typename Container::const_iterator>;
+		{ ccont.cend() }	-> std::same_as<typename Container::const_iterator>;
+
+		{ cont[vecsize] }	-> std::same_as<typename Container::reference>;
+		{ ccont[vecsize] }	-> std::same_as<typename Container::const_reference>;
+	}
+	&& !aml::is_narrowing_conversion<typename Container::size_type, Vectorsize>;
+#endif
+
+	/**
+		@brief The representation of a vector from linear algebra as a statically allocated template class
+
+		@tparam T The type of the elements
+		@tparam Size The static vector size
+
+		@see #Vector<Container, dynamic_extent>
+	*/
 template<class T, Vectorsize Size>
+#if AML_CXX20
+	//requires (Size != aml::dynamic_extent)
+#endif
 class Vector /** @cond */: public detail::VectorBase<T, Size>, public detail::VectorStorage<T, Size> /** @endcond */
 {
 	using Storage = detail::VectorStorage<T, Size>;
@@ -450,12 +488,16 @@ public:
 			template<class T, class... Parameters>
 			struct Container
 			{
-				using size_type		 = ... ;
+				using value_type	  = T;
+				using size_type		  = ... ;
 
-				using iterator		 = ... ;
-				using const_iterator = ... ;
+				using iterator		  = ... ;
+				using const_iterator  = ... ;
 
-				size_type size() const;
+				using reference		  = ... ;
+				using const_reference = ... ;
+
+				size_type size();
 				void resize(size_type new_size);
 
 				iterator begin();
@@ -467,8 +509,8 @@ public:
 				const_iterator cbegin() const;
 				const_iterator cend() const;
 
-				T& operator[](size_type index);
-				const T& operator[](size_type index) const;
+				reference operator[](size_type index);
+				const_reference operator[](size_type index) const;
 			};
 		@endcode
 
@@ -477,13 +519,18 @@ public:
 	@see @ref Vector "Vector<T, Size>" @n
 		 #dynamic_extent
 */
+
+#if AML_CXX20
+template<aml::is_support_dynamic_vector_container Container>
+#else
 template<class Container>
-class Vector<Container, dynamic_extent> /** @cond */: public detail::VectorBase<aml::get_value_type<Container>, dynamic_extent> /** @endcond */
+#endif
+class Vector<Container, aml::dynamic_extent> /** @cond */: public detail::VectorBase<aml::get_value_type<Container>, dynamic_extent> /** @endcond */
 {
 private:
 	friend class Vector;
 
-	using Base = detail::VectorBase<typename Container::value_type, aml::dynamic_extent>;
+	using Base = detail::VectorBase<aml::get_value_type<Container>, dynamic_extent>;
 public:
 
 	/**
@@ -494,8 +541,8 @@ public:
 	using size_type			= std::common_type_t<typename Base::size_type, typename container_type::size_type>; ///< The size type that vector uses
 	using value_type		= typename Base::value_type;		///< The value type that vector uses
 
-	using reference			= typename Base::reference;			///< Type that the non-const index operator returns
-	using const_reference	= typename Base::const_reference;	///< Type that const index operator returns
+	using reference			= typename container_type::reference;			///< Type that the non-const index operator returns
+	using const_reference	= typename container_type::const_reference;	///< Type that const index operator returns
 
 	/// The return type of the non - const @ref begin() and @ref end() methods
 	using iterator			= typename container_type::iterator;
@@ -797,17 +844,17 @@ protected:
 
 #define AML_VECTOR_FUNCTION_BODY2(outtype, firstvec, secondvec, dynamic_action, static_action)								\
 	if constexpr (firstvec.is_dynamic() && secondvec.is_dynamic()) {														\
-		AML_DEBUG_VERIFY(left.size() == right.size(), "Dynamic vector's sizes must be equal");								\
-		using left_container = aml::get_container_data<std::decay_t<decltype(firstvec)>::container_type>;						\
-		using right_container = aml::get_container_data<std::decay_t<decltype(secondvec)>::container_type>;						\
+		AML_DEBUG_VERIFY((left.size() == right.size()), "Dynamic vector's sizes must be equal");								\
+		using left_container = aml::get_container_data<Left>;						\
+		using right_container = aml::get_container_data<Right>;						\
 		aml::verify_container_parameters<left_container, right_container>();												\
-		aml::Vector<left_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));	\
+		aml::Vector<typename left_container::template create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));	\
 		dynamic_action																										\
 		return out;																											\
 	} else if constexpr (firstvec.is_dynamic() || secondvec.is_dynamic()) {													\
-		AML_DEBUG_VERIFY(firstvec.size() == secondvec.size(), "Dynamic vector's and static vector's sizes must be equal");	\
-		using container_ = aml::get_container_data<std::conditional_t<firstvec.is_dynamic(), Left, Right>>;						\
-		aml::Vector<container_::create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
+		AML_DEBUG_VERIFY((firstvec.size() == secondvec.size()), "Dynamic vector's and static vector's sizes must be equal");	\
+		using container_ = aml::get_container_data<typename std::conditional_t<firstvec.is_dynamic(), Left, Right>>;						\
+		aml::Vector<typename container_::template create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\
 	} else {																												\
@@ -822,13 +869,15 @@ protected:
 
 #define AML_OP_BODY1(outtype, action_)							\
 	AML_VECTOR_FUNCTION_BODY2(outtype, left, right,				\
-		for (Vectorsize i = 0; i < left.size(); ++i) {			\
+	{	for (Vectorsize i = 0; i < left.size(); ++i) {			\
 			out[i] = action_;									\
 		}														\
-	,	aml::static_for<left.static_size>([&](const auto i) {	\
+	},															\
+	{	aml::static_for<left.static_size>([&](const auto i) {	\
 			out[i] = action_;									\
 		});														\
-)
+	}															\
+	)
 
 #define AML_OP_BODY2(isdynamic, action_) \
 	if constexpr (isdynamic) {									\
@@ -845,7 +894,7 @@ protected:
 #define AML_OP_BODY3(outtype, vec_, containertype_, isdynamic, action_)												\
 	if constexpr (isdynamic) {																						\
 		using vec_container = aml::get_container_data<containertype_>;												\
-		aml::Vector<vec_container::create<outtype>, aml::dynamic_extent> out(aml::size_initializer(vec_.size()));	\
+		aml::Vector<typename vec_container::template create<outtype>, aml::dynamic_extent> out(aml::size_initializer(vec_.size()));	\
 		for (Vectorsize i = 0; i < vec_.size(); ++i) {																\
 			out[i] = action_;																						\
 		}																											\
@@ -1084,9 +1133,13 @@ auto& operator/=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexc
 	@see #operator!=(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&)
 */
 template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
-bool operator==(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept 
+bool operator==(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
 {
-	if (left.size() != right.size()) return false;
+	if constexpr (left.is_dynamic() || right.is_dynamic()) {
+		if (left.size() != right.size()) return false;
+	} else {
+		if constexpr (left.size() != right.size()) return false;
+	}
 
 	for (Vectorsize i = 0; i < left.size(); ++i) {
 		if (aml::not_equal(left[i], right[i])) return false;
