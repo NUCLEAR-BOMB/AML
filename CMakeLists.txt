@@ -5,43 +5,39 @@ include(aml_functions)
 
 project("AML" CXX)
 
-macro(aml_set_option varname default type docstr)
-	if (NOT DEFINED ${varname})
-		set(${varname} ${default} CACHE ${type} ${docstr})
-	else()
-		set(${varname} ${${varname}} CACHE ${type} ${docstr})
-	endif()
-endmacro()
+aml_set_option(AML_BUILD_DOC 	NO 		BOOL 	"Build AML doxygen doc")
+aml_set_option(AML_BUILD_TESTS	YES		BOOL 	"Build AML unittests")
+aml_set_option(AML_DOC_LATEX	NO		BOOL 	"Generate doxygen LaTeX")
+aml_set_option(AML_DOC_HTML		YES		BOOL 	"Generate doxygen HTML")
 
+aml_set_option(AML_STD			"17"	STRING	"AML lib C++ standard")
 
-aml_set_option(AML_BUILD_DOC 		NO 	BOOL "Build AML doxygen doc")
-aml_set_option(AML_BUILD_TESTS		YES	BOOL "Build AML unittests")
-aml_set_option(AML_DOC_LATEX		NO	BOOL "Generate doxygen LaTeX")
-aml_set_option(AML_DOC_HTML			YES	BOOL "Generate doxygen HTML")
+aml_set_option(AML_INCLUDE_PATH
+	"${CMAKE_SOURCE_DIR}/include/" PATH "AML lib include path")
 
-set(AML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/")
 set(CMAKE_INSTALL_MESSAGE LAZY)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-#file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/source/*.cpp")
-file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${AML_INCLUDE_DIR}/AML/*.hpp")
+#file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${AML_INCLUDE_PATH}/source/*.cpp")
+file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${AML_INCLUDE_PATH}/AML/*.hpp")
 
-if (MSVC)
-	add_compile_options(/W4 /WX)
-else()
-	add_compile_options(-Wall -Wextra -pedantic -Werror)
-endif()
+add_library				  (${PROJECT_NAME} INTERFACE ${HEADER_FILES})
 
-add_library("${PROJECT_NAME}" INTERFACE ${HEADER_FILES})
+target_compile_features	  (${PROJECT_NAME} INTERFACE "cxx_std_${AML_STD}")
+target_include_directories(${PROJECT_NAME} INTERFACE ${AML_INCLUDE_PATH})
 
-target_compile_features("${PROJECT_NAME}" INTERFACE "cxx_std_17")
-
-target_include_directories("${PROJECT_NAME}" INTERFACE ${AML_INCLUDE_DIR})
+target_compile_options	  (${PROJECT_NAME} INTERFACE
+	$<IF:$<CXX_COMPILER_ID:MSVC>,
+		/W4 /WX
+	, # ^^^ MSVC | not MSVC vvv
+		-Wall -Wextra -pedantic -Werror
+	>
+)
 
 #set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
 
-aml_add_native_visualizer()
+aml_add_native_visualizer(${PROJECT_NAME})
 
 if (AML_BUILD_DOC)
 	add_subdirectory(doc)
