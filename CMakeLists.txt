@@ -1,19 +1,19 @@
 cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(aml_functions)
 
 project("AML" CXX)
 
-aml_set_option(AML_BUILD_DOC 	NO 		BOOL 	"Build AML doxygen doc")
-aml_set_option(AML_BUILD_TESTS	YES		BOOL 	"Build AML unittests")
+aml_set_option(AML_DOC 			NO 		BOOL 	"Build AML doxygen doc")
+aml_set_option(AML_TESTS		YES		BOOL 	"Build AML unittests")
 aml_set_option(AML_DOC_LATEX	NO		BOOL 	"Generate doxygen LaTeX")
 aml_set_option(AML_DOC_HTML		YES		BOOL 	"Generate doxygen HTML")
 
 aml_set_option(AML_STD			"17"	STRING	"AML lib C++ standard")
 
 aml_set_option(AML_INCLUDE_PATH
-	"${CMAKE_SOURCE_DIR}/include/" PATH "AML lib include path")
+	"${CMAKE_SOURCE_DIR}/include" PATH "AML lib include path")
 
 set(CMAKE_INSTALL_MESSAGE LAZY)
 
@@ -39,11 +39,11 @@ target_compile_options	  (${PROJECT_NAME} INTERFACE
 
 aml_add_native_visualizer(${PROJECT_NAME})
 
-if (AML_BUILD_DOC)
+if (AML_DOC)
 	add_subdirectory(doc)
 endif()
 
-if (AML_BUILD_TESTS)
+if (AML_TESTS)
 	enable_testing()
 	add_subdirectory(unittests)
 endif()
