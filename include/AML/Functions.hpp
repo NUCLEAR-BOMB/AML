@@ -81,7 +81,7 @@ decltype(auto) abs(T&& val) noexcept {
 	@brief Checks if the @p left and @p right are equal
 	@details Can compare a floating point value
 
-	@see #not_equal
+	@see #aml::not_equal
 */
 template<class Left, class Right> [[nodiscard]] constexpr
 bool equal(const Left& left, const Right& right) noexcept 
@@ -101,7 +101,7 @@ bool equal(const Left& left, const Right& right) noexcept
 /**
 	@brief Checks if the @p left and @p right are not equal
 
-	@see #equal
+	@see #aml::equal
 */
 template<class Left, class Right> [[nodiscard]] constexpr
 bool not_equal(const Left& left, const Right& right) noexcept {
@@ -110,7 +110,7 @@ bool not_equal(const Left& left, const Right& right) noexcept {
 
 /**
 	@brief Checks if the @p val is zero
-	@details Can also check types that casts to @ref #zero "aml::zero"
+	@details Can also check types that casts to #aml::zero
 */
 template<class T> [[nodiscard]] constexpr
 bool is_zero(const T& val) noexcept {

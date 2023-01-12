@@ -15,10 +15,10 @@ inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1); ///<
 #if !AML_CXX20
 template<class T>
 using remove_cvref = std::remove_cv_t<typename std::template remove_reference_t<T>>; ///< C++20 std::remove_cvref clone
-#else
+#else // AML_CXX20
 template<class T>
 using remove_cvref = std::remove_cvref_t<T>;
-#endif
+#endif // AML_CXX20
 
 template<class T>
 inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>; ///< Checks if @c T is user created
@@ -102,7 +102,7 @@ static constexpr auto constant = constant_t<V>{}; ///< Shortcut for constant_t<V
 using selectable_unused = void; ///< Used in @ref selectable_convert to ignore cast
 
 /**
-	@brief Used to convert @p In to <tt>Out</tt> if Out isn't @ref selectable_unused type
+	@brief Used to convert @p In to <tt>Out</tt> if Out isn't #aml::selectable_unused type
 
 	@see selectable_type
 */
@@ -120,9 +120,9 @@ std::enable_if_t<!std::is_same_v<Out, selectable_unused>, Out> selectable_conver
 
 /**
 	@brief Template type alias that selects type.
-	@details If @p Out isn't @ref selectable_unused then the type alias is <tt>In</tt>, otherwise it will be Out
+	@details If @p Out isn't #aml::selectable_unused then the type alias is <tt>In</tt>, otherwise it will be Out
 
-	@see selectable_convert
+	@see #aml::selectable_convert
 */
 template<class Out, class In>
 using selectable_type = std::conditional_t<std::is_same_v<Out, selectable_unused>, In, Out>;
@@ -142,7 +142,7 @@ template<class T>
 inline constexpr bool is_complete = detail::is_complete_impl<T>::value;
 
 /**
-	@brief Max recursion level for @ref static_for
+	@brief Max recursion level for #aml::static_for
 	@details If the value is greater, then runtime for loop is used
 */
 inline constexpr std::size_t STATIC_FOR_MAX = 30;
@@ -215,7 +215,7 @@ void static_for(Function&& fun) noexcept
 }
 
 /**
-	@brief @copybrief static_for
+	@brief @copybrief aml::static_for
 	@details Calls @p Function @p To + 1 once or and pass [0, To] (integer closed interval) values
 
 	@tparam To End of interval

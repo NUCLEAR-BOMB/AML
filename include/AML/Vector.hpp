@@ -27,10 +27,10 @@ namespace aml {
 
 	/**
 		@brief Namespace for compile-time vector indexes
-		@details Use them to access vector's fields from @ref Vector::operator[](const VI::index<I>) and @ref Vector::operator[](const VI::index<I>) const
+		@details Use them to access vector's fields from #Vector::operator[](const VI::index<I>) and #Vector::operator[](const VI::index<I>) const
 
-		@see @ref Vector<T, Size> @n
-			 #Vector<Container, dynamic_extent>
+		@see Vector<T, Size> @n
+			 Vector<Container, dynamic_extent>
 	*/
 	namespace VI
 	{
@@ -133,7 +133,7 @@ namespace aml {
 		{ ccont[vecsize] }	-> std::same_as<typename Container::const_reference>;
 	}
 	&& !aml::is_narrowing_conversion<typename Container::size_type, Vectorsize>;
-#endif
+#endif // AML_CXX20
 
 	/**
 		@brief The representation of a vector from linear algebra as a statically allocated template class
@@ -141,7 +141,7 @@ namespace aml {
 		@tparam T The type of the elements
 		@tparam Size The static vector size
 
-		@see #Vector<Container, dynamic_extent>
+		@see aml::Vector<Container, dynamic_extent>
 	*/
 template<class T, Vectorsize Size>
 #if AML_CXX20
@@ -224,7 +224,7 @@ public:
 		@brief Initializes the vector with 0
 		@details To call this constructor overload you need to use @ref zero "aml::zero" as an first input parameter
 
-		@see @ref zero "aml::zero"
+		@see aml::zero
 	*/
 	constexpr
 	explicit Vector(const aml::zero_t) noexcept {
@@ -237,7 +237,7 @@ public:
 		@brief Initializes the vector with 1
 		@details To call this constructor overload you need to use @ref one "aml::one" as an first input parameter
 
-		@see @ref one "aml::one"
+		@see aml::one
 	*/
 	constexpr
 	explicit Vector(const aml::one_t) noexcept {
@@ -250,7 +250,7 @@ public:
 		@brief Initializes the unit vector
 		@details To call this constructor overload you need to use @ref unit "aml::unit" as an first input parameter
 
-		@see @ref unit "aml::unit"
+		@see aml::unit
 	*/
 	template<std::size_t Dir> constexpr 
 	explicit Vector(const aml::unit_t<Dir>) noexcept {
@@ -289,7 +289,7 @@ public:
 
 		@warning The size of the dynamic vector must be the same as the size of the current vector
 	
-		@see #Vector<T, dynamic_extent>
+		@see aml::Vector<T, dynamic_extent>
 	*/
 	template<class U> constexpr
 	explicit Vector(const Vector<U, dynamic_extent>& other) noexcept {
@@ -325,9 +325,9 @@ public:
 
 		@tparam I Compile-time index to the vector's field
 
-		@return @ref reference to vector's field
+		@return #reference to vector's field
 
-		@see #VI namespace
+		@see aml::VI namespace
 	*/
 	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 	reference operator[](const VI::index<I>) noexcept {
@@ -349,9 +349,9 @@ public:
 
 		@tparam I Compile-time index to the vector's field
 
-		@return @ref const_reference to vector's field
+		@return #const_reference to vector's field
 
-		@see #VI namespace
+		@see VI namespace
 	*/
 	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
 	const_reference operator[](const VI::index<I>) const noexcept {
@@ -363,9 +363,9 @@ public:
 
 		@param index Runtime index for the numbering of the vector field
 
-		@return @ref reference to vector's field
+		@return #reference to vector's field
 
-		@see #operator[](const VI::index<I>)
+		@see operator[](const VI::index<I>)
 	*/
 	constexpr
 	reference operator[](const size_type index) noexcept {
@@ -386,9 +386,9 @@ public:
 
 		@param index Runtime index for the numbering of the vector field
 
-		@return @ref const_reference to vector's field
+		@return #const_reference to vector's field
 
-		@see #operator[](const VI::index<I>) const
+		@see operator[](const VI::index<I>) const
 	*/
 	constexpr
 	const_reference operator[](const size_type index) const noexcept {
@@ -396,7 +396,7 @@ public:
 	}
 
 	/**
-		@return Begin @ref iterator
+		@return Begin #iterator
 	*/
 	[[nodiscard]] constexpr
 	iterator begin() noexcept {
@@ -408,7 +408,7 @@ public:
 	}
 
 	/**
-		@return End @ref iterator
+		@return End #iterator
 	*/
 	[[nodiscard]] constexpr
 	iterator end() noexcept {
@@ -420,7 +420,7 @@ public:
 	}
 
 	/**
-		@return Begin @ref const_iterator
+		@return Begin #const_iterator
 	*/
 	[[nodiscard]] constexpr
 	const_iterator begin() const noexcept {
@@ -432,7 +432,7 @@ public:
 	}
 
 	/**
-		@return End @ref const_iterator
+		@return End #const_iterator
 	*/
 	[[nodiscard]] constexpr
 	const_iterator end() const noexcept {
@@ -444,7 +444,7 @@ public:
 	}
 
 	/**
-		@return Begin @ref const_iterator
+		@return Begin #const_iterator
 	*/
 	[[nodiscard]] constexpr
 	const_iterator cbegin() const noexcept {
@@ -452,7 +452,7 @@ public:
 	}
 
 	/**
-		@return End @ref const_iterator
+		@return End #const_iterator
 	*/
 	[[nodiscard]] constexpr
 	const_iterator cend() const noexcept {
@@ -463,7 +463,7 @@ public:
 /**
 	@example Vector.cpp
 	
-	An example of basic use of @ref Vector<T, Size>
+	An example of basic use of @ref aml::Vector<T, Size>
 */
 
 
@@ -516,16 +516,16 @@ public:
 
 	@tparam Container The type of container that will be used
 
-	@see @ref Vector "Vector<T, Size>" @n
-		 #dynamic_extent
+	@see @ref aml::Vector<T, Size> @n
+		 aml::dynamic_extent
 */
 
 #if AML_CXX20
 template<aml::is_support_dynamic_vector_container Container>
-#else
+#else // !AML_CXX20
 template<class Container>
-#endif
-class Vector<Container, aml::dynamic_extent> /** @cond */: public detail::VectorBase<aml::get_value_type<Container>, dynamic_extent> /** @endcond */
+#endif // !AML_CXX20
+class Vector<Container, dynamic_extent> /** @cond */: public detail::VectorBase<aml::get_value_type<Container>, dynamic_extent> /** @endcond */
 {
 private:
 	friend class Vector;
@@ -608,7 +608,7 @@ public:
 
 		@param initsz The size that will be used to create the vector
 
-		@see #size_initializer
+		@see aml::size_initializer
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const aml::size_initializer initsz) noexcept {
@@ -618,7 +618,7 @@ public:
 	/**
 		@brief Creates the vector with size and fills it with 0
 
-		@see #zero
+		@see aml::zero
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const aml::size_initializer initsz, const aml::zero_t) noexcept 
@@ -628,7 +628,7 @@ public:
 	/**
 		@brief Creates the vector with size and fills it with 1
 
-		@see #one
+		@see aml::one
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 		explicit Vector(const aml::size_initializer initsz, const aml::one_t) noexcept
@@ -638,7 +638,7 @@ public:
 	/**
 		@brief Creates the unit vector
 
-		@see #unit
+		@see aml::unit
 	*/
 	template<std::size_t Dir> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const aml::size_initializer initsz, const aml::unit_t<Dir>) noexcept
@@ -652,7 +652,7 @@ public:
 		@param initsz The size that will be used to create the vector
 		@param fill_with Size and what the vector will be filled with
 
-		@see #fill_initializer
+		@see aml::fill_initializer
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(const aml::size_initializer initsz, const aml::fill_initializer<value_type> fill_with) noexcept 
@@ -983,7 +983,7 @@ auto& operator-=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& r
 
 	@return A new vector which is the result of multiplication
 
-	@see #operator*(const Left&, const Vector<Right, RightSize>&)
+	@see operator*(const Left&, const Vector<Right, RightSize>&)
 */
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator*(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
@@ -1004,7 +1004,7 @@ auto operator*(const Vector<Left, LeftSize>& left, const Right& right) noexcept 
 
 	@return A new vector which is the result of multiplication
 
-	@see #operator*(const Vector<Left, LeftSize>&, const Right&)
+	@see operator*(const Vector<Left, LeftSize>&, const Right&)
 */
 template<class Left, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator*(const Left& left, const Vector<Right, RightSize>& right) noexcept {
@@ -1037,7 +1037,7 @@ auto& operator*=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
 
 	@return A new vector which is the result of division
 
-	@see #operator/(const Left&, const Vector<Right, RightSize>&)
+	@see operator/(const Left&, const Vector<Right, RightSize>&)
 */
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
@@ -1057,7 +1057,7 @@ auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept 
 
 	@return A new vector which is the result of division
 
-	@see #operator/(const Vector<Left, LeftSize>&, const Right&)
+	@see operator/(const Vector<Left, LeftSize>&, const Right&)
 */
 template<class Left, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator/(const Left& left, const Vector<Right, RightSize>& right) noexcept {
@@ -1098,20 +1098,20 @@ auto operator-(const Vector<Left, LeftSize>& left) noexcept {
 }
 
 /**
-	@brief Do not use. Use @ref dot and @ref cross to apply vector multiplication
+	@brief Do not use. Use #aml::dot and #aml::cross to apply vector multiplication
 
-	@see #dot @n
-		 #cross
+	@see aml::dot @n
+		 aml::cross
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
-/** @copydoc operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) */
+/** @copydoc aml::operator*(const aml::Vector<Left, LeftSize>&, const aml::Vector<Right, RightSize>&) */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
 auto& operator*=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
-/** @copydoc operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) */
+/** @copydoc aml::operator*(const aml::Vector<Left, LeftSize>&, const aml::Vector<Right, RightSize>&) */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator/(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
-/** @copydoc operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) */
+/** @copydoc aml::operator*(const aml::Vector<Left, LeftSize>&, const aml::Vector<Right, RightSize>&) */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
 auto& operator/=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
 
@@ -1130,7 +1130,7 @@ auto& operator/=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexc
 
 	@return Is the @p left and @p right are equal
 
-	@see #operator!=(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&)
+	@see operator!=(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&)
 */
 template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
 bool operator==(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
@@ -1158,7 +1158,7 @@ bool operator==(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 
 	@return Is the @p left and @p right are not equal
 
-	@see #operator==(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&)
+	@see operator==(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&)
 */
 template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> [[nodiscard]] constexpr
 bool operator!=(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
@@ -1210,7 +1210,7 @@ auto sum_of(const Vector<T, Size>& vec) noexcept
 	@brief Distance between vectors. @f$ || \vec{a} - \vec{b} || @f$
 	@details @f$ = \sqrt{(x_1-x_2)^2+(y_1-y_2)^2+...} @f$
 
-	@see #dist(const aml::Vector<T, Size>&)
+	@see aml::dist(const aml::Vector<T, Size>&)
 */
 template<class OutType = selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto dist_between(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
@@ -1227,8 +1227,8 @@ auto dist_between(const Vector<Left, LeftSize>& left, const Vector<Right, RightS
 	@note
 			The size of the vectors must be equal
 
-	@see @ref Vector<T, Size> @n
-		 @ref Vector<Container, dynamic_extent>
+	@see Vector<T, Size> @n
+		 Vector<Container, dynamic_extent>
 */
 template<class OutType = selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto dot(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
@@ -1313,11 +1313,11 @@ namespace detail {
 }
 
 /**
-	@brief Type alias for #aml::Vector<Container, dynamic_extent> and it container
+	@brief Type alias for @ref aml::Vector<Container, dynamic_extent> and it container
 	@details A simple @c std::vector in template parameter @c Container will not work. @n
 			 This uses a wrapper around @c std::vector
 
-	@see #Vector<Container, dynamic_extent>
+	@see Vector<Container, dynamic_extent>
 */
 template<class T>
 using DVector = Vector<detail::DVector_default_container<T>, aml::dynamic_extent>;

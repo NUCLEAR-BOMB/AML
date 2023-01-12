@@ -85,7 +85,7 @@
 
 #if defined(_MSVC_LANG) && (_MSVC_LANG > __cplusplus)
 	#define AML_CXX_STL _MSVC_LANG
-#else
+#else // !(defined(_MSVC_LANG) && (_MSVC_LANG > __cplusplus))
 	#define AML_CXX_STL __cplusplus
 #endif
 
@@ -95,7 +95,7 @@
 #elif AML_CXX_STL >= 201703L
 	#define AML_CXX20 0
 	#define AML_CXX17 1
-#else
+#else // AML_CXX_STL < 201703L
 	#define AML_CXX20 0
 	#define AML_CXX17 0
 #endif
@@ -120,9 +120,9 @@ void logerror(error_string_type msg, error_file_str_type file, error_line_type l
 #if AML_DEBUG
 	#define AML_DEBUG_ERROR(errmsg) ::aml::logerror(errmsg, __FILE__, __LINE__)
 	//#define AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_) ::aml::logerror(errmsg, file_, line_)
-#else
+#else /// !AML_DEBUG
 	#define AML_DEBUG_ERROR(errmsg) ((void)0)
-#endif
+#endif /// !AML_DEBUG
 
 #if AML_DEBUG
 	#define AML_DEBUG_VERIFY(expression, errmsg)	\
@@ -135,8 +135,8 @@ void logerror(error_string_type msg, error_file_str_type file, error_line_type l
 			AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_);				\
 		}
 	*/
-#else
+#else // !AML_DEBUG
 	#define AML_DEBUG_VERIFY(expression, errmsg) ((void)0)
-#endif
+#endif // !AML_DEBUG
 
 }
