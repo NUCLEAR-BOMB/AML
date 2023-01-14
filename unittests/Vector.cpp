@@ -446,6 +446,17 @@ TEST(DynamicVectorTest, init_with_special_modifiers)
 	EXPECT_EQ(c[2], 1);
 }
 
+TEST(DynamicVectorTest, init_resized)
+{
+	const auto a = DVector<int>(1, 2, 3).resize(10);
+
+	ASSERT_EQ(a.size(), 10);
+
+	EXPECT_EQ(a[0], 1);
+	EXPECT_EQ(a[1], 2);
+	EXPECT_EQ(a[2], 3);
+}
+
 TEST(DynamicVectorTest, operators) {
 	const DVector<int> a(10, 20);
 	const DVector<int> b(-10, -20);

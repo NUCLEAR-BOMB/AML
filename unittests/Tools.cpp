@@ -104,13 +104,4 @@ TEST(ToolsOther, custom_type) {
 	ASSERT_EQ((int)aml::one, 1);
 }
 
-TEST(ToolsOther, has_container_structure) 
-{
-	EXPECT_TRUE(aml::has_container_structure<std::vector<int>>);
-	EXPECT_TRUE(aml::has_container_structure<std::list<int>>);
-
-	EXPECT_FALSE(aml::has_container_structure<int>);
-	EXPECT_FALSE(aml::has_container_structure<float>);
-}
-
 }

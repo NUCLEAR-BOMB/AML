@@ -379,57 +379,87 @@ namespace detail
 template<class From, class To>
 inline constexpr bool is_narrowing_conversion = detail::template is_narrowing_conversion_impl<From, To>::value;
 
-
-template<class Container>
-struct get_container_data;
-
-/// Contains information about the container
-template<template <class, class...> class Container, class T, class... Parameters>
-struct get_container_data<Container<T, Parameters...>>
+namespace detail
 {
-	using type = Container<T, Parameters...>; ///< Container itself
+	template<class Container, class U, class = void>
+	struct has_rebind_impl
+		: std::false_type {};
 
-	template<class U>
-	using create = Container<U, Parameters...>; ///< Creating a new container with a replaced value type
+	template<class Container, class U>
+	struct has_rebind_impl<Container, U, std::void_t<typename Container::template rebind<U>::type>>
+		: std::true_type {};
+}
 
-	using value_type = T; ///< Container value type
-	using parameters = std::tuple<Parameters...>; ///< Container parameters
-};
+template<class Container, class U = int>
+inline constexpr bool has_rebind = detail::template has_rebind_impl<Container, U>::value;
 
 namespace detail
 {
-	template<class T, class = void>
-	struct has_container_structure_impl : std::false_type {};
+	template<class Container, class U, bool = aml::has_rebind<Container, U>>
+	struct rebind_container_impl;
 
-	template<class T>
-	struct has_container_structure_impl<T, std::void_t<typename get_container_data<T>::type>> : std::true_type {};
+	template<template <class, class...> class Container, class T, class... Parameters, class U>
+	struct rebind_container_impl<Container<T, Parameters...>, U, false>
+	{
+		// if hasn't Container::rebind<...>::type
+		using type = Container<U, Parameters...>;
+	};
+
+	template<class Container, class U>
+	struct rebind_container_impl<Container, U, true>
+	{
+		// if has Container::rebind<...>::type
+		using type = typename Container::template rebind<U>::type;
+	};
+
+
+	template<class Container>
+	struct container_parameters_impl;
+
+	template<template <class, class...> class Container, class T, class... Parameters>
+	struct container_parameters_impl<Container<T, Parameters...>>
+	{
+		using type = std::tuple<Parameters...>;
+	};
+
+
+	template<class Container>
+	struct container_value_impl;
+
+	template<template <class, class...> class Container, class T, class... Parameters>
+	struct container_value_impl<Container<T, Parameters...>> 
+	{
+		using type = T;
+	};
 }
 
-/// Checks if @p T has container structure
-template<class T>
-inline constexpr bool has_container_structure = detail::template has_container_structure_impl<T>::value;
+template<class Container, class U>
+using rebind_container = typename detail::template rebind_container_impl<Container, U>::type;
+
+template<class Container>
+using container_parameters = typename detail::template container_parameters_impl<Container>::type;
+
+template<class Container>
+using container_value = typename detail::template container_value_impl<Container>::type;
 
 /**
 	@brief Verifies if @p Left nad @p Right have same parameters
 	@details Creates compile-time if it does not pass assert
-
-	@tparam Left Container data
-	@tparam Right Container data
-
-	@see get_container_data
 */
-template<class Left, class Right>
+template<class LeftContainer, class RightContainer>
 constexpr void verify_container_parameters() noexcept {
-	static_assert(std::is_same_v<typename Left::parameters, typename Right::parameters>,
-		"The parameters of the containers must be the same");
+	using lp = aml::container_parameters<LeftContainer>;
+	using rp = aml::container_parameters<RightContainer>;
+
+	static_assert(std::is_same_v<lp, rp>, "The parameters of the containers must be the same");
 }
 
 namespace detail {
 
 	template<class T, class = void>
 	struct get_value_type_impl {
-		static_assert(!sizeof(T*), "T must have a type alias \"value_type\"");
-		using type = void;
+		//static_assert(!sizeof(T*), "T must have a type alias \"value_type\"");
+		//using type = void;
 	};
 
 	template<class T>

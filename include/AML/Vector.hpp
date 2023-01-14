@@ -159,10 +159,10 @@ public:
 	using reference			= typename Base::reference;		  ///< Type that the non-const index operator returns
 	using const_reference	= typename Base::const_reference; ///< Type that const index operator returns
 
-	/// The return type of the non-const \ref begin() and \ref end() "end()" methods
+	/// The return type of the non-const begin() and end() methods
 	using iterator			= std::conditional_t<Base::uses_static_array(),		  T*,	   aml::IndexIterator<Vector<T, Size>>>;
 
-	/// The return type of the const \ref begin(), \ref cbegin() and \ref end(), \ref cend() methods
+	/// The return type of the const begin(), cbegin() and end(), cend() methods
 	using const_iterator	= std::conditional_t<Base::uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
 
 public:
@@ -544,14 +544,14 @@ public:
 	using reference			= typename container_type::reference;			///< Type that the non-const index operator returns
 	using const_reference	= typename container_type::const_reference;	///< Type that const index operator returns
 
-	/// The return type of the non - const @ref begin() and @ref end() methods
+	/// The return type of the non - const begin() and end() methods
 	using iterator			= typename container_type::iterator;
 
-	/// The return type of the const \ref begin(), \ref cbegin() and \ref end(), \ref cend() methods
+	/// The return type of the const begin(), cbegin() and end(), cend() methods
 	using const_iterator	= typename container_type::const_iterator;
 
 	//static_assert(std::is_default_constructible_v<container_type>,	"Container must be default constructible");
-	static_assert(aml::has_container_structure<container_type>,		"Container must have a container structure");
+	//static_assert(aml::has_container_structure<container_type>,		"Container must have a container structure");
 
 public:
 
@@ -722,8 +722,14 @@ public:
 		@warning If the size changes by more than it was, the new vector elements will not be explicitly initialized 
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	void resize(const size_type new_size) noexcept {
+	void resize(const size_type new_size) & noexcept {
 		this->container.resize(new_size);
+	}
+
+	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	auto&& resize(const size_type new_size) && noexcept {
+		this->resize(new_size);
+		return std::move(*this);
 	}
 
 	/**
@@ -806,17 +812,11 @@ public:
 		return this->container;
 	}
 
-	/**
-		@copydoc get_container()
-	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	const container_type& get_container() const & noexcept {
 		return this->container;
 	}
 
-	/**
-		@copydoc get_container()
-	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	container_type&& get_container() && noexcept {
 		return std::move(this->container);
@@ -844,17 +844,15 @@ protected:
 
 #define AML_VECTOR_FUNCTION_BODY2(outtype, firstvec, secondvec, dynamic_action, static_action)								\
 	if constexpr (firstvec.is_dynamic() && secondvec.is_dynamic()) {														\
-		AML_DEBUG_VERIFY((left.size() == right.size()), "Dynamic vector's sizes must be equal");								\
-		using left_container = aml::get_container_data<Left>;						\
-		using right_container = aml::get_container_data<Right>;						\
-		aml::verify_container_parameters<left_container, right_container>();												\
-		aml::Vector<typename left_container::template create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));	\
+		AML_DEBUG_VERIFY((left.size() == right.size()), "Dynamic vector's sizes must be equal");							\
+		aml::verify_container_parameters<Left, Right>();																	\
+		aml::Vector<rebind_container<Left, outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\
 	} else if constexpr (firstvec.is_dynamic() || secondvec.is_dynamic()) {													\
 		AML_DEBUG_VERIFY((firstvec.size() == secondvec.size()), "Dynamic vector's and static vector's sizes must be equal");	\
-		using container_ = aml::get_container_data<typename std::conditional_t<firstvec.is_dynamic(), Left, Right>>;						\
-		aml::Vector<typename container_::template create<outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
+		using Container_ = typename std::conditional_t<firstvec.is_dynamic(), Left, Right>;						\
+		aml::Vector<rebind_container<Container_, outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\
 	} else {																												\
@@ -891,20 +889,20 @@ protected:
 	}															\
 	return left;
 
-#define AML_OP_BODY3(outtype, vec_, containertype_, isdynamic, action_)												\
-	if constexpr (isdynamic) {																						\
-		using vec_container = aml::get_container_data<containertype_>;												\
-		aml::Vector<typename vec_container::template create<outtype>, aml::dynamic_extent> out(aml::size_initializer(vec_.size()));	\
-		for (Vectorsize i = 0; i < vec_.size(); ++i) {																\
-			out[i] = action_;																						\
-		}																											\
-		return out;																									\
-	} else {																										\
-		aml::Vector<outtype, vec_.static_size> out;																	\
-		aml::static_for<vec_.static_size>([&](const auto i) {														\
-			out[i] = action_;																						\
-		});																											\
-		return out;																									\
+#define AML_OP_BODY3(outtype, vec_, containertype_, isdynamic, action_)				\
+	if constexpr (isdynamic) {														\
+		aml::Vector<rebind_container<containertype_, outtype>, aml::dynamic_extent>	\
+			out(aml::size_initializer(vec_.size()));								\
+		for (Vectorsize i = 0; i < vec_.size(); ++i) {								\
+			out[i] = action_;														\
+		}																			\
+		return out;																	\
+	} else {																		\
+		aml::Vector<outtype, vec_.static_size> out;									\
+		aml::static_for<vec_.static_size>([&](const auto i) {						\
+			out[i] = action_;														\
+		});																			\
+		return out;																	\
 	}
 
 /**
@@ -1105,13 +1103,13 @@ auto operator-(const Vector<Left, LeftSize>& left) noexcept {
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator*(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
-/** @copydoc aml::operator*(const aml::Vector<Left, LeftSize>&, const aml::Vector<Right, RightSize>&) */
+
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
 auto& operator*=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
-/** @copydoc aml::operator*(const aml::Vector<Left, LeftSize>&, const aml::Vector<Right, RightSize>&) */
+
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator/(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
-/** @copydoc aml::operator*(const aml::Vector<Left, LeftSize>&, const aml::Vector<Right, RightSize>&) */
+
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
 auto& operator/=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
 
