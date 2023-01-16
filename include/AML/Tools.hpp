@@ -133,7 +133,7 @@ namespace detail {
 
 	template<class T>
 	struct is_complete_impl<T, decltype(sizeof(T))> : public std::true_type {};
-}
+} // namespace detail
 
 /**
 	@brief Checks if @p T is not forward declarated
@@ -196,7 +196,7 @@ namespace detail
 			}
 		}
 	}
-}
+} // namespace detail
 
 /**
 	@brief Compile-time for loop
@@ -265,7 +265,7 @@ namespace detail
 			void
 		>>>;
 	};
-}
+} // namespace detail
 
 /**
 	@brief Converts a number of @b bytes to a type whose size is no larger than the size of the signed integral
@@ -362,7 +362,7 @@ namespace detail
 	template<typename From, typename To>
 	struct is_narrowing_conversion_impl<From, To, std::void_t<decltype(To{ std::declval<From>() })>> 
 		: std::false_type {};
-}
+} // namespace detail
 
 /**
 	@brief Checks if the @p From type is has a narrowing conversion to the @p To type
@@ -388,7 +388,7 @@ namespace detail
 	template<class Container, class U>
 	struct has_rebind_impl<Container, U, std::void_t<typename Container::template rebind<U>::type>>
 		: std::true_type {};
-}
+} // namespace detail
 
 template<class Container, class U = int>
 inline constexpr bool has_rebind = detail::template has_rebind_impl<Container, U>::value;
@@ -431,7 +431,7 @@ namespace detail
 	{
 		using type = T;
 	};
-}
+} // namespace detail
 
 template<class Container, class U>
 using rebind_container = typename detail::template rebind_container_impl<Container, U>::type;
@@ -466,7 +466,7 @@ namespace detail {
 	struct get_value_type_impl<T, std::void_t<typename std::template decay_t<T>::value_type>> {
 		using type = typename std::template decay_t<T>::value_type;
 	};
-}
+} // namespace detail
 
 /**
 	@brief Get value type of container

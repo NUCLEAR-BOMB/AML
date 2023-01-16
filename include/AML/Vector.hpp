@@ -15,95 +15,95 @@
 #include <concepts>
 #endif
 
-namespace aml {
+namespace aml 
+{
 
+/**
+	@brief The main alias for vector's size type
+	@details More created for code readability
+
+	@see Vector
+*/
+using Vectorsize = std::size_t;
+
+/**
+	@brief Namespace for compile-time vector indexes
+	@details Use them to access vector's fields from #Vector::operator[](const VI::index<I>) and #Vector::operator[](const VI::index<I>) const
+
+	@see Vector<T, Size> @n
+			Vector<Container, dynamic_extent>
+*/
+namespace VI {
 	/**
-		@brief The main alias for vector's size type
-		@details More created for code readability
+		@brief Template type alias to access the vector field at compile time
 
-		@see Vector
+		@tparam I Index of vector field number
 	*/
-	using Vectorsize = std::size_t;
+	template<Vectorsize I>
+	using index = std::integral_constant<Vectorsize, I>;
 
-	/**
-		@brief Namespace for compile-time vector indexes
-		@details Use them to access vector's fields from #Vector::operator[](const VI::index<I>) and #Vector::operator[](const VI::index<I>) const
+	inline constexpr index<0> X{}; ///< @c x 1D variable using indexes
+	inline constexpr index<1> Y{}; ///< @c y 2D variable using indexes
+	inline constexpr index<2> Z{}; ///< @c z 3D variable using indexes
+	inline constexpr index<3> W{}; ///< @c w 4D variable using indexes
+	inline constexpr index<4> V{}; ///< @c v 5D variable using indexes
 
-		@see Vector<T, Size> @n
-			 Vector<Container, dynamic_extent>
-	*/
-	namespace VI
+	inline constexpr index<0> first{}; ///< Index of first vector element
+} // namespace VI
+
+namespace detail 
+{
+	template<class T, Vectorsize S>
+	struct VectorStorage {
+	protected:
+		T array[S];
+	};
+
+	template<class T>
+	struct VectorStorage<T, 1> {
+		T x;
+	};
+
+	template<class T>
+	struct VectorStorage<T, 2> {
+		T x, y;
+	};
+
+	template<class T>
+	struct VectorStorage<T, 3> {
+		T x, y, z;
+	};
+
+	template<class T>
+	struct VectorStorage<T, 4> {
+		T x, y, z, w;
+	};
+
+	template<class T>
+	struct VectorStorage<T, 5> {
+		T x, y, z, w, v;
+	};
+
+	template<class T, Vectorsize Size>
+	struct VectorBase
 	{
-		/**
-			@brief Template type alias to access the vector field at compile time
+		static_assert(std::is_object_v<T>, "A vector's T must be an object type");
+		static_assert(!std::is_abstract_v<T>, "A vector's T cannot be an abstract class type");
+		static_assert(aml::is_complete<T>, "A vector's T must be a complete type");
 
-			@tparam I Index of vector field number
-		*/
-		template<Vectorsize I>
-		using index = std::integral_constant<Vectorsize, I>;
+		using size_type = Vectorsize;
+		using value_type = T;
 
-		inline constexpr index<0> X{}; ///< @c x 1D variable using indexes
-		inline constexpr index<1> Y{}; ///< @c y 2D variable using indexes
-		inline constexpr index<2> Z{}; ///< @c z 3D variable using indexes
-		inline constexpr index<3> W{}; ///< @c w 4D variable using indexes
-		inline constexpr index<4> V{}; ///< @c v 5D variable using indexes
+		using reference = T&;
+		using const_reference = const T&;
 
-		inline constexpr index<0> first{}; ///< Index of first vector element
-	}
+		static constexpr bool is_dynamic() noexcept { return (Size == aml::dynamic_extent); }
+		static constexpr bool uses_static_array() noexcept { return (Size > 5) && !is_dynamic(); }
+		static constexpr bool has_index(const size_type index) noexcept { return (Size > index); }
 
-	namespace detail
-	{
-		template<class T, Vectorsize S>
-		struct VectorStorage {
-		protected:
-			T array[S];
-		};
-
-		template<class T>
-		struct VectorStorage<T, 1> {
-			T x;
-		};
-
-		template<class T>
-		struct VectorStorage<T, 2> {
-			T x, y;
-		};
-
-		template<class T>
-		struct VectorStorage<T, 3> {
-			T x, y, z;
-		};
-
-		template<class T>
-		struct VectorStorage<T, 4> {
-			T x, y, z, w;
-		};
-
-		template<class T>
-		struct VectorStorage<T, 5> {
-			T x, y, z, w, v;
-		};
-
-		template<class T, Vectorsize Size>
-		struct VectorBase
-		{
-			static_assert(std::is_object_v<T>, "A vector's T must be an object type");
-			static_assert(!std::is_abstract_v<T>, "A vector's T cannot be an abstract class type");
-			static_assert(aml::is_complete<T>, "A vector's T must be a complete type");
-
-			using size_type = Vectorsize;
-			using value_type = T;
-
-			using reference = T&;
-			using const_reference = const T&;
-
-			static constexpr bool is_dynamic() noexcept { return (Size == aml::dynamic_extent); }
-			static constexpr bool uses_static_array() noexcept { return (Size > 5) && !is_dynamic(); }
-			static constexpr bool has_index(const size_type index) noexcept { return (Size > index); }
-
-			static constexpr Vectorsize extent = aml::dynamic_extent;
-		};
-	}
+		static constexpr Vectorsize extent = aml::dynamic_extent;
+	};
+} // namespace detail
 
 #if AML_CXX20
 	template<class Container>
@@ -459,7 +459,7 @@ public:
 		return end();
 	}
 
-};
+}; // class Vector<T, Size>
 /**
 	@example Vector.cpp
 	
@@ -829,7 +829,7 @@ protected:
 		@details Have the same type as @c %Container template parameter
 	*/
 	container_type container;
-};
+}; // class Vector<Container, dynamic_extent>
 
 #define AML_VECTOR_FOR_LOOP(from_, vec_, action_)					\
 	if constexpr (vec_.is_dynamic()) {								\
@@ -1308,7 +1308,7 @@ auto normalize(const Vector<T, Size>& vec) noexcept
 namespace detail {
 	template<class T>
 	struct DVector_default_container : std::vector<T> {};
-}
+} // namespace detail
 
 /**
 	@brief Type alias for @ref aml::Vector<Container, dynamic_extent> and it container
@@ -1334,7 +1334,7 @@ namespace detail
 	template<class Container>
 	struct is_vector_impl<Vector<Container, aml::dynamic_extent>>
 		: std::true_type {};
-}
+} // namespace detail
 
 /// Checks if @p T is a vector from linear algebra
 template<class T>
@@ -1374,6 +1374,6 @@ namespace short_vector_alias
 	using vec5u = vec5<unsigned>;
 	using vec5f = vec5<float>;
 	using vec5d = vec5<double>;
-}
+} // namespace short_vector_alias
 
-}
+} // namespace aml
