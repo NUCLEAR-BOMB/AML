@@ -6,6 +6,10 @@
 // #define AML_NAMESPACE namespace aml {
 // #define AML_NAMESPACE_END }
 
+#ifdef AML_LIBRARY
+	#error Something went wrong
+#endif
+
 // Macro that determines whether the AML library is connected
 #define AML_LIBRARY
 
@@ -111,21 +115,35 @@
 	#error C++17 or higher is required
 #endif
 
+#if AML_MSVC
+	#define AML_PRETTY_FUNCTION __FUNCSIG__
+	//#define AML_PRETTY_FUNCTION __FUNCTION__
+	//#define AML_PRETTY_FUNCTION __func__
+#elif AML_GCC
+	#define AML_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#else
+	#define AML_PRETTY_FUNCTION ""
+#endif
+
 namespace aml {
 
 using error_line_type		= std::decay_t<decltype(__LINE__)>;
 using error_file_str_type	= std::decay_t<decltype(__FILE__)>;
+using error_func_str_type	= const char*;
 
 using error_string_type		= const char*; // std::string?
 
 [[noreturn]] inline
-void logerror(error_string_type msg, error_file_str_type file, error_line_type line) noexcept {
-	std::cerr << "\n\tAML RUNTIME ERROR | " << file << "(" << line << "): " << msg << '\n';
-	std::terminate();
+void logerror(error_string_type msg, error_func_str_type func, error_file_str_type file, error_line_type line) noexcept {
+	std::cerr
+		<< "\n   AML RUNTIME ERROR | " << msg << "\n\t"
+		<< " >>> " << func << "\n\t"
+		<< file << "(" << line << ")" << '\n';
+	std::abort();
 }
 
 #if AML_DEBUG
-	#define AML_DEBUG_ERROR(errmsg) ::aml::logerror(errmsg, __FILE__, __LINE__)
+	#define AML_DEBUG_ERROR(errmsg) ::aml::logerror(errmsg, AML_PRETTY_FUNCTION, __FILE__, __LINE__)
 	//#define AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_) ::aml::logerror(errmsg, file_, line_)
 #else /// !AML_DEBUG
 	#define AML_DEBUG_ERROR(errmsg) ((void)0)
