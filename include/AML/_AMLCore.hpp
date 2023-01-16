@@ -143,4 +143,7 @@ void logerror(error_string_type msg, error_file_str_type file, error_line_type l
 	#define AML_DEBUG_VERIFY(expression, errmsg) ((void)0)
 #endif // !AML_DEBUG
 
+//#define AML_CREATE_CUSTOM_BINARY_OPERATOR(opname, returntype, firsttype, secondtype) \
+
+
 }

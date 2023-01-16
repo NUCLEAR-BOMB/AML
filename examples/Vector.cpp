@@ -14,10 +14,20 @@ int main()
 	// Apply the dot product of vectors
 	//  vvv scalar
 	auto d = aml::dot(c, a);
-
+	
+	// You can also do it like this
+	//  vvvvvvvvv
+	using aml::dot;
+	d = c <dot> a;
+	
 	// Apply cross product 
 	//  vvv 3D vector
 	auto f = aml::cross(a, b);
+	
+	// And with aml::cross too
+	//  vvvvvvvvvvv
+	using aml::cross;
+	f = a <cross> b;
 
 	// Cast vector "b" to the type aml::Vector<int, 3>, which has vector "a"
 	a = static_cast<aml::Vector<int, 3>>(b);

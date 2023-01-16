@@ -314,7 +314,10 @@ TEST(VectorTest, dot) {
 	const Vector<int, 3> a(5, 6, 7);
 	const Vector<int, 3> b(-2, 10, -1);
 
-	ASSERT_EQ(aml::dot(a, b), 43);
+	ASSERT_EQ((aml::dot(a, b)), 43);
+
+	auto a_dot_b = a <dot> b;
+	ASSERT_EQ(a_dot_b, 43);
 }
 
 TEST(VectorTest, cross) {
@@ -330,13 +333,13 @@ TEST(VectorTest, cross) {
 	const Vector<int, 3> j(aml::unit<1>);
 	const Vector<int, 3> k(aml::unit<2>);
 
-	const auto i_cross_j = aml::cross(i, j);
+	const auto i_cross_j = i <cross> j;
 	EXPECT_EQ(i_cross_j, k);
 
-	const auto j_cross_k = aml::cross(j, k);
+	const auto j_cross_k = j <cross> k;
 	EXPECT_EQ(j_cross_k, i);
 
-	const auto k_cross_i = aml::cross(k, i);
+	const auto k_cross_i = k <cross> i;
 	EXPECT_EQ(k_cross_i, j);
 }
 

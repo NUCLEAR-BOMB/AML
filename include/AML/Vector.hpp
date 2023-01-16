@@ -1250,21 +1250,10 @@ auto dist_between(const Vector<Left, LeftSize>& left, const Vector<Right, RightS
 	return aml::dist<OutType>(left - right);
 }
 
-/**
-	@brief Linearly algebraic scalar product, dot product of vectors. @f$ \vec{a} \cdot \vec{b} @f$
-	@details @f$ = \sum_{i=0}^{n} \vec{a}_i \vec{b}_i 
-				 = \vec{a}_x \vec{b}_x + \vec{a}_y * \vec{b}_y + ... @f$
-
-			 [Wikipedia page](https://en.wikipedia.org/wiki/Dot_product)
-
-	@note
-			The size of the vectors must be equal
-
-	@see Vector<T, Size> @n
-		 Vector<Container, dynamic_extent>
-*/
+// vvvvv dot product impl vvvvv
+struct dot_fn {
 template<class OutType = selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
-auto dot(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
+auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) const noexcept
 {
 	auto out = (left[VI::first] * right[VI::first]);
 
@@ -1273,7 +1262,8 @@ auto dot(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& rig
 		for (Vectorsize i = 1; i < left.size(); ++i) {
 			out += left[i] * right[i];
 		}
-	} else {
+	}
+	else {
 		static_assert(LeftSize == RightSize, "Vector's sizes must be equal");
 		aml::static_for<1, LeftSize>([&](const auto i) {
 			out += left[i] * right[i];
@@ -1282,6 +1272,89 @@ auto dot(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& rig
 
 	return aml::selectable_convert<OutType>(out);
 }
+};
+
+/**
+	@brief Linearly algebraic scalar product, dot product of vectors. @f$ \vec{a} \cdot \vec{b} @f$
+	@details @f$ = \sum_{i=0}^{n} \vec{a}_i \vec{b}_i
+					= \vec{a}_x \vec{b}_x + \vec{a}_y * \vec{b}_y + ... @f$ @n
+
+				Can be used as the operator (vecres = vec1 @<dot@> vec2)
+
+				[Wikipedia page](https://en.wikipedia.org/wiki/Dot_product)
+
+	@param left  First input vector
+	@param right Second input vector
+
+	@note
+			The size of the vectors must be equal
+
+	@see @ref aml::Vector<T, Size> @n
+		 aml::Vector<Container, dynamic_extent>
+*/
+inline constexpr dot_fn dot;
+
+namespace detail {
+	template<class T>
+	struct dot_op_proxy {
+		const T& v;
+	};
+
+	template<class T> constexpr
+	const dot_op_proxy<T> operator<(const T& left, const dot_fn&) { return {left}; }
+
+	template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> constexpr
+	decltype(auto) operator>(const dot_op_proxy<Vector<Left, LeftSize>>& left, const Vector<Right, RightSize>& right) {
+		return aml::dot(left.v, right);
+	}
+}
+
+// vvvvv cross product impl vvvvv
+struct cross_fn
+{
+template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
+auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) const noexcept
+{
+	if constexpr (left.is_dynamic() || right.is_dynamic()) {
+		AML_DEBUG_VERIFY((left.size() == right.size()) && (left.size() == 3), "The size of the vectors must be equal to 3");
+	}
+	else {
+		static_assert((left.static_size == 3), "The size of the vectors must be equal to 3");
+	}
+
+	using left_value_type = aml::get_value_type<decltype(left)>;
+	using right_value_type = aml::get_value_type<decltype(right)>;
+
+	using out_type = decltype((std::declval<left_value_type>()* std::declval<right_value_type>()) -
+		(std::declval<left_value_type>() * std::declval<right_value_type>()));
+
+	using namespace aml::VI;
+	const auto& a = left; const auto& b = right;
+
+	AML_VECTOR_FUNCTION_BODY1(out_type, left, right, \
+		out[X] = (a[Y] * b[Z]) - (a[Z] * b[Y]);			\
+		out[Y] = (a[Z] * b[X]) - (a[X] * b[Z]);			\
+		out[Z] = (a[X] * b[Y]) - (a[Y] * b[X]);			\
+	);
+}
+};
+
+namespace detail
+{
+	template<class T>
+	struct cross_op_proxy {
+		const T& v;
+	};
+
+	template<class T> constexpr
+	const cross_op_proxy<T> operator<(const T& left, const cross_fn&) { return {left}; }
+
+	template<class Left, class Right, Vectorsize LeftSize, Vectorsize RightSize> constexpr
+	decltype(auto) operator>(const cross_op_proxy<Vector<Left, LeftSize>>& left, const Vector<Right, RightSize>& right) {
+		return aml::cross(left.v, right);
+	}
+}
+
 
 /**
 	@brief Linearly algebraic cross product of vectors. @f$ \vec{a} \times \vec{b} @f$
@@ -1293,7 +1366,9 @@ auto dot(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& rig
 					   \vec{a}_x & \vec{a}_y & \vec{a}_z \\
 					   \vec{b}_x & \vec{b}_y & \vec{b}_z
 				   \end{vmatrix} @f$
-
+			@n
+			Can be used as the operator (vecres = vec1 @<cross@> vec2)
+			@n
 			[Wikipedia page](https://en.wikipedia.org/wiki/Cross_product)
 
 	@attention
@@ -1303,30 +1378,7 @@ auto dot(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& rig
 				Add seven-dimensional cross product @n
 				https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
 */
-template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
-auto cross(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
-{
-	if constexpr (left.is_dynamic() || right.is_dynamic()) {
-		AML_DEBUG_VERIFY((left.size() == right.size()) && (left.size() == 3), "The size of the vectors must be equal to 3");
-	} else {
-		static_assert((left.static_size == 3), "The size of the vectors must be equal to 3");
-	}
-
-	using left_value_type  = aml::get_value_type<decltype(left)>;
-	using right_value_type = aml::get_value_type<decltype(right)>;
-
-	using out_type = decltype((std::declval<left_value_type>() * std::declval<right_value_type>()) - 
-							  (std::declval<left_value_type>() * std::declval<right_value_type>()));
-
-	using namespace aml::VI;
-	const auto& a = left; const auto& b = right;
-
-	AML_VECTOR_FUNCTION_BODY1(out_type, left, right,	\
-		out[X] = (a[Y] * b[Z]) - (a[Z] * b[Y]);			\
-		out[Y] = (a[Z] * b[X]) - (a[X] * b[Z]);			\
-		out[Z] = (a[X] * b[Y]) - (a[Y] * b[X]);			\
-	);
-}
+inline constexpr aml::cross_fn cross;
 
 /**
 	@brief Normalizes the vector. @f$ \frac{\vec{a}}{ || \vec{a} || } @f$
