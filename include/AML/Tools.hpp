@@ -49,7 +49,7 @@ struct fill_initializer
 	using value_type = T;
 
 	constexpr fill_initializer(const T& val) noexcept : value(val) {}
-	constexpr fill_initializer(T&& val) noexcept : value(std::move(val)) {}
+	constexpr fill_initializer(T&& val) noexcept	  : value(std::move(val)) {}
 
 	const value_type value;
 };

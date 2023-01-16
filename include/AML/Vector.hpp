@@ -849,6 +849,23 @@ protected:
 	container_type container;
 }; // class Vector<Container, dynamic_extent>
 
+/**
+	@brief Class template argument deduction (deduction guides) for @ref aml::Vector<T, Size>
+
+	@details <b>Sample: </b>
+			 @code
+				aml::Vector vec(1, 2, 3, 4, 5);
+
+				static_assert(std::is_same_v<typename decltype(vec)::value_type, int>, "");
+				static_assert(vec.size() == 5, "");
+			 @endcode
+*/
+template<class First, class... Rest>
+Vector(First&&, Rest&&...) -> Vector<
+	std::common_type_t<First, Rest...>, 
+	(sizeof...(Rest) + 1)
+>;
+
 #define AML_VECTOR_FOR_LOOP(from_, vec_, action_)					\
 	if constexpr (vec_.is_dynamic()) {								\
 		for (Vectorsize i = from_; i < vec_.size(); ++i) {			\

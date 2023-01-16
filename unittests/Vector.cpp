@@ -416,6 +416,7 @@ TEST(DynamicVectorTest, init_with_fill_initializer)
 
 	//const DVector<int> b(aml::size_initializer(4), aml::fill_initializer<int>(-3));
 	const DVector<int> b(4, aml::fill_initializer<int>(-3));
+
 	ASSERT_EQ(b.size(), 4);
 
 	ASSERT_EQ(b[0], -3);
