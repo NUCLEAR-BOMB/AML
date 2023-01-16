@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <type_traits>
+#include <cstdarg>
+#include <cstdio>
 
 // #define AML_NAMESPACE namespace aml {
 // #define AML_NAMESPACE_END }
@@ -76,6 +78,19 @@
 	#AML_FORCEINLINE inline
 #endif
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+	#define AML_WINDOWS 1
+#else
+	#define AML_WINDOWS 0
+#endif
+
+#if defined(__unix__)
+	#define AML_UNIX 1
+#else
+	#define AML_UNIX 0
+#endif
+
+
 #ifdef __cpp_constexpr_dynamic_alloc
 	#define AML_CONSTEXPR_DYNAMIC_ALLOC constexpr
 #else
@@ -125,6 +140,19 @@
 	#define AML_PRETTY_FUNCTION ""
 #endif
 
+#if AML_WINDOWS && AML_MSVC
+	#include <intrin.h>
+	#define AML_DEBUG_BREAK ::__debugbreak()
+#elif AML_GCC
+	#define AML_DEBUG_BREAK __builtin_trap()
+#elif AML_UNIX
+	#include <csignal>
+	#define AML_DEBUG_BREAK ::raise(SIGTRAP)
+#else
+	#include <cstdlib>
+	#define AML_DEBUG_BREAK ::std::abort()
+#endif
+
 namespace aml {
 
 using error_line_type		= std::decay_t<decltype(__LINE__)>;
@@ -134,24 +162,41 @@ using error_func_str_type	= const char*;
 using error_string_type		= const char*; // std::string?
 
 [[noreturn]] inline
-void logerror(error_string_type msg, error_func_str_type func, error_file_str_type file, error_line_type line) noexcept {
+void logerror(
+	error_string_type msg, 
+	error_func_str_type func, 
+	error_file_str_type file, 
+	error_line_type line, 
+	...
+) noexcept {
 	std::cerr
-		<< "\n   AML RUNTIME ERROR | " << msg << "\n\t"
+		<< "\n   ";
+
+	va_list argptr;
+	va_start(argptr, line);
+	vprintf(msg, argptr);
+	va_end(argptr);
+
+	std::cerr
+		<< "\n\t"
 		<< " >>> " << func << "\n\t"
 		<< file << "(" << line << ")" << '\n';
-	std::abort();
+
+	AML_DEBUG_BREAK;
 }
 
 #if AML_DEBUG
-	#define AML_DEBUG_ERROR(errmsg) ::aml::logerror(errmsg, AML_PRETTY_FUNCTION, __FILE__, __LINE__)
+	#define AML_DEBUG_ERROR(errmsg, ...) \
+		::aml::logerror(errmsg, AML_PRETTY_FUNCTION, __FILE__, __LINE__, __VA_ARGS__)
+
 	//#define AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_) ::aml::logerror(errmsg, file_, line_)
 #else /// !AML_DEBUG
 	#define AML_DEBUG_ERROR(errmsg) ((void)0)
 #endif /// !AML_DEBUG
 
 #if AML_DEBUG
-	#define AML_DEBUG_VERIFY(expression, errmsg)	\
-		do { if (expression) {} else { AML_DEBUG_ERROR(errmsg); } } while (0)
+	#define AML_DEBUG_VERIFY(expression, errmsg, ...)	\
+		do { if (expression) {} else { AML_DEBUG_ERROR(errmsg, __VA_ARGS__); } } while (0)
 
 	/*
 	#define AML_DEBUG_VERIFY_LOCATION(expression, errmsg, file_, line_) \

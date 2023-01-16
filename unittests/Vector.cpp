@@ -377,9 +377,7 @@ TEST(VectorTest, cast_from_dynamic_vector) {
 
 TEST(VectorTest, resize) {
 
-	Vector a(1, 2, 3);
-
-	a[10] = 10;
+	const Vector a(1, 2, 3);
 
 	const auto b = a.resize<2>();
 

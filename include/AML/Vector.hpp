@@ -409,7 +409,8 @@ public:
 	constexpr
 	reference operator[](const size_type index) noexcept 
 	{
-		AML_DEBUG_VERIFY(index < Size, "Vector index out of range");
+		AML_DEBUG_VERIFY(index < Size, "Vector index out of range | index: %zu", index);
+
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array[index];
 		} else {
@@ -1287,7 +1288,7 @@ auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 	auto out = (left[VI::first] * right[VI::first]);
 
 	if constexpr (left.is_dynamic() || right.is_dynamic()) {
-		AML_DEBUG_VERIFY(left.size() == right.size(), "Vector's sizes must be equal");
+		AML_DEBUG_VERIFY(left.size() == right.size(), "Vector's sizes must be equal | left size: %zu, right size: %zu", left.size(), right.size());
 		for (Vectorsize i = 1; i < left.size(); ++i) {
 			out += left[i] * right[i];
 		}
@@ -1347,7 +1348,7 @@ template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[n
 auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) const noexcept
 {
 	if constexpr (left.is_dynamic() || right.is_dynamic()) {
-		AML_DEBUG_VERIFY((left.size() == right.size()) && (left.size() == 3), "The size of the vectors must be equal to 3");
+		AML_DEBUG_VERIFY((left.size() == right.size()) && (left.size() == 3), "The size of the vectors must be equal to 3 | left size: %zu, right size: %zu", left.size(), right.size());
 	}
 	else {
 		static_assert((left.static_size == 3), "The size of the vectors must be equal to 3");
