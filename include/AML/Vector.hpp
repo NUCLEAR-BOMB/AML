@@ -336,6 +336,27 @@ public:
 	}
 
 	/**
+		@brief Returns a new vector with size @p OtherSize and with elements of the current
+		
+		@attention If the new size (<tt>OtherSize</tt>) is larger than the current size (<tt>Size</tt>), the remaining elements will be filled with 0
+	*/
+	template<Vectorsize OtherSize, class OtherT = T> [[nodiscard]] AML_CONSTEVAL
+	auto&& resize() const noexcept
+	{
+		Vector<OtherT, OtherSize> out;
+
+		aml::static_for<OtherSize>([&](const auto i) {
+			if constexpr (i < Size) {
+				out[i] = static_cast<OtherT>((*this)[i]);
+			} else {
+				out[i] = static_cast<OtherT>(0);
+			}
+		});
+
+		return std::move(out);
+	}
+
+	/**
 		@brief Index operator overload to access field in compile-time 
 		@details To call this operator overload you need to use \ref VI::index as an first input parameter
 
@@ -346,7 +367,9 @@ public:
 		@see aml::VI namespace
 	*/
 	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
-	reference operator[](const VI::index<I>) noexcept {
+	reference operator[](const VI::index<I>) noexcept 
+	{
+		static_assert(I < Size, "Static vector index out of range");
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array[I];
 		} else {
@@ -384,7 +407,9 @@ public:
 		@see operator[](const VI::index<I>)
 	*/
 	constexpr
-	reference operator[](const size_type index) noexcept {
+	reference operator[](const size_type index) noexcept 
+	{
+		AML_DEBUG_VERIFY(index < Size, "Vector index out of range");
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array[index];
 		} else {

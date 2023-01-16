@@ -375,6 +375,25 @@ TEST(VectorTest, cast_from_dynamic_vector) {
 	EXPECT_EQ(b[2], 9);
 }
 
+TEST(VectorTest, resize) {
+
+	Vector a(1, 2, 3);
+
+	a[10] = 10;
+
+	const auto b = a.resize<2>();
+
+	ASSERT_EQ(b.size(), 2);
+	EXPECT_EQ(b[0], 1);
+	EXPECT_EQ(b[1], 2);
+
+	const auto c = b.resize<3>();
+	ASSERT_EQ(c.size(), 3);
+	EXPECT_EQ(c[0], 1);
+	EXPECT_EQ(c[1], 2);
+	EXPECT_EQ(c[2], 0);
+}
+
 TEST(DynamicVectorTest, init_using_array) {
 	const DVector<int> a({ 2 });
 
