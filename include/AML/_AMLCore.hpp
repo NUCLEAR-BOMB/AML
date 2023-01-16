@@ -6,6 +6,10 @@
 // #define AML_NAMESPACE namespace aml {
 // #define AML_NAMESPACE_END }
 
+// Macro that determines whether the AML library is connected
+#define AML_LIBRARY
+
+
 #if defined(__INTEL_COMPILER)
 	#define AML_INTEL 1
 #else

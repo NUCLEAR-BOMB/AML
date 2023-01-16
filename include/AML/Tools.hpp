@@ -8,6 +8,12 @@
 #include <functional>
 #include <cstddef>
 
+#ifdef AML_LIBRARY
+	#define AML_LIBRARY_TOOLS
+#else
+	#error AML library is required
+#endif
+
 namespace aml {
 
 inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1); ///< std::dynamic_extent clone

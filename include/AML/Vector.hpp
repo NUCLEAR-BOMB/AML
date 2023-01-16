@@ -15,6 +15,12 @@
 #include <concepts>
 #endif
 
+#ifdef AML_LIBRARY
+	#define AML_LIBRARY_VECTOR
+#else
+	#error AML library is required
+#endif
+
 namespace aml 
 {
 

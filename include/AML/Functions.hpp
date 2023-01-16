@@ -4,6 +4,12 @@
 #include <AML/Tools.hpp>
 #include <limits>
 
+#ifdef AML_LIBRARY
+	#define AML_LIBRARY_FUNCTIONS
+#else
+	#error AML library is required
+#endif
+
 namespace aml {
 
 /**
