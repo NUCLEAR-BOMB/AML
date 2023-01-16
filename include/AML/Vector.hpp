@@ -203,6 +203,14 @@ public:
 		});
 	}
 
+private:
+	template<class... Ts>
+	static constexpr bool enable_if_variadic_constructor = (
+		!(aml::is_narrowing_conversion<Ts, value_type> || ...)
+		&& (sizeof...(Ts) == Size)
+	);
+public:
+
 	/**
 		@brief Initializes the vector using variadic arguments
 		@details All variable arguments must be a non-narrowing transformation to a main vector type
@@ -210,13 +218,11 @@ public:
 		@tparam First,Rest... Variable input variadic templates 
 		@param f,r Variadic arguments
 	*/
-	template<class First, class... Rest> constexpr
-	explicit Vector(First&& f, Rest&&... r) noexcept {
-		static_assert(!(aml::is_narrowing_conversion<T, First> || (aml::is_narrowing_conversion<T, Rest> || ...)), 
-			"Variadic parameter types have a narrowing conversion");
-		static_assert((sizeof...(r) + 1) == Size, 
-			"Bad number of variadic parameters");
-
+	template<class First, class... Rest, 
+		std::enable_if_t<enable_if_variadic_constructor<First, Rest...>, int> = 0
+	> constexpr
+	explicit Vector(First&& f, Rest&&... r) noexcept 
+	{
 		(*this)[VI::first] = std::forward<First>(f);
 
 		Vectorsize i = 1;
@@ -585,6 +591,13 @@ public:
 		std::copy_n(Array, ArraySize, this->container.begin());
 	}
 
+private:
+	template<class... Ts>
+	static constexpr bool enable_if_variadic_constructor = (
+		!(aml::is_narrowing_conversion<Ts, value_type> || ...)
+	);
+public:
+
 	/**
 		@brief Initializes the vector using variadic arguments
 		@details All variable arguments must be a non-narrowing transformation to a main vector type @n
@@ -593,13 +606,12 @@ public:
 		@tparam First,Rest... Variable input variadic templates
 		@param f,r Variadic arguments
 	*/
-	template<class First, class... Rest> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	template<class First, class... Rest, 
+		std::enable_if_t<enable_if_variadic_constructor<First, Rest...>, int> = 0
+	> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
 	explicit Vector(First&& f, Rest&&... r) noexcept 
 		: Vector(aml::size_initializer(1 + sizeof...(r))) 
 	{
-		static_assert(!(aml::is_narrowing_conversion<value_type, First> || (aml::is_narrowing_conversion<value_type, Rest> || ...)),
-			"Variadic parameter types have a narrowing conversion");
-		
 		container[0] = std::forward<First>(f);
 
 		Vectorsize i = 1;
