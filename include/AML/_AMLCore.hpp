@@ -9,6 +9,9 @@
 // Macro that determines whether the AML library is connected
 #define AML_LIBRARY
 
+//#define AML_NO_CUSTOM_OPERATORS
+
+#define AML_HAS_NO_VALUE(macro) ((~(~macro + 0) == 0) && (~(~macro + 1) == 1))
 
 #if defined(__INTEL_COMPILER)
 	#define AML_INTEL 1

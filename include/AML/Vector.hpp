@@ -1294,6 +1294,7 @@ auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 */
 inline constexpr dot_fn dot;
 
+#ifndef AML_NO_CUSTOM_OPERATORS
 namespace detail {
 	template<class T>
 	struct dot_op_proxy {
@@ -1308,6 +1309,7 @@ namespace detail {
 		return aml::dot(left.v, right);
 	}
 }
+#endif
 
 // vvvvv cross product impl vvvvv
 struct cross_fn
@@ -1339,6 +1341,7 @@ auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 }
 };
 
+#ifndef AML_NO_CUSTOM_OPERATORS
 namespace detail
 {
 	template<class T>
@@ -1354,7 +1357,7 @@ namespace detail
 		return aml::cross(left.v, right);
 	}
 }
-
+#endif
 
 /**
 	@brief Linearly algebraic cross product of vectors. @f$ \vec{a} \times \vec{b} @f$
