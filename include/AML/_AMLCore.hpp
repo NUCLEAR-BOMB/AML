@@ -174,7 +174,7 @@ void logerror(
 
 	va_list argptr;
 	va_start(argptr, line);
-	vprintf(msg, argptr);
+	vfprintf(stderr, msg, argptr);
 	va_end(argptr);
 
 	std::cerr
