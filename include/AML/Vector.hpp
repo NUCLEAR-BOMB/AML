@@ -12,6 +12,7 @@
 #include <utility>
 #include <array>
 #include <cstddef>
+#include <string>
 
 #if AML_CXX20
 #include <concepts>
@@ -375,7 +376,7 @@ public:
 		return std::move(out);
 	}
 
-	template<class U = value_type>
+	template<class U = value_type> [[nodiscard]] constexpr
 	auto to_array() const noexcept
 	{
 		std::array<U, Size> out;
@@ -418,8 +419,22 @@ public:
 			return std::span<const value_type, std::dynamic_extent>(reinterpret_cast<const value_type*>(this), Size);
 		#endif
 	}
-
 #endif
+
+	[[nodiscard]] constexpr
+	std::string to_string() const noexcept 
+	{
+		std::string str;
+
+		str += "(";
+		aml::static_for<Size>([&](const auto i) {
+			str += std::to_string((*this)[i]);
+			if constexpr (i != (Size - 1)) str += ',';
+		});
+		str += ")";
+
+		return str;
+	}
 
 	/**
 		@brief Index operator overload to access field in compile-time 
@@ -870,6 +885,22 @@ public:
 	auto&& resize(const size_type new_size) && noexcept(noexcept(this->resize(new_size))) {
 		this->resize(new_size);
 		return std::move(*this);
+	}
+
+	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	std::string to_string() const noexcept
+	{
+		std::string str;
+
+		str += "(";
+		for (auto i = this->begin(); i != this->end(); ++i)
+		{
+			str += std::to_string(*i);
+			if (i != std::prev(this->end())) str += ',';
+		}
+		str += ")";
+
+		return str;
 	}
 
 	/**

@@ -333,6 +333,19 @@ TEST(VectorTest, to_span) {
 }
 #endif
 
+TEST(VectorTest, to_string)
+{
+	const Vector a(1, 100, -250);
+
+	auto str_a = a.to_string();
+	ASSERT_EQ(str_a, "(1,100,-250)");
+
+	const Vector b(1.2f, 3.4f, 5.6f);
+
+	auto str_b = b.to_string();
+	ASSERT_EQ(str_b, "(1.200000,3.400000,5.600000)");
+}
+
 TEST(DynamicVectorTest, init_using_array) {
 	const DVector<int> a({ 2 });
 
@@ -506,6 +519,15 @@ TEST(DynamicVectorTest, cast_from_static_vector)
 	EXPECT_EQ(b[0], 10);
 	EXPECT_EQ(b[1], 20);
 	EXPECT_EQ(b[2], 30);
+}
+
+TEST(DynamicVectorTest, to_string)
+{
+	const DVector<int> a(-10, 168, 32855);
+	ASSERT_EQ(a.to_string(), "(-10,168,32855)");
+
+	const DVector<float> b(123.456f, 789.112f);
+	ASSERT_EQ(b.to_string(), "(123.456001,789.112000)");
 }
 
 TEST(DynamicAndStaticVectorTest, operators) 
