@@ -29,7 +29,7 @@ TEST(VectorTest, init_filled) {
 	EXPECT_EQ(a[1], 10);
 }
 
-TEST(VectorTest, checkSize) {
+TEST(VectorTest, check_size) {
 	Vector<int, 1> a({ 200 });
 	EXPECT_EQ(a.size(), 1);
 
@@ -190,137 +190,65 @@ TEST(VectorTest, iterate) {
 		++bi;
 	}
 }
-// +
-TEST(VectorTest, add) {
+
+TEST(VectorTest, operators) 
+{
 	const Vector<int, 3> a(1, 2, 3);
 	const Vector<int, 3> b(3, 2, 1);
 
-	const auto r1 = a + b;
-	const auto r2 = b + a;
+	const int s = 12;
+	const float sf = 1.2345f;
 
-	const Vector<int, 3> result(4, 4, 4);
-	ASSERT_EQ(r1, result);
-	ASSERT_EQ(r2, result);
-}
-// +=
-TEST(VectorTest, add_eq) {
-	Vector<int, 3> a(2, 4, 6);
-	const Vector<int, 3> b(1, 2, 3);
+	ASSERT_EQ((a + b), Vector(4, 4, 4));
+	ASSERT_EQ((b + a), Vector(4, 4, 4));
 
-	a += b;
+	auto c = a;
 
-	const Vector<int, 3> result(3, 6, 9);
-	ASSERT_EQ(a, result);
-}
-// -
-TEST(VectorTest, sub) {
-	const Vector<int, 3> a(3, 4, 5);
-	const Vector<int, 3> b(5, 6, 7);
+	c += b;
+	ASSERT_EQ(c, Vector(4, 4, 4));
 
-	const auto r1 = a - b;
-	const auto r2 = b - a;
+	ASSERT_EQ((a - b), Vector(-2, 0, 2));
+	ASSERT_NE((b - a), Vector(-2, 0, 2));
 
-	const Vector<int, 3> result(-2, -2, -2);
-	ASSERT_EQ(r1, result);
-	ASSERT_NE(r1, r2);
-}
-// -=
-TEST(VectorTest, sub_eq) {
-	Vector<int, 3> a(-1, -2, -3);
-	const Vector<int, 3> b(1, 2, 3);
+	c -= a;
+	ASSERT_EQ(c, Vector(3, 2, 1));
 
-	a -= b;
-	const Vector<int, 3> result(-2, -4, -6);
-	ASSERT_EQ(a, result);
-}
-// *
-TEST(VectorTest, mul_by_scalar) {
-	const Vector<int, 3> a(0, 1, 0);
-	const int b = 3;
+	ASSERT_EQ((a * s), Vector(12, 24, 36));
+	ASSERT_EQ((s * a), Vector(12, 24, 36));
 
-	const auto r1 = a * b;
-	const auto r2 = b * a;
+	c *= s;
+	ASSERT_EQ(c, Vector(36, 24, 12));
 
-	const Vector<int, 3> result(0, 3, 0);
-	ASSERT_EQ(r1, result);
-	ASSERT_EQ(r2, result);
-}
-// *=
-TEST(VectorTest, mul_eq_by_scalar) {
-	Vector<int, 3> a(10, 20, 30);
-	const int b = 3;
+	ASSERT_EQ((a / sf), Vector(0.810044527f, 1.62008905f, 2.43013358f));
+	ASSERT_NE((sf / a), Vector(0.810044527f, 1.62008905f, 2.43013358f));
 
-	a *= b;
+	auto cf = static_cast<Vector<float, 3>>(c);
 
-	const Vector<int, 3> result(30, 60, 90);
-	ASSERT_EQ(a, result);
-}
-// /
-TEST(VectorTest, div_by_scalar) {
-	const Vector<int, 3> a(5, 10, 15);
-	const int b = 5;
+	cf /= sf;
+	ASSERT_EQ(cf, Vector(29.1616020f, 19.4410686f, 9.72053432f));
 
-	const auto r1 = a / b;
-	const auto r2 = b / a;
-
-	const Vector<int, 3> result(1, 2, 3);
-	ASSERT_EQ(r1, result);
-	ASSERT_NE(r1, r2);
-}
-// /=
-TEST(VectorTest, div_eq_by_scalar) {
-	Vector<int, 3> a(10, 20, 30);
-	const int b = 10;
-
-	a /= b;
-
-	const Vector<int, 3> result(1, 2, 3);
-	ASSERT_EQ(a, result);
-}
-// -
-TEST(VectorTest, neg) {
-	const Vector<int, 3> a(1, 3, 5);
-
-	auto b = -a;
-
-	const Vector<int, 3> result(-1, -3, -5);
-	ASSERT_EQ(b, result);
-	ASSERT_NE(b, a);
+	c = -a;
+	ASSERT_EQ(c, Vector(-1, -2, -3));
+	ASSERT_NE(c, a);
 }
 
-TEST(VectorTest, dist) {
-	const Vector<int, 2> a(3, 4);
+TEST(VectorTest, functions)
+{
+	ASSERT_FLOAT_EQ(aml::dist(Vector(3, 4)), 5.f);
+	ASSERT_FLOAT_EQ(aml::dist(Vector(1.f, 2.f, 3.f)), 3.74165738f);
+	ASSERT_DOUBLE_EQ(aml::dist(Vector(1., 2., 3., 4., 5., 6., 7.)), 11.832159566199232);
 
-	EXPECT_FLOAT_EQ(aml::dist(a), 5.f);
+	ASSERT_FLOAT_EQ(aml::dist_between(Vector(15, 21), Vector(-5, 0)), 29.f);
+	ASSERT_FLOAT_EQ(aml::dist_between(
+		Vector(100.24f, -100.64f, 50.5f), 
+		Vector(125.f, 250.f, 300.f)),
+	431.05884f);
 
-	const Vector<float, 3> b(1.f, 2.f, 3.f);
-	EXPECT_FLOAT_EQ(aml::dist(b), 3.74165738f);
+	ASSERT_EQ(aml::normalize(Vector(5, 10)), Vector(0.44721359549f, 0.894427190999f));
 
-	const Vector<double, 7> c(1., 2., 3., 4., 5., 6., 7.);
-	EXPECT_DOUBLE_EQ(aml::dist(c), 11.832159566199232);
-}
+	ASSERT_EQ((aml::dot(Vector(5, 6, 7), Vector(-2, 10, -1))), 43);
+	ASSERT_EQ((Vector(5, 6, 7) <dot> Vector(-2, 10, -1)), 43);
 
-TEST(VectorTest, dist_between) {
-	const Vector<int, 2> a1(15, 21);
-	const Vector<int, 2> b1(-5, 0);
-	ASSERT_FLOAT_EQ(aml::dist_between(a1, b1), 29.f);
-
-	const Vector<float, 3> a2(100.24f, -100.64f, 50.5f);
-	const Vector<float, 3> b2(125.f, 250.f, 300.f);
-	ASSERT_FLOAT_EQ(aml::dist_between(a2, b2), 431.05884f);
-}
-
-TEST(VectorTest, dot) {
-	const Vector<int, 3> a(5, 6, 7);
-	const Vector<int, 3> b(-2, 10, -1);
-
-	ASSERT_EQ((aml::dot(a, b)), 43);
-
-	auto a_dot_b = a <dot> b;
-	ASSERT_EQ(a_dot_b, 43);
-}
-
-TEST(VectorTest, cross) {
 	const Vector<int, 3> a(1, 2, 3);
 	const Vector<int, 3> b(4, 5, 6);
 
@@ -343,26 +271,13 @@ TEST(VectorTest, cross) {
 	EXPECT_EQ(k_cross_i, j);
 }
 
-TEST(VectorTest, zerovector) {
-	const Vector<int, 3> a(aml::zero);
-	const Vector<int, 3> b(0, 0, 0);
+TEST(VectorTest, special_init)
+{
+	ASSERT_EQ((Vector<int, 3>(aml::zero)), Vector(0, 0, 0));
 
-	ASSERT_EQ(a, b);
-}
+	ASSERT_EQ((Vector<int, 4>(aml::unit<0>)), Vector(1, 0, 0, 0));
 
-TEST(VectorTest, unitvector) {
-	const Vector<int, 4> a(aml::unit<0>);
-
-	const Vector<int, 4> result(1, 0, 0, 0);
-	ASSERT_EQ(a, result);
-}
-
-TEST(VectorTest, normalize) {
-	const Vector<int, 2> a(5, 10);
-	const Vector<float, 2> na = aml::normalize(a);
-
-	const Vector<float, 2> resulta(0.44721359549f, 0.894427190999f);
-	ASSERT_EQ(na, resulta);
+	ASSERT_EQ((Vector<int, 2>(aml::one)), Vector(1, 1));
 }
 
 TEST(VectorTest, cast_from_dynamic_vector) {
