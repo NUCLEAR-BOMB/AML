@@ -491,4 +491,33 @@ inline constexpr bool is_immutable_ref = std::is_constructible_v<T, const From&>
 template<class T>
 inline constexpr bool is_const_ref = std::is_const_v<std::remove_reference_t<T>>;
 
+namespace detail
+{
+	template<class R, class... Args>
+	struct function_traits_impl_base 
+	{
+		using result_type = R;
+
+		using args_as_tuple = std::tuple<Args...>;
+
+		template<std::size_t I>
+		using arg = std::tuple_element_t<I, args_as_tuple>;
+	};
+
+	template<class>
+	struct function_traits_impl;
+
+	template<class R, class... Args> struct function_traits_impl<R(Args..., ...)> 
+		: function_traits_impl_base<R, Args...> {};
+
+	template<class R, class... Args> struct function_traits_impl<std::function<R(Args...)>> 
+		: function_traits_impl_base<R, Args...> {};
+
+	template<class R, class... Args> struct function_traits_impl<R(Args...)> 
+		: function_traits_impl_base<R, Args...> {};
+}
+
+template<class Func>
+using function_traits = detail::template function_traits_impl<Func>;
+
 }
