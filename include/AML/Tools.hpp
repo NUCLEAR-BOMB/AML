@@ -481,4 +481,14 @@ namespace detail {
 template<class T>
 using get_value_type = typename detail::template get_value_type_impl<T>::type;
 
+template<class T>
+using remove_ptr_and_ref = std::remove_reference_t<std::remove_pointer_t<std::decay_t<T>>>;
+
+template<class T, class From>
+inline constexpr bool is_immutable_ref = std::is_constructible_v<T, const From&> || 
+										 std::is_assignable_v<T, const From&>;
+
+template<class T>
+inline constexpr bool is_const_ref = std::is_const_v<std::remove_reference_t<T>>;
+
 }

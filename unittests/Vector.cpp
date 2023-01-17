@@ -392,6 +392,32 @@ TEST(VectorTest, resize) {
 	EXPECT_EQ(c[2], 0);
 }
 
+TEST(VectorTest, to_array)
+{
+	Vector a(1, 2, 3);
+	auto a1 = a.to_array<int>();
+	Vector b(1, 2, 3, 4);
+	auto b1 = a.to_array<float>();
+
+	const Vector c(1, 2, 3, 4, 5, 6);
+	auto c1 = c.to_array();
+	const Vector d(1, 2);
+	auto d1 = d.to_array<float>();
+}
+
+#if AML_CXX20 && defined(AML_PACK_VECTOR)
+TEST(VectorTest, to_span) {
+
+	Vector a(1, 2, 3, 4, 5, 6);
+
+	auto a1 = a.to_span();
+
+	const Vector b(1, 2, 3, 4, 5);
+
+	auto b1 = b.to_span();
+}
+#endif
+
 TEST(DynamicVectorTest, init_using_array) {
 	const DVector<int> a({ 2 });
 

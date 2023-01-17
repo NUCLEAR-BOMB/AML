@@ -10,9 +10,11 @@
 #include <algorithm>
 #include <vector>
 #include <utility>
+#include <array>
 
 #if AML_CXX20
 #include <concepts>
+#include <span>
 #endif
 
 #ifdef AML_LIBRARY
@@ -20,6 +22,8 @@
 #else
 	#error AML library is required
 #endif
+
+//#define AML_PACK_VECTOR
 
 namespace aml 
 {
@@ -141,14 +145,21 @@ namespace detail
 	&& !aml::is_narrowing_conversion<typename Container::size_type, Vectorsize>;
 #endif // AML_CXX20
 
-	/**
-		@brief The representation of a vector from linear algebra as a statically allocated template class
+/**
+	@brief The representation of a vector from linear algebra as a statically allocated template class
 
-		@tparam T The type of the elements
-		@tparam Size The static vector size
+	@tparam T The type of the elements
+	@tparam Size The static vector size
 
-		@see aml::Vector<Container, dynamic_extent>
-	*/
+	@see aml::Vector<Container, dynamic_extent>
+*/
+#ifdef AML_PACK_VECTOR
+	#if (AML_MSVC || AML_GCC)
+		#pragma pack(push, 1)
+	#else
+		#error is not supported struct packing by compiler
+	#endif
+#endif
 template<class T, Vectorsize Size>
 #if AML_CXX20
 	//requires (Size != aml::dynamic_extent)
@@ -340,7 +351,7 @@ public:
 		
 		@attention If the new size (<tt>OtherSize</tt>) is larger than the current size (<tt>Size</tt>), the remaining elements will be filled with 0
 	*/
-	template<Vectorsize OtherSize, class OtherT = T> [[nodiscard]] AML_CONSTEVAL
+	template<Vectorsize OtherSize, class OtherT = value_type> [[nodiscard]] constexpr
 	auto&& resize() const noexcept
 	{
 		Vector<OtherT, OtherSize> out;
@@ -355,6 +366,52 @@ public:
 
 		return std::move(out);
 	}
+
+	template<class U = value_type>
+	auto to_array() const noexcept
+	{
+		std::array<U, Size> out;
+
+		aml::static_for<Size>([&](const auto i) {
+			out[i] = static_cast<U>((*this)[i]);
+		});
+
+		return out;
+	}
+
+
+#if AML_CXX20
+	template<class T2_ = T,	std::enable_if_t<
+		std::is_same_v<T2_, T> && (Base::uses_static_array()
+	#ifdef AML_PACK_VECTOR
+	|| true		
+	#endif
+	), int> = 0>
+	auto to_span() noexcept
+	{
+		#ifndef AML_PACK_VECTOR
+			return std::span<value_type, Size>(this->array);
+		#else
+			return std::span<value_type, std::dynamic_extent>(reinterpret_cast<value_type*>(this), Size);
+		#endif
+	}
+
+	template<class T2_ = T, std::enable_if_t<
+		std::is_same_v<T2_, T> && (Base::uses_static_array()
+	#ifdef AML_PACK_VECTOR
+	|| true
+	#endif
+	), int> = 0>
+	auto to_span() const noexcept
+	{
+		#ifndef AML_PACK_VECTOR
+			return std::span<const value_type, Size>(this->array);
+		#else
+			return std::span<const value_type, std::dynamic_extent>(reinterpret_cast<const value_type*>(this), Size);
+		#endif
+	}
+
+#endif
 
 	/**
 		@brief Index operator overload to access field in compile-time 
@@ -502,6 +559,13 @@ public:
 	}
 
 }; // class Vector<T, Size>
+#ifdef AML_PACK_VECTOR
+	#if (AML_MSVC || AML_GCC)
+		#pragma pack(pop)
+	#endif
+#endif
+
+
 /**
 	@example Vector.cpp
 	
@@ -1371,6 +1435,30 @@ auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 }
 };
 
+/**
+	@brief Linearly algebraic cross product of vectors. @f$ \vec{a} \times \vec{b} @f$
+	@details @f$ = (\vec{a}_y \vec{b}_z - \vec{a}_z \vec{b}_y,
+					\vec{a}_z \vec{b}_x - \vec{a}_x \vec{b}_z,
+					\vec{a}_x \vec{b}_y - \vec{a}_y \vec{b}_x)
+				 = \begin{vmatrix}
+					   \hat{i} & \hat{j} & \hat{k} \\
+					   \vec{a}_x & \vec{a}_y & \vec{a}_z \\
+					   \vec{b}_x & \vec{b}_y & \vec{b}_z
+				   \end{vmatrix} @f$
+			@n
+			Can be used as the operator (vecres = vec1 @<cross@> vec2)
+			@n
+			[Wikipedia page](https://en.wikipedia.org/wiki/Cross_product)
+
+	@attention
+				The size of the vectors must be equal to 3
+
+	@todo
+				Add seven-dimensional cross product @n
+				https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
+*/
+inline constexpr aml::cross_fn cross;
+
 #ifndef AML_NO_CUSTOM_OPERATORS
 namespace detail
 {
@@ -1388,30 +1476,6 @@ namespace detail
 	}
 }
 #endif
-
-/**
-	@brief Linearly algebraic cross product of vectors. @f$ \vec{a} \times \vec{b} @f$
-	@details @f$ = (\vec{a}_y \vec{b}_z - \vec{a}_z \vec{b}_y,
-				    \vec{a}_z \vec{b}_x - \vec{a}_x \vec{b}_z,
-				    \vec{a}_x \vec{b}_y - \vec{a}_y \vec{b}_x) 
-				 = \begin{vmatrix}
-				       \hat{i} & \hat{j} & \hat{k} \\
-					   \vec{a}_x & \vec{a}_y & \vec{a}_z \\
-					   \vec{b}_x & \vec{b}_y & \vec{b}_z
-				   \end{vmatrix} @f$
-			@n
-			Can be used as the operator (vecres = vec1 @<cross@> vec2)
-			@n
-			[Wikipedia page](https://en.wikipedia.org/wiki/Cross_product)
-
-	@attention
-				The size of the vectors must be equal to 3
-
-	@todo 
-				Add seven-dimensional cross product @n
-				https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
-*/
-inline constexpr aml::cross_fn cross;
 
 /**
 	@brief Normalizes the vector. @f$ \frac{\vec{a}}{ || \vec{a} || } @f$
