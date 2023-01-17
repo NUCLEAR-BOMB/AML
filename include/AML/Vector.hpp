@@ -11,6 +11,7 @@
 #include <vector>
 #include <utility>
 #include <array>
+#include <cstddef>
 
 #if AML_CXX20
 #include <concepts>
@@ -113,6 +114,7 @@ namespace detail
 
 		static constexpr Vectorsize extent = aml::dynamic_extent;
 	};
+
 } // namespace detail
 
 #if AML_CXX20
@@ -175,12 +177,18 @@ public:
 
 	using reference			= typename Base::reference;		  ///< Type that the non-const index operator returns
 	using const_reference	= typename Base::const_reference; ///< Type that const index operator returns
-
+	
+#ifndef AML_PACK_VECTOR
 	/// The return type of the non-const begin() and end() methods
-	using iterator			= std::conditional_t<Base::uses_static_array(),		  T*,	   aml::IndexIterator<Vector<T, Size>>>;
+	using iterator			= std::conditional_t<Base::uses_static_array(),		  value_type*,	   aml::IndexIterator<Vector<value_type, Size>>>;
 
 	/// The return type of the const begin(), cbegin() and end(), cend() methods
-	using const_iterator	= std::conditional_t<Base::uses_static_array(), const T*, aml::ConstIndexIterator<Vector<T, Size>>>;
+	using const_iterator	= std::conditional_t<Base::uses_static_array(), const value_type*, aml::ConstIndexIterator<Vector<value_type, Size>>>;
+#else
+	using iterator = value_type*;
+	using const_iterator = const value_type*;
+#endif
+
 
 public:
 
@@ -471,12 +479,16 @@ public:
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array[index];
 		} else {
+#ifndef AML_PACK_VECTOR
 			if constexpr (Base::has_index(0)) if (index == 0) return Storage::x;
 			if constexpr (Base::has_index(1)) if (index == 1) return Storage::y;
 			if constexpr (Base::has_index(2)) if (index == 2) return Storage::z;
 			if constexpr (Base::has_index(3)) if (index == 3) return Storage::w;
 			if constexpr (Base::has_index(4)) if (index == 4) return Storage::v;
 			AML_UNREACHABLE;
+#else
+			return (reinterpret_cast<value_type*>(this))[index];
+#endif
 		}
 	}
 
@@ -502,7 +514,11 @@ public:
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array;
 		} else {
+#ifndef AML_PACK_VECTOR
 			return iterator(*this, 0);
+#else
+			return reinterpret_cast<iterator>(this);
+#endif
 		}
 	}
 
@@ -512,9 +528,13 @@ public:
 	[[nodiscard]] constexpr
 	iterator end() noexcept(std::is_nothrow_constructible_v<iterator, decltype(*this), decltype(size())>) {
 		if constexpr (Base::uses_static_array()) {
-			return Storage::array + size();
+			return Storage::array + this->size();
 		} else {
-			return iterator(*this, size());
+#ifndef AML_PACK_VECTOR
+			return iterator(*this, this->size());
+#else
+			return reinterpret_cast<iterator>(this) + this->size();
+#endif
 		}
 	}
 
@@ -526,7 +546,11 @@ public:
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array;
 		} else {
+#ifndef AML_PACK_VECTOR
 			return const_iterator(*this, 0);
+#else
+			return reinterpret_cast<const_iterator>(this);
+#endif
 		}
 	}
 
@@ -536,9 +560,13 @@ public:
 	[[nodiscard]] constexpr
 	const_iterator end() const noexcept(std::is_nothrow_constructible_v<const_iterator, decltype(*this), decltype(size())>) {
 		if constexpr (Base::uses_static_array()) {
-			return Storage::array + size();
+			return Storage::array + this->size();
 		} else {
-			return const_iterator(*this, size());
+#ifndef AML_PACK_VECTOR
+			return const_iterator(*this, this->size());
+#else
+			return reinterpret_cast<const_iterator>(this) + this->size();
+#endif
 		}
 	}
 
