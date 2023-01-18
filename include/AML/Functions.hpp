@@ -99,6 +99,10 @@ bool equal(const Left& left, const Right& right) noexcept
 		const type m = aml::max<type>(static_cast<type>(1), aml::abs<type>(left), aml::abs<type>(right));
 		return (aml::abs(left - right)) <= (std::numeric_limits<type>::epsilon() * m);
 	} 
+	else if constexpr (std::is_arithmetic_v<Left> && std::is_arithmetic_v<Right>) {
+		using common = std::common_type_t<Left, Right>;
+		return (static_cast<common>(left) == static_cast<common>(right));
+	}
 	else {
 		return (left == right);
 	}
@@ -134,7 +138,7 @@ auto dist_between(const Left& left, const Right& right) noexcept {
 /**
 	@brief Checks if @p val is odd
 */
-template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
+template<class T> [[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
 bool odd(const T& val) noexcept 
 {
 	static_assert(!std::is_floating_point_v<T>, "T must not be a floating point number");
@@ -144,7 +148,7 @@ bool odd(const T& val) noexcept
 /**
 	@brief Checks if @p val is even
 */
-template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
+template<class T> [[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
 bool even(const T& val) noexcept {
 	return !aml::odd(val);
 }
@@ -152,7 +156,7 @@ bool even(const T& val) noexcept {
 /**
 	@brief Checks if @p val is negative
 */
-template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
+template<class T> [[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
 bool negative(const T& val) noexcept {
 	if constexpr (std::is_unsigned_v<T>) {
 		return false;
@@ -164,7 +168,7 @@ bool negative(const T& val) noexcept {
 /**
 	@brief Checks if @p val is positive
 */
-template<class T> [[nodiscard]] constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
+template<class T> [[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
 bool positive(const T& val) noexcept {
 	return !aml::negative(val);
 }
@@ -179,9 +183,9 @@ decltype(auto) floor(T&& val) noexcept
 		return aml::selectable_convert<OutType>(val);
 	} 
 	else if constexpr (std::is_floating_point_v<T>) { 
-		const auto t = static_cast<std::int_fast64_t>(val);
+		const std::int_fast64_t t = static_cast<std::int_fast64_t>(val);
 		using conv = aml::selectable_type<OutType, T>;
-		return static_cast<conv>(t - (t > val ? 1 : 0));
+		return static_cast<conv>(t - (static_cast<T>(t) > val ? 1 : 0));
 	} 
 	else {
 		static_assert(!sizeof(T*), "Flooring not supported type");
@@ -200,7 +204,7 @@ decltype(auto) ceil(T&& val) noexcept
 	else if constexpr (std::is_floating_point_v<T>) {
 		const auto t = static_cast<std::int_fast64_t>(val);
 		using conv = aml::selectable_type<OutType, T>;
-		return static_cast<conv>(t + (t < val ? 1 : 0));
+		return static_cast<conv>(t + (static_cast<T>(t) < val ? 1 : 0));
 	} 
 	else {
 		static_assert(!sizeof(T*), "Ceiling not supported type");

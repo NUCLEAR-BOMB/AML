@@ -18,6 +18,7 @@ public:
 	using value_type = typename Object::value_type;
 
 	using difference_type = Difference;
+	using object_size_type = typename Object::size_type;
 
 	using reference = value_type&;
 	using const_reference = const value_type&;
@@ -118,17 +119,17 @@ public:
 
 	[[nodiscard]] constexpr
 	std::conditional_t<std::is_const_v<Object>, const_reference, reference> operator*() noexcept {
-		return m_object[m_shift];
+		return m_object[static_cast<object_size_type>(m_shift)];
 	}
 
 	[[nodiscard]] constexpr
 	std::conditional_t<std::is_const_v<Object>, const_pointer, pointer> operator->() noexcept {
-		return std::addressof(m_object[m_shift]);
+		return std::addressof(m_object[static_cast<object_size_type>(m_shift)]);
 	}
 
 	[[nodiscard]] constexpr
 	std::conditional_t<std::is_const_v<Object>, const_reference, reference> operator[](difference_type off) noexcept {
-		return m_object[m_shift + off];
+		return m_object[static_cast<object_size_type>(m_shift + off)];
 	}
 
 private:

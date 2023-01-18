@@ -11,7 +11,13 @@ file(GLOB_RECURSE ALL_FILES CONFIGURE_DEPENDS
 
 add_executable(${PROJECT_NAME} ${ALL_FILES})
 
-target_link_libraries(${PROJECT_NAME} GTest::gtest AML)
+target_compile_options("AML" INTERFACE
+	$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:
+		-Wno-unused-variable -Wno-implicit-int-float-conversion
+	>
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest AML)
 
 set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "GoogleTest")
 

@@ -30,7 +30,7 @@ auto pow(const Left& left, const Right& right) noexcept {
 }
 
 template<class OutType = aml::selectable_unused, class First, class Second, class... Rest> [[nodiscard]] constexpr
-auto dist(const First& first, const Second& second, const Rest&... rest) noexcept {
+auto dist(const First& first, const Rest&... rest) noexcept {
 	auto sum = aml::sum_of(first, rest...);
 	return aml::sqrt<OutType>(sum);
 }

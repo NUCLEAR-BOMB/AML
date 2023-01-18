@@ -304,7 +304,7 @@ namespace detail
 			2..2	&rArr; @c int16 @n
 			3..4	&rArr; @c int32 @n
 			5..8	&rArr; @c int64 @n
-			>8		&rArr; @c void
+			>8		&rArr; @c error
 */
 template<std::size_t Bytes>
 using signed_from_bytes = typename detail::template signed_from_bytes_impl2<Bytes>::type;
@@ -319,7 +319,7 @@ using signed_from_bytes = typename detail::template signed_from_bytes_impl2<Byte
 			2..2	&rArr; @c uint16 @n
 			3..4	&rArr; @c uint32 @n
 			5..8	&rArr; @c uint64 @n
-			>8		&rArr; @c void
+			>8		&rArr; @c error
 */
 template<std::size_t Bytes>
 using unsigned_from_bytes = std::make_unsigned_t<signed_from_bytes<Bytes>>;
@@ -334,7 +334,7 @@ using unsigned_from_bytes = std::make_unsigned_t<signed_from_bytes<Bytes>>;
 			9..16	&rArr; @c int16 @n
 			17..32	&rArr; @c int32 @n
 			33..64	&rArr; @c int64 @n
-			>64		&rArr; @c void
+			>64		&rArr; @c error
 
 	@see signed_from_bytes
 */
@@ -351,7 +351,7 @@ using signed_from_bits = signed_from_bytes<(Bits + (CHAR_BIT - 1)) / CHAR_BIT>;
 			9..16	&rArr; @c uint16 @n
 			17..32	&rArr; @c uint32 @n
 			33..64	&rArr; @c uint64 @n
-			>64		&rArr; @c void
+			>64		&rArr; @c error
 
 	@see unsigned_from_bytes
 */

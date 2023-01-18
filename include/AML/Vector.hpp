@@ -350,7 +350,7 @@ public:
 	/**
 		@brief Returns size of the vector
 	*/
-	[[nodiscard]] AML_CONSTEVAL static /** @cond */ AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ AML_CONSTEVAL static
 	size_type size() noexcept {
 		return Size;
 	}
@@ -421,7 +421,7 @@ public:
 	}
 #endif
 
-	[[nodiscard]] constexpr
+	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC
 	std::string to_string() const noexcept 
 	{
 		std::string str;
@@ -446,7 +446,7 @@ public:
 
 		@see aml::VI namespace
 	*/
-	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
+	template<size_type I> /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
 	reference operator[](const VI::index<I>) noexcept 
 	{
 		static_assert(I < Size, "Static vector index out of range");
@@ -472,7 +472,7 @@ public:
 
 		@see VI namespace
 	*/
-	template<size_type I> constexpr /** @cond */ AML_FORCEINLINE /** @endcond */
+	template<size_type I> /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
 	const_reference operator[](const VI::index<I>) const noexcept {
 		return const_cast<Vector&>(*this)[VI::index<I>{}];
 	}
@@ -822,7 +822,7 @@ public:
 	{
 		using other_value_type = aml::get_value_type<decltype(other)>;
 
-		std::transform(other.container.cbegin(), other.container.cend(), this->container.begin(),
+		std::transform(other.cbegin(), other.cend(), this->begin(),
 			[](const other_value_type& val) {
 				return static_cast<value_type>(val);
 			}

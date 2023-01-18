@@ -69,7 +69,7 @@
 #endif
 
 #if AML_CLANG
-	#define AML_FORCEINLINE [[gnu::always_inline]] [[gnu::gnu_inline]] extern inline
+	#define AML_FORCEINLINE [[gnu::always_inline]] inline
 #elif AML_GCC
 	#define AML_FORCEINLINE [[gnu::always_inline]] inline
 #elif AML_MSVC
@@ -163,17 +163,17 @@ using error_string_type		= const char*; // std::string?
 
 [[noreturn]] inline
 void logerror(
-	error_string_type msg, 
+	error_line_type line,
 	error_func_str_type func, 
-	error_file_str_type file, 
-	error_line_type line, 
+	error_file_str_type file,
+	error_string_type msg,
 	...
 ) noexcept {
 	std::cerr
 		<< "\n   ";
 
 	va_list argptr;
-	va_start(argptr, line);
+	va_start(argptr, msg);
 	vfprintf(stderr, msg, argptr);
 	va_end(argptr);
 
@@ -183,33 +183,21 @@ void logerror(
 		<< file << "(" << line << ")" << '\n';
 
 	AML_DEBUG_BREAK;
+	std::abort();
 }
 
 #if AML_DEBUG
-	#define AML_DEBUG_ERROR(errmsg, ...) \
-		::aml::logerror(errmsg, AML_PRETTY_FUNCTION, __FILE__, __LINE__, __VA_ARGS__)
-
-	//#define AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_) ::aml::logerror(errmsg, file_, line_)
+	#define AML_DEBUG_ERROR(...) \
+		::aml::logerror(__LINE__, AML_PRETTY_FUNCTION, __FILE__, __VA_ARGS__)
 #else /// !AML_DEBUG
 	#define AML_DEBUG_ERROR(errmsg) ((void)0)
 #endif /// !AML_DEBUG
 
 #if AML_DEBUG
-	#define AML_DEBUG_VERIFY(expression, errmsg, ...)	\
-		do { if (expression) {} else { AML_DEBUG_ERROR(errmsg, __VA_ARGS__); } } while (0)
-
-	/*
-	#define AML_DEBUG_VERIFY_LOCATION(expression, errmsg, file_, line_) \
-		if (expression) {}												\
-		else {															\
-			AML_DEBUG_ERROR_LOCATION(errmsg, file_, line_);				\
-		}
-	*/
+	#define AML_DEBUG_VERIFY(expression, ...)	\
+		do { if (expression) {} else { AML_DEBUG_ERROR(__VA_ARGS__); } } while (0)
 #else // !AML_DEBUG
 	#define AML_DEBUG_VERIFY(expression, errmsg) ((void)0)
 #endif // !AML_DEBUG
-
-//#define AML_CREATE_CUSTOM_BINARY_OPERATOR(opname, returntype, firsttype, secondtype) \
-
 
 }

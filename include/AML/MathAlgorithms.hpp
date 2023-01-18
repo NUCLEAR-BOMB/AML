@@ -27,7 +27,7 @@ namespace algorithms
 
 		auto lastx = x;
 		while (true) {
-			x = outtype(0.5) * (x + (val / x));
+			x = outtype(0.5) * (x + (static_cast<outtype>(val) / x));
 			if (aml::equal(x, lastx)) break;
 			lastx = x;
 		}

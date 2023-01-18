@@ -56,7 +56,7 @@ TEST(static_for_test, force_max)
 	ASSERT_EQ(a, 123);
 }
 
-static constexpr
+[[maybe_unused]] static constexpr
 void test_of_bytes() {
 	using namespace std;
 	static_assert(is_same_v<std::make_unsigned_t<signed_from_bytes<0>>, unsigned_from_bytes<0>>);
@@ -78,7 +78,7 @@ void test_of_bytes() {
 	static_assert(4 > sizeof(float) || is_same_v<floating_point_from_bytes<4>, float>);
 }
 
-static constexpr
+[[maybe_unused]] static constexpr
 void test_of_bits() {
 	using namespace std;
 	static_assert(is_same_v<std::make_unsigned_t<signed_from_bits<0>>, unsigned_from_bits<0>>);

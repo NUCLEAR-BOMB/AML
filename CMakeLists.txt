@@ -31,7 +31,7 @@ target_compile_options	  (${PROJECT_NAME} INTERFACE
 	$<IF:$<CXX_COMPILER_ID:MSVC>,
 		/W4 /WX
 	, # ^^^ MSVC | not MSVC vvv
-		-Wall -Wextra -pedantic -Werror
+		-Wall -Wextra -pedantic -Wconversion -Werror
 	>
 )
 
