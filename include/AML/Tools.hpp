@@ -7,6 +7,7 @@
 #include <tuple>
 #include <functional>
 #include <cstddef>
+#include <vector>
 
 #ifdef AML_LIBRARY
 	#define AML_LIBRARY_TOOLS
@@ -396,8 +397,44 @@ namespace detail
 		: std::true_type {};
 } // namespace detail
 
+/**
+	@brief Checks if @p Container has <tt>rebind<U>::type</tt>
+*/
 template<class Container, class U = int>
 inline constexpr bool has_rebind = detail::template has_rebind_impl<Container, U>::value;
+
+namespace detail
+{
+	template<class Container>
+	struct container_parameters_impl;
+
+	template<template <class, class...> class Container, class T, class... Parameters>
+	struct container_parameters_impl<Container<T, Parameters...>>
+	{
+		using type = std::tuple<Parameters...>;
+	};
+
+	template<class Container>
+	struct container_value_impl;
+
+	template<template <class, class...> class Container, class T, class... Parameters>
+	struct container_value_impl<Container<T, Parameters...>> 
+	{
+		using type = T;
+	};
+} // namespace detail
+
+/**
+	@brief Template type alias of @p Container parameters as a @c std::tuple<...>
+*/
+template<class Container>
+using container_parameters = typename detail::template container_parameters_impl<Container>::type;
+
+/**
+	@brief Template type alias of @p Container value type
+*/
+template<class Container>
+using container_value = typename detail::template container_value_impl<Container>::type;
 
 namespace detail
 {
@@ -417,36 +454,35 @@ namespace detail
 		// if has Container::rebind<...>::type
 		using type = typename Container::template rebind<U>::type;
 	};
+}
 
+/**
+	@brief Struct that rebinds container value type
+	@details You can add new specializations to this struct to add support for a container
 
-	template<class Container>
-	struct container_parameters_impl;
-
-	template<template <class, class...> class Container, class T, class... Parameters>
-	struct container_parameters_impl<Container<T, Parameters...>>
-	{
-		using type = std::tuple<Parameters...>;
-	};
-
-
-	template<class Container>
-	struct container_value_impl;
-
-	template<template <class, class...> class Container, class T, class... Parameters>
-	struct container_value_impl<Container<T, Parameters...>> 
-	{
-		using type = T;
-	};
-} // namespace detail
-
+	@see aml::rebind_container
+*/
 template<class Container, class U>
-using rebind_container = typename detail::template rebind_container_impl<Container, U>::type;
+struct rebind_container_body
+{
+	using type = typename detail::template rebind_container_impl<Container, U>::type;
+};
 
-template<class Container>
-using container_parameters = typename detail::template container_parameters_impl<Container>::type;
+template<class T, class Allocator, class U>
+struct rebind_container_body<std::vector<T, Allocator>, U>
+{
+	using rebinded_allocator = typename rebind_container_body<Allocator, U>::type;
 
-template<class Container>
-using container_value = typename detail::template container_value_impl<Container>::type;
+	using type = std::vector<U, rebinded_allocator>;
+};
+
+/**
+	@brief Rebinds @p Container as a container with value type of @p U
+
+	@see aml::rebind_container_body
+*/
+template<class Container, class U>
+using rebind_container = typename aml::template rebind_container_body<Container, U>::type;
 
 /**
 	@brief Verifies if @p Left nad @p Right have same parameters
@@ -460,16 +496,10 @@ constexpr void verify_container_parameters() noexcept {
 	static_assert(std::is_same_v<lp, rp>, "The parameters of the containers must be the same");
 }
 
-namespace detail {
-
-	template<class T, class = void>
-	struct get_value_type_impl {
-		//static_assert(!sizeof(T*), "T must have a type alias \"value_type\"");
-		//using type = void;
-	};
-
+namespace detail 
+{
 	template<class T>
-	struct get_value_type_impl<T, std::void_t<typename std::template decay_t<T>::value_type>> {
+	struct get_value_type_impl {
 		using type = typename std::template decay_t<T>::value_type;
 	};
 } // namespace detail

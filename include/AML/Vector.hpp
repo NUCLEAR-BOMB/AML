@@ -743,16 +743,14 @@ public:
 		@tparam First,Rest... Variable input variadic templates
 		@param f,r Variadic arguments
 	*/
-	template<class First, class... Rest, 
-		std::enable_if_t<enable_if_variadic_constructor<First, Rest...>, int> = 0
+	template<class... Rest, 
+		std::enable_if_t<enable_if_variadic_constructor<Rest...>, int> = 0
 	> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(First&& f, Rest&&... r) noexcept(std::is_nothrow_copy_assignable_v<reference>)
-		: Vector(aml::size_initializer(1 + sizeof...(r))) 
+	explicit Vector(Rest&&... r) noexcept(std::is_nothrow_copy_assignable_v<reference>)
+		: Vector(aml::size_initializer(sizeof...(r))) 
 	{
-		container[0] = std::forward<First>(f);
-
-		Vectorsize i = 1;
-		// fold expression
+		Vectorsize i = 0;
+		// C++17 fold expression
 		((container[i++] = std::forward<Rest>(r)), ...);
 	}
 
@@ -1583,20 +1581,22 @@ auto normalize(const Vector<T, Size>& vec) noexcept
 	return (vec * inv_mag);
 }
 
+#if 0
 namespace detail {
 	template<class T>
 	struct DVector_default_container : std::vector<T> {};
 } // namespace detail
+#endif
 
 /**
 	@brief Type alias for @ref aml::Vector<Container, dynamic_extent> and it container
-	@details A simple @c std::vector in template parameter @c Container will not work. @n
-			 This uses a wrapper around @c std::vector
+	@details Uses #aml::rebind_container to change @c std::vector value type
 
-	@see Vector<Container, dynamic_extent>
+	@see Vector<Container, dynamic_extent> @n
+		 aml::rebind_container
 */
 template<class T>
-using DVector = Vector<detail::DVector_default_container<T>, aml::dynamic_extent>;
+using DVector = Vector<std::vector<T>, aml::dynamic_extent>;
 
 
 namespace detail
