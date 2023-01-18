@@ -383,6 +383,20 @@ TEST(VectorTest, structured_binding)
 	}
 }
 
+TEST(VectorTest, reference_type)
+{
+	int x = 10, y = 20;
+
+	Vector<int&, 2> a(x, y);
+
+	a[0] = 12345;
+
+	EXPECT_EQ(a[0], x);
+	EXPECT_EQ(a[0], 12345);
+
+	EXPECT_EQ(a[1], 20);
+}
+
 TEST(DynamicVectorTest, init_using_array) {
 	const DVector<int> a({ 2 });
 

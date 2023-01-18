@@ -69,6 +69,8 @@ namespace detail
 	struct VectorStorage {
 	protected:
 		T array[S];
+
+		template<class... Ts> constexpr VectorStorage(Ts&&... vals) : array{ std::forward<Ts>(vals)...} {}
 	};
 
 	template<class T>
@@ -99,7 +101,7 @@ namespace detail
 	template<class T, Vectorsize Size>
 	struct VectorBase
 	{
-		static_assert(std::is_object_v<T>, "A vector's T must be an object type");
+		//static_assert(std::is_object_v<T>, "A vector's T must be an object type");
 		static_assert(!std::is_abstract_v<T>, "A vector's T cannot be an abstract class type");
 		static_assert(aml::is_complete<T>, "A vector's T must be a complete type");
 
@@ -109,11 +111,17 @@ namespace detail
 		using reference = T&;
 		using const_reference = const T&;
 
-		static constexpr bool is_dynamic() noexcept { return (Size == aml::dynamic_extent); }
-		static constexpr bool uses_static_array() noexcept { return (Size > 5) && !is_dynamic(); }
+		static constexpr bool is_dynamic() noexcept						{ return (Size == aml::dynamic_extent); }
+		static constexpr bool uses_static_array() noexcept				{ return (Size > 5) && !is_dynamic(); }
 		static constexpr bool has_index(const size_type index) noexcept { return (Size > index); }
 
 		static constexpr Vectorsize extent = aml::dynamic_extent;
+	};
+
+	template<class T, Vectorsize Size>
+	struct VectorBase<T&, Size> : VectorBase<T, Size>
+	{
+		using value_type = std::reference_wrapper<T>;
 	};
 
 } // namespace detail
@@ -214,7 +222,7 @@ public:
 		@param Array Input array
 	*/
 	template<std::size_t ArraySize> constexpr
-	Vector(const T (&Array)[ArraySize]) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+	Vector(const value_type (&Array)[ArraySize]) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		static_assert(ArraySize == Size, 
 			"The size of the array does not equal to vector's size");
@@ -239,19 +247,11 @@ public:
 		@tparam First,Rest... Variable input variadic templates 
 		@param f,r Variadic arguments
 	*/
-	template<class First, class... Rest, 
-		std::enable_if_t<enable_if_variadic_constructor<First, Rest...>, int> = 0
+	template<class... Rest, 
+		std::enable_if_t<enable_if_variadic_constructor<Rest...>, int> = 0
 	> constexpr
-	explicit Vector(First&& f, Rest&&... r) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
-	{
-		(*this)[VI::first] = std::forward<First>(f);
-
-		size_type i = VI::first;
-		([&] {
-			++i;
-			(*this)[i] = std::forward<Rest>(r); 
-		}(), ...);
-	}
+	explicit Vector(Rest&&... r) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+		: Storage{ std::forward<Rest>(r)... } {}
 
 	/**
 		@brief Initializes the vector with 0
@@ -292,8 +292,8 @@ public:
 	{
 		static_assert(Base::has_index(Dir), "Unit must be in vector's range");
 		aml::static_for<Size>([&](const auto i) {
-			if constexpr (i == Dir) (*this)[i] = static_cast<T>(1);
-			else					(*this)[i] = static_cast<T>(0);
+			if constexpr (i == Dir) (*this)[i] = static_cast<value_type>(1);
+			else					(*this)[i] = static_cast<value_type>(0);
 		});
 	}
 
