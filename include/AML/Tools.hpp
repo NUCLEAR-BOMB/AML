@@ -7,7 +7,10 @@
 #include <tuple>
 #include <functional>
 #include <cstddef>
+
 #include <vector>
+#include <list>
+#include <deque>
 
 #ifdef AML_LIBRARY
 	#define AML_LIBRARY_TOOLS
@@ -468,14 +471,6 @@ struct rebind_container_body
 	using type = typename detail::template rebind_container_impl<Container, U>::type;
 };
 
-template<class T, class Allocator, class U>
-struct rebind_container_body<std::vector<T, Allocator>, U>
-{
-	using rebinded_allocator = typename rebind_container_body<Allocator, U>::type;
-
-	using type = std::vector<U, rebinded_allocator>;
-};
-
 /**
 	@brief Rebinds @p Container as a container with value type of @p U
 
@@ -483,6 +478,24 @@ struct rebind_container_body<std::vector<T, Allocator>, U>
 */
 template<class Container, class U>
 using rebind_container = typename aml::template rebind_container_body<Container, U>::type;
+
+template<class T, class Allocator, class U>
+struct rebind_container_body<std::vector<T, Allocator>, U>
+{
+	using type = std::vector<U, rebind_container<Allocator, U>>;
+};
+
+template<class T, class Allocator, class U>
+struct rebind_container_body<std::deque<T, Allocator>, U>
+{
+	using type = std::deque<U, rebind_container<Allocator, U>>;
+};
+
+template<class T, class Allocator, class U>
+struct rebind_container_body<std::list<T, Allocator>, U>
+{
+	using type = std::list<U, rebind_container<Allocator, U>>;
+};
 
 /**
 	@brief Verifies if @p Left nad @p Right have same parameters
