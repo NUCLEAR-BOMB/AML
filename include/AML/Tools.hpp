@@ -265,6 +265,14 @@ namespace detail
 		>>>>;
 	};
 
+	template<std::size_t Bytes, bool = std::is_void_v<typename signed_from_bytes_impl<Bytes>::type>>
+	struct signed_from_bytes_impl2;
+
+	template<std::size_t Bytes>
+	struct signed_from_bytes_impl2<Bytes, false> {
+		using type = typename signed_from_bytes_impl<Bytes>::type;
+	};
+
 	template<std::size_t Bytes>
 	struct floating_point_from_bytes_impl
 	{
@@ -275,6 +283,15 @@ namespace detail
 			void
 		>>>;
 	};
+
+	template<std::size_t Bytes, bool = std::is_void_v<typename floating_point_from_bytes_impl<Bytes>::type>>
+	struct floating_point_from_bytes_impl2;
+
+	template<std::size_t Bytes>
+	struct floating_point_from_bytes_impl2<Bytes, false> {
+		using type = typename floating_point_from_bytes_impl<Bytes>::type;
+	};
+
 } // namespace detail
 
 /**
@@ -290,7 +307,7 @@ namespace detail
 			>8		&rArr; @c void
 */
 template<std::size_t Bytes>
-using signed_from_bytes = typename detail::template signed_from_bytes_impl<Bytes>::type;
+using signed_from_bytes = typename detail::template signed_from_bytes_impl2<Bytes>::type;
 
 /**
 	@brief Converts a number of @b bytes to a type whose size is no larger than the size of the unsigned integral
@@ -350,7 +367,7 @@ using unsigned_from_bits = std::make_unsigned_t<signed_from_bits<Bits>>;
 		 unsigned_from_bytes
 */
 template<std::size_t Bytes>
-using floating_point_from_bytes = typename detail::template floating_point_from_bytes_impl<Bytes>::type;
+using floating_point_from_bytes = typename detail::template floating_point_from_bytes_impl2<Bytes>::type;
 
 /**
 	@brief Converts a number of @b bits to a type whose size is no larger than the size of the floating point
