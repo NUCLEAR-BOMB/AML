@@ -346,6 +346,43 @@ TEST(VectorTest, to_string)
 	ASSERT_EQ(str_b, "(1.200000,3.400000,5.600000)");
 }
 
+TEST(VectorTest, structured_binding)
+{
+	{
+		Vector a(0, -10000);
+		auto [x, y] = a;
+
+		x = (-y);
+		EXPECT_EQ(x, 10000);
+		EXPECT_EQ(y, -10000);
+	}
+	{
+		Vector vec(1, 2, 3);
+
+		auto& [a, b, c] = vec;
+		a = 100;
+		b = 110;
+		c = 120;
+
+		EXPECT_EQ(vec, Vector(100, 110, 120));
+	}
+	{
+		Vector mv(0, 9, 1);
+
+		auto&& [x, y, z] = std::move(mv);
+		x = y = z;
+		EXPECT_EQ(x, 1);
+	}
+	{
+		const Vector a(1, 2, 3, 4, 5, 6, 7);
+
+		const auto& [a1, a2, a3, a4, a5, a6, a7] = a;
+
+		EXPECT_EQ(a1, 1);
+		EXPECT_EQ(a7, 7);
+	}
+}
+
 TEST(DynamicVectorTest, init_using_array) {
 	const DVector<int> a({ 2 });
 

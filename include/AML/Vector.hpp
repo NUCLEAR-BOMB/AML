@@ -1019,6 +1019,41 @@ Vector(First&&, Rest&&...) -> Vector<
 	(sizeof...(Rest) + 1)
 >;
 
+}
+// vvv std vvv / ^^^ aml ^^^
+namespace std
+{
+	template<class T, ::aml::Vectorsize Size> 
+	struct tuple_size<::aml::Vector<T, Size>> 
+		: std::integral_constant<std::size_t, Size> {};
+
+	template<std::size_t I, class T, ::aml::Vectorsize Size>
+	struct tuple_element<I, ::aml::Vector<T, Size>> 
+	{
+		using type = typename ::aml::template Vector<T, Size>::value_type;
+	};
+} 
+// ^^^ std ^^^ / vvv aml vvv
+namespace aml 
+{
+
+template<std::size_t I, class T, Vectorsize Size> constexpr
+	  auto&  get	   (Vector<T, Size>& vec) noexcept 
+	{ return vec[VI::index<I>{}]; }
+template<std::size_t I, class T, Vectorsize Size> constexpr 
+const auto&  get (const Vector<T, Size>& vec) noexcept 
+	{ return vec[VI::index<I>{}]; }
+template<std::size_t I, class T, Vectorsize Size> constexpr
+	  auto&& get	  (Vector<T, Size>&& vec) noexcept 
+	{ return std::move(vec[VI::index<I>{}]); }
+template<std::size_t I, class T, Vectorsize Size> constexpr
+const auto&& get(const Vector<T, Size>&& vec) noexcept 
+	{ return std::move(vec[VI::index<I>{}]); }
+
+
+
+
+
 #define AML_VECTOR_FOR_LOOP(from_, vec_, action_)					\
 	if constexpr (vec_.is_dynamic()) {								\
 		for (Vectorsize i = from_; i < vec_.size(); ++i) {			\
