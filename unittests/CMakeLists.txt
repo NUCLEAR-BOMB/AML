@@ -11,7 +11,9 @@ file(GLOB_RECURSE ALL_FILES CONFIGURE_DEPENDS
 
 add_executable(${PROJECT_NAME} ${ALL_FILES})
 
-target_compile_options("AML" INTERFACE
+aml_inherit_compile_options(${PROJECT_NAME} PRIVATE "AML")
+
+target_compile_options(${PROJECT_NAME} PRIVATE
 	$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:
 		-Wno-unused-variable -Wno-implicit-int-float-conversion
 	>

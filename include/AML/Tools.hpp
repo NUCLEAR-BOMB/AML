@@ -251,6 +251,11 @@ void variadic_loop(Args&&... args, Function&& fun) noexcept {
 }
 #endif
 
+template<std::size_t I, class T> constexpr
+decltype(auto) get(T&& val) noexcept(noexcept(std::forward<T>(val).get<I>())) {
+	return std::forward<T>(val).get<I>();
+}
+
 namespace detail
 {
 	template<std::size_t Bytes>

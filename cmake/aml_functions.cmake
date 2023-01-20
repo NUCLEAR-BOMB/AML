@@ -29,3 +29,13 @@ macro(aml_find_gtest)
 		include(GoogleTest)
 	endif()
 endmacro()
+
+function(aml_inherit_compile_options target scope targetfrom)
+	get_target_property(options ${targetfrom} INTERFACE_COMPILE_OPTIONS)
+	if (options STREQUAL "options-NOTFOUND")
+		get_target_property(options ${targetfrom} COMPILE_OPTIONS)
+	endif()
+	
+	target_compile_options(${target} ${scope} ${options})
+endfunction()
+
