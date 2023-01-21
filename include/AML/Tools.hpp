@@ -103,10 +103,10 @@ inline constexpr zero_t zero{}; ///< Shortcut for zero_t{}
 inline constexpr one_t one{};	///< Shortcut for one_t{}
 
 template<std::size_t Dir>
-unit_t<Dir> unit{}; ///< Shortcut for unit_t<Dir>{}
+inline constexpr unit_t<Dir> unit{}; ///< Shortcut for unit_t<Dir>{}
 
 template<auto V>
-static constexpr auto constant = constant_t<V>{}; ///< Shortcut for constant_t<V>{}
+inline constexpr auto constant = constant_t<V>{}; ///< Shortcut for constant_t<V>{}
 
 
 using selectable_unused = void; ///< Used in @ref selectable_convert to ignore cast

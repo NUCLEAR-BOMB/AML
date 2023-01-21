@@ -45,6 +45,21 @@ public:
 	{}
 
 	constexpr
+	explicit Complex([[maybe_unused]] const aml::zero_t) noexcept
+		: container{static_cast<T>(0), static_cast<T>(0)} {}
+
+	constexpr
+	explicit Complex([[maybe_unused]] const aml::one_t) noexcept
+		: container{static_cast<T>(1), static_cast<T>(1)} {}
+
+	template<std::size_t Dir> constexpr
+	explicit Complex([[maybe_unused]] const aml::unit_t<Dir>) noexcept
+		: container{ (Dir == 0) ? static_cast<T>(1) : static_cast<T>(0),
+					 (Dir == 1) ? static_cast<T>(1) : static_cast<T>(0)} {
+		static_assert(Dir < static_size, "Unit direction out of range");
+	}
+
+	constexpr
 	Complex(const Complex&) noexcept = default;
 	constexpr
 	Complex(Complex&&) noexcept = default;
@@ -256,6 +271,11 @@ auto sqrt(const Complex<T>& val) noexcept
 	const auto val_plus_r = val + r;
 
 	return aml::sqrt(r) * (val_plus_r) / aml::abs(val_plus_r);
+}
+
+template<class T> [[nodiscard]] constexpr
+auto csqrt(const Complex<T>& val) noexcept {
+	return aml::sqrt(val);
 }
 
 template<class T>

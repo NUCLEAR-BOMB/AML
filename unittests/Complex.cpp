@@ -16,6 +16,21 @@ TEST(ComplexTest, init)
 	EXPECT_EQ(aml::Im(b), 2);
 }
 
+TEST(ComplexTest, init_with_special_modifiers)
+{
+	const Complex<int> a(aml::zero);
+	EXPECT_EQ(a, Complex(0, 0));
+	
+	const Complex<int> b(aml::one);
+	EXPECT_EQ(b, Complex(1, 1));
+
+	const Complex<int> c(aml::unit<0>);
+	EXPECT_EQ(c, Complex(1, 0));
+
+	const Complex<int> d(aml::unit<1>);
+	EXPECT_EQ(d, Complex(0, 1));
+}
+
 TEST(ComplexTest, cast)
 {
 	const Complex a(2.5, 100.0);
