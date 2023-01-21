@@ -260,7 +260,7 @@ public:
 		@see aml::zero
 	*/
 	constexpr
-	explicit Vector(const aml::zero_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
+	explicit Vector([[maybe_unused]] const aml::zero_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
 	{
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<value_type>(0);
@@ -274,7 +274,7 @@ public:
 		@see aml::one
 	*/
 	constexpr
-	explicit Vector(const aml::one_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+	explicit Vector([[maybe_unused]] const aml::one_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<value_type>(1);
@@ -288,7 +288,7 @@ public:
 		@see aml::unit
 	*/
 	template<std::size_t Dir> constexpr 
-	explicit Vector(const aml::unit_t<Dir>) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
+	explicit Vector([[maybe_unused]] const aml::unit_t<Dir>) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
 	{
 		static_assert(Base::has_index(Dir), "Unit must be in vector's range");
 		aml::static_for<Size>([&](const auto i) {
@@ -447,7 +447,7 @@ public:
 		@see aml::VI namespace
 	*/
 	template<size_type I> /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
-	reference operator[](const VI::index<I>) noexcept 
+	reference operator[]([[maybe_unused]] const VI::index<I>) noexcept 
 	{
 		static_assert(I < Size, "Static vector index out of range");
 		if constexpr (Base::uses_static_array()) {
@@ -473,7 +473,7 @@ public:
 		@see VI namespace
 	*/
 	template<size_type I> /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
-	const_reference operator[](const VI::index<I>) const noexcept {
+	const_reference operator[]([[maybe_unused]] const VI::index<I>) const noexcept {
 		return const_cast<Vector&>(*this)[VI::index<I>{}];
 	}
 
@@ -774,7 +774,7 @@ public:
 		@see aml::zero
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const aml::size_initializer initsz, const aml::zero_t) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
+	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::zero_t) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
 		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(0))) {
 	}
 
@@ -784,7 +784,7 @@ public:
 		@see aml::one
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-		explicit Vector(const aml::size_initializer initsz, const aml::one_t) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
+		explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::one_t) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
 		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(1))) {
 	}
 
@@ -794,7 +794,7 @@ public:
 		@see aml::unit
 	*/
 	template<std::size_t Dir> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const aml::size_initializer initsz, const aml::unit_t<Dir>) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::zero)> && std::is_nothrow_copy_assignable_v<reference>)
+	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::unit_t<Dir>) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::zero)> && std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(initsz, aml::zero) {
 		this->container[Dir] = static_cast<value_type>(1);
 	}
