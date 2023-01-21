@@ -258,6 +258,51 @@ decltype(auto) get(T&& val) noexcept(noexcept(std::forward<T>(val).get<I>())) {
 
 namespace detail
 {
+	template<class, template<class...> class>
+	struct is_specialization_impl : std::false_type {};
+
+	template<template <class...> class Template, class... Args>
+	struct is_specialization_impl<Template<Args...>, Template> : std::true_type {};
+}
+
+template<class T, template <class...> class TP>
+inline constexpr bool is_specialization = detail::template is_specialization_impl<T, TP>::value;
+
+
+namespace detail
+{
+	template<class T, class = void>
+	struct has_value_member : std::false_type {};
+
+	template<class T>
+	struct has_value_member<T, std::void_t<decltype(T::value, 0)>> : std::true_type {};
+
+
+	template<class T, class = void>
+	struct has_get_method : std::false_type {};
+
+	template<class T>
+	struct has_get_method<T, std::void_t<decltype(std::declval<T>().get(), 0)>> : std::true_type {};
+}
+
+template<class T> constexpr
+decltype(auto) unwrap(T&& val) noexcept 
+{
+	using type = aml::remove_cvref<T>;
+
+	if constexpr (detail::template has_value_member<type>::value) {
+		return std::forward<T>(val).value;
+	} else if constexpr (detail::template has_get_method<type>::value) {
+		return std::forward<T>(val).get();
+	} else {
+		return std::forward<T>(val);
+	}
+}
+
+
+
+namespace detail
+{
 	template<std::size_t Bytes>
 	struct signed_from_bytes_impl
 	{
