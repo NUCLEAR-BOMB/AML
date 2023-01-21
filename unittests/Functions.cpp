@@ -24,8 +24,8 @@ TEST(FunctionsTest, abs)
 	ASSERT_EQ(aml::abs(unsigned(2)), unsigned(2));
 	ASSERT_EQ(aml::abs(unsigned(5)), unsigned(5));
 	
-	ASSERT_EQ(aml::abs<unsigned>(int(5)), unsigned(5));
-	ASSERT_EQ(aml::abs<unsigned>(int(-5)), unsigned(5));
+	ASSERT_EQ(unsigned(aml::abs(int(5))), unsigned(5));
+	ASSERT_EQ(unsigned(aml::abs(int(-5))), unsigned(5));
 
 	ASSERT_FLOAT_EQ(aml::abs(0.5f), 0.5f);
 	ASSERT_FLOAT_EQ(aml::abs(-0.5f), 0.5f);

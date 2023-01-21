@@ -1,16 +1,6 @@
 #include <AML/Complex.hpp>
 
 #include <gtest/gtest.h>
-#include <ostream>
-
-namespace aml
-{
-template<class T>
-std::ostream& operator<<(std::ostream& os, const Complex<T>& right) {
-	os << '(' << aml::Re(right) << ',' << aml::Im(right) << ")\n";
-	return os;
-}
-}
 
 using namespace aml;
 namespace {
@@ -100,6 +90,39 @@ TEST(ComplexTest, abs)
 	const Complex a(3, 4);
 
 	EXPECT_FLOAT_EQ(aml::abs(a), 5.f);
+}
+
+TEST(ComplexTest, sqrt)
+{
+	const Complex a(10, -10);
+
+	auto b = aml::sqrt(a);
+
+	EXPECT_EQ(b, Complex(3.47434402f, -1.43912029f));
+}
+
+TEST(ComplexTest, structured_binding)
+{
+	{
+		const Complex a(1, -2);
+
+		const auto& [r, i] = a;
+		
+		EXPECT_EQ(r, 1);
+		EXPECT_EQ(i, -2);
+	}
+	{
+		Complex a(123.456f, 789.112f);
+
+		auto& [r, i] = a;
+
+		r = 1.f;
+		i = r;
+
+		EXPECT_FLOAT_EQ(r, 1.f);
+		EXPECT_FLOAT_EQ(i, 1.f);
+	}
+
 }
 
 

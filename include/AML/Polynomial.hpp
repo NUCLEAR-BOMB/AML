@@ -1,8 +1,6 @@
 #pragma once
 
-#include <AML/Tools.hpp>
-#include <AML/Functions.hpp>
-#include <AML/MathFunctions.hpp>
+#include <AML/Complex.hpp>
 
 #include <utility>
 #include <optional>
@@ -87,18 +85,20 @@ class PolynomialRoot
 {
 public:
 
-	using value_type = T;
+	using value_type = aml::Complex<T>;
+	using real_value_type = typename value_type::real_type;
+
 	using size_type = std::size_t;
 
-	using reference = T&;
-	using const_reference = const T&;
+	using reference = value_type&;
+	using const_reference = const value_type&;
 
-	using rvalue_reference = T&&;
-	using const_rvalue_reference = const T&&;
+	using rvalue_reference = value_type&&;
+	using const_rvalue_reference = const value_type&&;
 
 	static constexpr size_type maxrootn = (PolynomialDegree - 1);
 
-	using container_type = std::optional<T>[maxrootn];
+	using container_type = std::optional<value_type>[maxrootn];
 
 private:
 	template<class... Ts>
@@ -123,6 +123,11 @@ public:
 	}
 
 	constexpr
+	operator const real_value_type&() const {
+		return aml::Re(this->container[0].value());
+	}
+
+	constexpr
 	operator const value_type&() const {
 		return this->container[0].value();
 	}
@@ -137,6 +142,11 @@ public:
 		for (auto& i : this->container) {
 			if (!i.has_value()) { i = val; return; }
 		}
+	}
+
+	template<class... Args> 
+	void emplace(Args&&... args) noexcept {
+		this->append(Complex(std::forward<Args>(args)...));
 	}
 
 	template<size_type I> constexpr reference get() & { static_assert(I < maxrootn, "out of range"); return this->container[I].value(); }
@@ -205,18 +215,15 @@ auto solve(Pol&& polynomial) noexcept
 
 	PolynomialRoot<aml::get_value_type<Pol>, 3> roots;
 
-	if (D > 0) {
-		const auto sqrt_D = aml::sqrt(D);
-
-		roots.append((-b + sqrt_D) / (2 * a));
-		roots.append((-b - sqrt_D) / (2 * a));
-		return roots;
-	}
-	
 	if (D == 0) {
 		roots.append(-b / (2 * a));
 		return roots;
 	}
+
+	const auto sqrt_D = aml::csqrt(D);
+
+	roots.append((-b + sqrt_D) / (2 * a));
+	roots.append((-b - sqrt_D) / (2 * a));
 
 	return roots;
 }

@@ -3,6 +3,8 @@
 #include <AML/Tools.hpp>
 #include <AML/MathFunctions.hpp>
 
+#include <iostream>
+
 namespace aml
 {
 
@@ -38,7 +40,7 @@ public:
 	{}
 
 	template<class U> constexpr
-	Complex(const Complex<U>& other) noexcept 
+	explicit Complex(const Complex<U>& other) noexcept 
 		: container{static_cast<T>(other.container[RE]), static_cast<T>(other.container[IM])}
 	{}
 
@@ -77,8 +79,6 @@ Complex(RealT&&, ImagT&&) -> Complex<std::common_type_t<RealT, ImagT>>;
 template<class RealT>
 Complex(RealT&&) -> Complex<RealT>;
 
-
-
 template<class T> constexpr
 auto& Re(Complex<T>& c) noexcept { return c.container[Complex<T>::RE]; }
 template<class T> constexpr
@@ -98,6 +98,51 @@ template<class T> AML_CONSTEVAL
 auto Im([[maybe_unused]] T&&) noexcept {
 	return static_cast<T>(0);
 }
+
+template<class T> [[nodiscard]] constexpr
+auto to_real(T&& val) noexcept {
+	return Complex<T>(std::forward<T>(val), static_cast<T>(0));
+}
+
+template<class T> [[nodiscard]] constexpr
+auto to_imag(T&& val) noexcept {
+	return Complex<T>(static_cast<T>(0), std::forward<T>(val));
+}
+
+}
+// vvv std vvv / ^^^ aml ^^^
+namespace std
+{
+	template<class T>
+	struct tuple_size<::aml::Complex<T>>
+		: std::integral_constant<std::size_t, ::aml::Complex<T>::static_size> {};
+
+	template<std::size_t I, class T>
+	struct tuple_element<I, ::aml::Complex<T>>
+	{
+		using type = typename ::aml::template Complex<T>::value_type;
+	};
+}
+// ^^^ std ^^^ / vvv aml vvv
+namespace aml
+{
+template<std::size_t I, class T> constexpr
+auto& get(Complex<T>& val) noexcept
+{
+	if constexpr (I == 0) {
+		return aml::Re(val);
+	} else if constexpr (I == 1) {
+		return aml::Im(val);
+	}
+}
+template<std::size_t I, class T> constexpr
+const auto& get(const Complex<T>& val) noexcept {
+	return aml::get<I>(const_cast<Complex<T>&>(val));
+}
+
+
+
+
 
 template<class T>
 inline constexpr bool is_complex = aml::is_specialization<T, aml::Complex>;
@@ -164,7 +209,7 @@ auto& operator/=(Complex<Left>& left, const Right& right) noexcept {
 
 template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_complex<Right>, int> = 0> constexpr
 bool operator==(const Left& left, const Right& right) noexcept {
-	return (Re(left) == Re(right)) && (Im(left) == Im(right));
+	return ( Re(left) <equal> Re(right) ) && ( Im(left) <equal> Im(right) );
 }
 template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_complex<Right>, int> = 0>
 bool operator!=(const Left& left, const Right& right) noexcept {
@@ -184,6 +229,39 @@ auto round(const Complex<T>& val) noexcept {
 template<class T> [[nodiscard]] constexpr
 auto abs(const Complex<T>& val) noexcept {
 	return aml::sqrt( sqr(Re(val)) + sqr(Im(val)) );
+}
+
+template<class T> [[nodiscard]] constexpr
+auto normalize(const Complex<T>& val) noexcept 
+{
+	using abstype = decltype(aml::abs(val));
+
+	const abstype inv_mag = static_cast<abstype>(1) / aml::abs(val);
+	return (val * inv_mag);
+}
+
+template<class T> [[nodiscard]] constexpr
+auto csqrt(const T& val) noexcept {
+	if (val < 0) {
+		return aml::to_imag(aml::sqrt(aml::abs(val)));
+	} else {
+		return aml::to_real(aml::sqrt(val));
+	}
+}
+
+template<class T> [[nodiscard]] constexpr
+auto sqrt(const Complex<T>& val) noexcept 
+{
+	const auto r = aml::abs(val);
+	const auto val_plus_r = val + r;
+
+	return aml::sqrt(r) * (val_plus_r) / aml::abs(val_plus_r);
+}
+
+template<class T>
+std::ostream& operator<<(std::ostream& os, const Complex<T>& right) {
+	os << '(' << aml::Re(right) << ',' << aml::Im(right) << ")\n";
+	return os;
 }
 
 }

@@ -54,5 +54,13 @@
 			</IndexListItems>
 		</Expand>
 	</Type>
+
+	<Type Name="aml::Complex&lt;*&gt;">
+		<DisplayString>{{ ({container[0],g}) + ({container[1],g}) i }}</DisplayString>
+		<Expand>
+			<Item Name="Real">container[0],g</Item>
+			<Item Name="Imaginary">container[1],g</Item>
+		</Expand>
+	</Type>
 	
 </AutoVisualizer>

@@ -74,31 +74,27 @@ auto sqr(const T& val) noexcept {
 /**
 	@brief Absolute value or modulus of a number. @f$ |x| @f$
 */
-template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
-decltype(auto) abs(T&& val) noexcept {
+template<class T> [[nodiscard]] constexpr
+decltype(auto) abs(const T& val) noexcept {
 	if constexpr (std::is_unsigned_v<T>) {
-		return aml::selectable_convert<OutType>(std::forward<T>(val));
+		return val;
 	} else {
-		return aml::selectable_convert<OutType>((val < static_cast<T>(0)) ? (-val) : (val));
+		return (val < static_cast<T>(0)) ? (-val) : (val);
 	}
 }
 
-/**
-	@brief Checks if the @p left and @p right are equal
-	@details Can compare a floating point value
-
-	@see #aml::not_equal
-*/
-template<class Left, class Right> [[nodiscard]] constexpr
-bool equal(const Left& left, const Right& right) noexcept 
+struct equal_fn
 {
-	if constexpr (std::is_floating_point_v<Left> && std::is_floating_point_v<Right>) 
+template<class Left, class Right> [[nodiscard]] constexpr
+bool operator()(const Left& left, const Right& right) const noexcept
+{
+	if constexpr (std::is_floating_point_v<Left> && std::is_floating_point_v<Right>)
 	{
 		using type = std::common_type_t<Left, Right>;
 
-		const type m = aml::max<type>(static_cast<type>(1), aml::abs<type>(left), aml::abs<type>(right));
+		const type m = aml::max<type>(static_cast<type>(1), static_cast<type>(aml::abs(left)), static_cast<type>(aml::abs(right)));
 		return (aml::abs(left - right)) <= (std::numeric_limits<type>::epsilon() * m);
-	} 
+	}
 	else if constexpr (std::is_arithmetic_v<Left> && std::is_arithmetic_v<Right>) {
 		using common = std::common_type_t<Left, Right>;
 		return (static_cast<common>(left) == static_cast<common>(right));
@@ -107,6 +103,34 @@ bool equal(const Left& left, const Right& right) noexcept
 		return (left == right);
 	}
 }
+};
+
+/**
+	@brief Checks if the @p left and @p right are equal
+	@details Can compare a floating point value
+
+	@see #aml::not_equal
+*/
+inline constexpr equal_fn equal;
+
+#ifndef AML_NO_CUSTOM_OPERATORS
+namespace detail {
+	template<class T>
+	struct equal_op_proxy {
+		const T& v;
+	};
+}
+
+template<class T> constexpr
+const detail::equal_op_proxy<T> operator<(const T& left, const equal_fn&) { return { left }; }
+
+template<class Left, class Right> constexpr
+decltype(auto) operator>(const detail::equal_op_proxy<Left>& left, const Right& right) {
+	return aml::equal(left.v, right);
+}
+
+#endif
+
 
 /**
 	@brief Checks if the @p left and @p right are not equal
