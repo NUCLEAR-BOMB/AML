@@ -90,10 +90,10 @@ bool operator()(const Left& left, const Right& right) const noexcept
 {
 	if constexpr (std::is_floating_point_v<Left> && std::is_floating_point_v<Right>)
 	{
-		using type = std::common_type_t<Left, Right>;
+		using common = std::common_type_t<Left, Right>;
 
-		const type m = aml::max<type>(static_cast<type>(1), static_cast<type>(aml::abs(left)), static_cast<type>(aml::abs(right)));
-		return (aml::abs(left - right)) <= (std::numeric_limits<type>::epsilon() * m);
+		const auto m = aml::max<common>(static_cast<common>(1), static_cast<common>(aml::abs(left)), static_cast<common>(aml::abs(right)));
+		return (aml::abs(left - right)) <= (std::numeric_limits<common>::epsilon() * m);
 	}
 	else if constexpr (std::is_arithmetic_v<Left> && std::is_arithmetic_v<Right>) {
 		using common = std::common_type_t<Left, Right>;
@@ -102,10 +102,10 @@ bool operator()(const Left& left, const Right& right) const noexcept
 	else if constexpr (std::is_invocable_r_v<bool, std::equal_to<>, Left, Right>) {
 		return (left == right);
 	}
-	else if constexpr (std::is_convertible_v<Left, Right>) {
+	else if constexpr (std::is_constructible_v<Left, decltype(right)>) {
 		return (left == static_cast<Left>(right));
 	}
-	else if constexpr (std::is_constructible_v<Right, Left>) {
+	else if constexpr (std::is_constructible_v<Right, decltype(left)>) {
 		return (static_cast<Right>(left) == right);
 	}
 	AML_UNREACHABLE;

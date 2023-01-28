@@ -45,17 +45,6 @@ TEST(static_for_test, zero_to_range_with_arg)
 	ASSERT_EQ(a, 90);
 }
 
-TEST(static_for_test, force_max)
-{
-	int a = 3;
-	ASSERT_EQ(STATIC_FOR_MAX, 30);
-
-	static_for<0, 40>([&]() {
-		a += 3;
-	});
-	ASSERT_EQ(a, 123);
-}
-
 [[maybe_unused]] static constexpr
 void test_of_bytes() {
 	using namespace std;

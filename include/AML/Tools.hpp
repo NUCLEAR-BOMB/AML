@@ -179,21 +179,16 @@ namespace detail
 	{
 		if constexpr (std::is_invocable_v<Function>) // checks if function hasn't any arguments
 		{
-			using t = decltype(std::invoke(fun));
-			if constexpr (!std::is_void_v<t>) {
+			if constexpr (!std::is_void_v<std::invoke_result_t<Function>>) {
 				static_assert(!sizeof(Function*), "Functions/lambda must return void");
-			}
-			else {
+			} else {
 				std::invoke(fun);
 			}
-		} else 
-		{
-			using t = decltype(std::invoke(fun, val));
-			if constexpr (!std::is_void_v<t>) {
+		} else {
+			if constexpr (!std::is_void_v<std::invoke_result_t<Function, FunVal>>) {
 				static_assert(!sizeof(Function*), "Functions/lambda must return void");
-			}
-			else {
-				std::invoke(fun, val);
+			} else {
+				std::invoke(fun, std::forward<FunVal>(val));
 			}
 		}
 	}
