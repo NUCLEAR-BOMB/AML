@@ -4,11 +4,12 @@
 #include <type_traits>
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
 
 // #define AML_NAMESPACE namespace aml {
 // #define AML_NAMESPACE_END }
 
-#ifdef AML_LIBRARY
+#if defined(AML_LIBRARY) && !defined(__INTELLISENSE__)
 	#error Something went wrong
 #endif
 
@@ -91,7 +92,6 @@
 	#define AML_UNIX 0
 #endif
 
-
 #ifdef __cpp_constexpr_dynamic_alloc
 	#define AML_CONSTEXPR_DYNAMIC_ALLOC constexpr
 #else
@@ -110,10 +110,12 @@
 	#define AML_DEBUG 1
 #endif
 
-#if defined(_MSVC_LANG) && (_MSVC_LANG > __cplusplus)
+#if defined(_MSVC_LANG) && defined(__cplusplus) && (_MSVC_LANG > __cplusplus)
 	#define AML_CXX_STL _MSVC_LANG
-#else // !(defined(_MSVC_LANG) && (_MSVC_LANG > __cplusplus))
+#elif defined(__cplusplus)
 	#define AML_CXX_STL __cplusplus
+#else
+	#define AML_CXX_STL 0
 #endif
 
 #if AML_CXX_STL >= 202002L
@@ -127,30 +129,31 @@
 	#define AML_CXX17 0
 #endif
 
-#if !AML_CXX17
+#if !AML_CXX17 && !defined(__INTELLISENSE__)
 	#error C++17 or higher is required
 #endif
 
-#if AML_MSVC
-	#define AML_PRETTY_FUNCTION __FUNCSIG__
-	//#define AML_PRETTY_FUNCTION __FUNCTION__
-	//#define AML_PRETTY_FUNCTION __func__
-#elif AML_GCC
-	#define AML_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#if AML_MSVC || defined(__FUNCSIG__)
+	#define AML_CURRENT_FUNCTION __FUNCSIG__
+	//#define AML_CURRENT_FUNCTION __FUNCTION__
+	//#define AML_CURRENT_FUNCTION __func__
+#elif AML_GCC || defined(__PRETTY_FUNCTION__)
+	#define AML_CURRENT_FUNCTION __PRETTY_FUNCTION__
+#elif AML_CXX_STL >= 201103
+	#define AML_CURRENT_FUNCTION __func__
 #else
-	#define AML_PRETTY_FUNCTION ""
+	#define AML_CURRENT_FUNCTION ""
 #endif
 
 #if AML_WINDOWS && AML_MSVC
 	#include <intrin.h>
-	#define AML_DEBUG_BREAK ::__debugbreak()
+	#define AML_DEBUG_BREAK ::__debugbreak(); ::std::abort()
 #elif AML_GCC
-	#define AML_DEBUG_BREAK __builtin_trap()
+	#define AML_DEBUG_BREAK __builtin_trap(); ::std::abort()
 #elif AML_UNIX
 	#include <csignal>
-	#define AML_DEBUG_BREAK ::raise(SIGTRAP)
+	#define AML_DEBUG_BREAK ::raise(SIGTRAP); ::std::abort()
 #else
-	#include <cstdlib>
 	#define AML_DEBUG_BREAK ::std::abort()
 #endif
 
@@ -175,27 +178,23 @@ void logerror(
 	error_file_str_type file,
 	error_string_type msg,
 	...
-) noexcept {
-	std::cerr
-		<< "\n   ";
+) noexcept 
+{
+	std::fprintf(stderr, "\n   ");
 
 	va_list argptr;
 	va_start(argptr, msg);
-	vfprintf(stderr, msg, argptr);
+	std::vfprintf(stderr, msg, argptr);
 	va_end(argptr);
-
-	std::cerr
-		<< "\n\t"
-		<< " >>> " << func << "\n\t"
-		<< file << "(" << line << ")" << '\n';
+	
+	std::fprintf(stderr, "\n\t >>> %s \n\t %s(%d) \n", func, file, line);
 
 	AML_DEBUG_BREAK;
-	std::abort();
 }
 
 #if AML_DEBUG
 	#define AML_DEBUG_ERROR(...) \
-		::aml::logerror(__LINE__, AML_PRETTY_FUNCTION, __FILE__, __VA_ARGS__)
+		::aml::logerror(__LINE__, AML_CURRENT_FUNCTION, __FILE__, __VA_ARGS__)
 #else /// !AML_DEBUG
 	#define AML_DEBUG_ERROR(errmsg) ((void)0)
 #endif /// !AML_DEBUG
