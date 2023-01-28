@@ -262,9 +262,9 @@ public:
 	AML_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::zero_t) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
-		aml::static_for<Size>([&](const auto i) {
+		for (size_type i = 0; i < Size; ++i) {
 			(*this)[i] = static_cast<value_type>(0);
-		});
+		}
 	}
 
 	/**
@@ -276,9 +276,9 @@ public:
 	AML_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::one_t) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
-		aml::static_for<Size>([&](const auto i) {
+		for (size_type i = 0; i < Size; ++i) {
 			(*this)[i] = static_cast<value_type>(1);
-		});
+		}
 	}
 
 	/**
@@ -291,10 +291,12 @@ public:
 	explicit Vector([[maybe_unused]] const aml::unit_t<Dir>) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		static_assert(Base::has_index(Dir), "Unit must be in vector's range");
-		aml::static_for<Size>([&](const auto i) {
-			if constexpr (i == Dir) (*this)[i] = static_cast<value_type>(1);
-			else					(*this)[i] = static_cast<value_type>(0);
-		});
+
+		for (size_type i = 0; i < Size; ++i) 
+		{
+			if (i == Dir) { (*this)[i] = static_cast<value_type>(1); }
+			else          { (*this)[i] = static_cast<value_type>(0); }
+		}
 	}
 
 	/**
@@ -442,7 +444,7 @@ public:
 
 		@tparam I Compile-time index to the vector's field
 
-		@return #reference to vector's field
+		@return reference to vector's field
 
 		@see aml::VI namespace
 	*/

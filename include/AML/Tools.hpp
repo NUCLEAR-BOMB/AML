@@ -168,7 +168,9 @@ inline constexpr bool is_complete = detail::is_complete_impl<T>::value;
 	@brief Max recursion level for #aml::static_for
 	@details If the value is greater, then runtime for loop is used
 */
-inline constexpr std::size_t STATIC_FOR_MAX = 30;
+inline constexpr std::size_t STATIC_FOR_MAX = std::numeric_limits<std::size_t>::max();
+
+//inline constexpr std::size_t STATIC_FOR_MAX = 30;
 
 namespace detail
 {
