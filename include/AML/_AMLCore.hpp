@@ -16,6 +16,7 @@
 #define AML_LIBRARY
 
 //#define AML_NO_CUSTOM_OPERATORS
+//#define AML_ALWAYS_NOEXCEPT
 
 #define AML_HAS_NO_VALUE(macro) ((~(~macro + 0) == 0) && (~(~macro + 1) == 1))
 
@@ -151,6 +152,12 @@
 #else
 	#include <cstdlib>
 	#define AML_DEBUG_BREAK ::std::abort()
+#endif
+
+#ifndef AML_ALWAYS_NOEXCEPT
+	#define AML_NOEXCEPT_EXPR(...) noexcept(__VA_ARGS__)
+#else
+	#define AML_NOEXCEPT_EXPR(...) noexcept
 #endif
 
 namespace aml {

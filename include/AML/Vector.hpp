@@ -210,7 +210,7 @@ public:
 		@warning Does not explicitly initialize elements
 	*/
 	constexpr
-	Vector() noexcept(std::is_nothrow_default_constructible_v<value_type>) {
+	Vector() AML_NOEXCEPT_EXPR(std::is_nothrow_default_constructible_v<value_type>) {
 		
 	}
 
@@ -222,7 +222,7 @@ public:
 		@param Array Input array
 	*/
 	template<std::size_t ArraySize> constexpr
-	Vector(const value_type (&Array)[ArraySize]) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+	Vector(const value_type (&Array)[ArraySize]) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		static_assert(ArraySize == Size, 
 			"The size of the array does not equal to vector's size");
@@ -250,7 +250,7 @@ public:
 	template<class... Rest, 
 		std::enable_if_t<enable_if_variadic_constructor<Rest...>, int> = 0
 	> constexpr
-	explicit Vector(Rest&&... r) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+	explicit Vector(Rest&&... r) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 		: Storage{ std::forward<Rest>(r)... } {}
 
 	/**
@@ -260,7 +260,7 @@ public:
 		@see aml::zero
 	*/
 	AML_CONSTEVAL
-	explicit Vector([[maybe_unused]] const aml::zero_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
+	explicit Vector([[maybe_unused]] const aml::zero_t) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<value_type>(0);
@@ -274,7 +274,7 @@ public:
 		@see aml::one
 	*/
 	AML_CONSTEVAL
-	explicit Vector([[maybe_unused]] const aml::one_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+	explicit Vector([[maybe_unused]] const aml::one_t) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<value_type>(1);
@@ -288,7 +288,7 @@ public:
 		@see aml::unit
 	*/
 	template<std::size_t Dir> AML_CONSTEVAL
-	explicit Vector([[maybe_unused]] const aml::unit_t<Dir>) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
+	explicit Vector([[maybe_unused]] const aml::unit_t<Dir>) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		static_assert(Base::has_index(Dir), "Unit must be in vector's range");
 		aml::static_for<Size>([&](const auto i) {
@@ -301,7 +301,7 @@ public:
 		@brief Cast from Vector<U, Size> to Vector<T, Size>
 	*/
 	template<class U> constexpr
-	explicit Vector(const Vector<U, Size>& other) noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
+	explicit Vector(const Vector<U, Size>& other) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>) {
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<value_type>(other[i]);
 		});
@@ -311,7 +311,7 @@ public:
 		@brief Initializes the filled vector 
 	*/
 	constexpr
-	explicit Vector(const aml::fill_initializer<value_type> fill_with) noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
+	explicit Vector(const aml::fill_initializer<value_type> fill_with) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>) {
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = fill_with.value;
 		});
@@ -328,7 +328,7 @@ public:
 		@see aml::Vector<T, dynamic_extent>
 	*/
 	template<class U> constexpr
-	explicit Vector(const Vector<U, dynamic_extent>& other) noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
+	explicit Vector(const Vector<U, dynamic_extent>& other) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>) {
 		AML_DEBUG_VERIFY(other.size() == Size, "The dynamic vector must have the same size");
 		aml::static_for<Size>([&](const auto i) {
 			(*this)[i] = static_cast<value_type>(other[i]);
@@ -336,16 +336,16 @@ public:
 	}
 
 	constexpr
-	Vector(const Vector&) noexcept(std::is_nothrow_copy_constructible_v<value_type>) = default;
+	Vector(const Vector&) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_constructible_v<value_type>) = default;
 
 	constexpr
-	Vector(Vector&&) noexcept(std::is_nothrow_move_constructible_v<value_type>) = default;
+	Vector(Vector&&) AML_NOEXCEPT_EXPR(std::is_nothrow_move_constructible_v<value_type>) = default;
 
 	constexpr
-	Vector& operator=(const Vector&) noexcept(std::is_nothrow_copy_assignable_v<value_type>) = default;
+	Vector& operator=(const Vector&) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>) = default;
 
 	constexpr
-	Vector& operator=(Vector&&) noexcept(std::is_nothrow_move_assignable_v<value_type>) = default;
+	Vector& operator=(Vector&&) AML_NOEXCEPT_EXPR(std::is_nothrow_move_assignable_v<value_type>) = default;
 
 	/**
 		@brief Returns size of the vector
@@ -525,7 +525,7 @@ public:
 		@return Begin #iterator
 	*/
 	[[nodiscard]] constexpr
-	iterator begin() noexcept(std::is_nothrow_constructible_v<iterator, decltype(*this), decltype(0)>) {
+	iterator begin() AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<iterator, decltype(*this), decltype(0)>) {
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array;
 		} else {
@@ -541,7 +541,7 @@ public:
 		@return End #iterator
 	*/
 	[[nodiscard]] constexpr
-	iterator end() noexcept(std::is_nothrow_constructible_v<iterator, decltype(*this), decltype(size())>) {
+	iterator end() AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<iterator, decltype(*this), decltype(size())>) {
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array + this->size();
 		} else {
@@ -557,7 +557,7 @@ public:
 		@return Begin #const_iterator
 	*/
 	[[nodiscard]] constexpr
-	const_iterator begin() const noexcept(std::is_nothrow_constructible_v<const_iterator, decltype(*this), decltype(0)>) {
+	const_iterator begin() const AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<const_iterator, decltype(*this), decltype(0)>) {
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array;
 		} else {
@@ -573,7 +573,7 @@ public:
 		@return End #const_iterator
 	*/
 	[[nodiscard]] constexpr
-	const_iterator end() const noexcept(std::is_nothrow_constructible_v<const_iterator, decltype(*this), decltype(size())>) {
+	const_iterator end() const AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<const_iterator, decltype(*this), decltype(size())>) {
 		if constexpr (Base::uses_static_array()) {
 			return Storage::array + this->size();
 		} else {
@@ -589,7 +589,7 @@ public:
 		@return Begin #const_iterator
 	*/
 	[[nodiscard]] constexpr
-	const_iterator cbegin() const noexcept(noexcept(begin())) {
+	const_iterator cbegin() const AML_NOEXCEPT_EXPR(noexcept(begin())) {
 		return begin();
 	}
 
@@ -597,7 +597,7 @@ public:
 		@return End #const_iterator
 	*/
 	[[nodiscard]] constexpr
-	const_iterator cend() const noexcept(noexcept(end())) {
+	const_iterator cend() const AML_NOEXCEPT_EXPR(noexcept(end())) {
 		return end();
 	}
 
@@ -711,7 +711,7 @@ public:
 		@warning Does not explicitly initialize elements
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector() noexcept(std::is_nothrow_default_constructible_v<container_type>) {
+	Vector() AML_NOEXCEPT_EXPR(std::is_nothrow_default_constructible_v<container_type>) {
 
 	}
 
@@ -723,7 +723,7 @@ public:
 		@param Array Input array
 	*/
 	template<std::size_t ArraySize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector(const value_type (&Array)[ArraySize]) noexcept(noexcept(std::copy_n(Array, ArraySize, this->container.begin())))
+	Vector(const value_type (&Array)[ArraySize]) AML_NOEXCEPT_EXPR(noexcept(std::copy_n(Array, ArraySize, this->container.begin())))
 		: Vector(aml::size_initializer(ArraySize)) {
 		std::copy_n(Array, ArraySize, this->container.begin());
 	}
@@ -746,7 +746,7 @@ public:
 	template<class... Rest, 
 		std::enable_if_t<enable_if_variadic_constructor<Rest...>, int> = 0
 	> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(Rest&&... r) noexcept(std::is_nothrow_copy_assignable_v<reference>)
+	explicit Vector(Rest&&... r) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(sizeof...(r))) 
 	{
 		Vectorsize i = 0;
@@ -764,7 +764,7 @@ public:
 		@see aml::size_initializer
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const aml::size_initializer initsz) noexcept(noexcept(this->resize(initsz.size))) {
+	explicit Vector(const aml::size_initializer initsz) AML_NOEXCEPT_EXPR(noexcept(this->resize(initsz.size))) {
 		this->resize(initsz.size);
 	}
 
@@ -774,7 +774,7 @@ public:
 		@see aml::zero
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::zero_t) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
+	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::zero_t) AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
 		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(0))) {
 	}
 
@@ -784,7 +784,7 @@ public:
 		@see aml::one
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-		explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::one_t) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
+		explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::one_t) AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
 		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(1))) {
 	}
 
@@ -794,7 +794,7 @@ public:
 		@see aml::unit
 	*/
 	template<std::size_t Dir> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::unit_t<Dir>) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::zero)> && std::is_nothrow_copy_assignable_v<reference>)
+	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::unit_t<Dir>) AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::zero)> && std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(initsz, aml::zero) {
 		this->container[Dir] = static_cast<value_type>(1);
 	}
@@ -808,7 +808,7 @@ public:
 		@see aml::fill_initializer
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const aml::size_initializer initsz, const aml::fill_initializer<value_type> fill_with) noexcept(std::is_nothrow_constructible_v<Vector, decltype(initsz)> && noexcept(std::fill(this->container.begin(), this->container.end(), fill_with.value)))
+	explicit Vector(const aml::size_initializer initsz, const aml::fill_initializer<value_type> fill_with) AML_NOEXCEPT_EXPR(std::is_nothrow_constructible_v<Vector, decltype(initsz)> && noexcept(std::fill(this->container.begin(), this->container.end(), fill_with.value)))
 		: Vector(initsz) {
 		std::fill(this->container.begin(), this->container.end(), fill_with.value);
 	}
@@ -817,7 +817,7 @@ public:
 		@brief Cast from Vector<U, dynamic_extent> to Vector<T, dynamic_extent>
 	*/
 	template<class U> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const Vector<U, aml::dynamic_extent>& other) noexcept(std::is_nothrow_copy_assignable_v<reference>)
+	explicit Vector(const Vector<U, aml::dynamic_extent>& other) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.size())) 
 	{
 		using other_value_type = aml::get_value_type<decltype(other)>;
@@ -835,7 +835,7 @@ public:
 		@tparam OtherSize The size of the static allocated vector at compile-time
 	*/
 	template<class U, Vectorsize OtherSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	explicit Vector(const Vector<U, OtherSize>& other) noexcept(std::is_nothrow_copy_assignable_v<reference>)
+	explicit Vector(const Vector<U, OtherSize>& other) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.static_size))
 	{
 		using other_value_type = aml::get_value_type<decltype(other)>;
@@ -848,22 +848,22 @@ public:
 	}
 
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector(const Vector&) noexcept(std::is_nothrow_copy_constructible_v<container_type>) = default;
+	Vector(const Vector&) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_constructible_v<container_type>) = default;
 
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector(Vector&&) noexcept(std::is_nothrow_move_constructible_v<container_type>) = default;
+	Vector(Vector&&) AML_NOEXCEPT_EXPR(std::is_nothrow_move_constructible_v<container_type>) = default;
 
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector& operator=(const Vector&) noexcept(std::is_nothrow_copy_assignable_v<container_type>) = default;
+	Vector& operator=(const Vector&) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<container_type>) = default;
 
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	Vector& operator=(Vector&&) noexcept(std::is_nothrow_move_assignable_v<container_type>) = default;
+	Vector& operator=(Vector&&) AML_NOEXCEPT_EXPR(std::is_nothrow_move_assignable_v<container_type>) = default;
 
 	/**
 		@return Returns size of the vector
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	size_type size() const noexcept(noexcept(this->container.size())) {
+	size_type size() const AML_NOEXCEPT_EXPR(noexcept(this->container.size())) {
 		return static_cast<size_type>(this->container.size());
 	}
 
@@ -875,12 +875,12 @@ public:
 		@warning If the size changes by more than it was, the new vector elements will not be explicitly initialized 
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	void resize(const size_type new_size) & noexcept(noexcept(this->container.resize(new_size))) {
+	void resize(const size_type new_size) & AML_NOEXCEPT_EXPR(noexcept(this->container.resize(new_size))) {
 		this->container.resize(new_size);
 	}
 
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	auto&& resize(const size_type new_size) && noexcept(noexcept(this->resize(new_size))) {
+	auto&& resize(const size_type new_size) && AML_NOEXCEPT_EXPR(noexcept(this->resize(new_size))) {
 		this->resize(new_size);
 		return std::move(*this);
 	}
@@ -909,7 +909,7 @@ public:
 		@return @ref reference to vector's field
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	reference operator[](const size_type index) noexcept(noexcept(this->container[index])) {
+	reference operator[](const size_type index) AML_NOEXCEPT_EXPR(noexcept(this->container[index])) {
 		return this->container[index];
 	}
 
@@ -921,7 +921,7 @@ public:
 		@return @ref Vector<T, Size>::const_reference to vector's field
 	*/
 	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
-	const_reference operator[](const size_type index) const noexcept(noexcept(this->container[index])) {
+	const_reference operator[](const size_type index) const AML_NOEXCEPT_EXPR(noexcept(this->container[index])) {
 		return this->container[index];
 	}
 
@@ -929,7 +929,7 @@ public:
 		@return Container %begin()
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	iterator begin() noexcept(noexcept(this->container.begin())) {
+	iterator begin() AML_NOEXCEPT_EXPR(noexcept(this->container.begin())) {
 		return this->container.begin();
 	}
 
@@ -937,7 +937,7 @@ public:
 		@return Container %end()
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	iterator end() noexcept(noexcept(this->container.end())) {
+	iterator end() AML_NOEXCEPT_EXPR(noexcept(this->container.end())) {
 		return this->container.end();
 	}
 
@@ -945,7 +945,7 @@ public:
 		@return Container %begin() const
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	const_iterator begin() const noexcept(noexcept(this->container.begin())) {
+	const_iterator begin() const AML_NOEXCEPT_EXPR(noexcept(this->container.begin())) {
 		return this->container.begin();
 	}
 
@@ -953,7 +953,7 @@ public:
 		@return Container %end() const
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	const_iterator end() const noexcept(noexcept(this->container.end())) {
+	const_iterator end() const AML_NOEXCEPT_EXPR(noexcept(this->container.end())) {
 		return this->container.end();
 	}
 
@@ -961,7 +961,7 @@ public:
 		@return Container %cbegin() const
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	const_iterator cbegin() const noexcept(noexcept(this->container.cbegin())) {
+	const_iterator cbegin() const AML_NOEXCEPT_EXPR(noexcept(this->container.cbegin())) {
 		return this->container.cbegin();
 	}
 
@@ -969,7 +969,7 @@ public:
 		@return Container %cend() const
 	*/
 	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
-	const_iterator cend() const noexcept(noexcept(this->container.cend())) {
+	const_iterator cend() const AML_NOEXCEPT_EXPR(noexcept(this->container.cend())) {
 		return this->container.cend();
 	}
 
