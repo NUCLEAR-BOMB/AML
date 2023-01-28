@@ -33,6 +33,19 @@ using remove_cvref = std::remove_cvref_t<T>;
 template<class T>
 inline constexpr bool is_custom = std::is_class_v<T> || std::is_union_v<T> || std::is_enum_v<T>; ///< Checks if @c T is user created
 
+#if !AML_CXX20
+namespace detail {
+	template<class T>
+	struct type_identity_impl {
+		using type = T;
+	};
+}
+template<class T>
+using type_identity = typename detail::template type_identity_impl<T>::type;
+#else
+template<class T>
+using type_identity = typename std::template type_identity<T>::type;
+#endif
 
 /// Wrapper around @c std::size_t
 struct size_initializer
@@ -578,18 +591,46 @@ constexpr void verify_container_parameters() noexcept {
 
 namespace detail 
 {
-	template<class T>
+	// meta if else
+	template<class T, class = void>
 	struct get_value_type_impl {
-		using type = typename std::template decay_t<T>::value_type;
+		// 1: else
+		template<class T, class = void>
+		struct nested_1 {
+			// 2: else
+			template<class T, bool = std::is_same_v<std::remove_reference_t<decltype(aml::unwrap(std::declval<T>()))>, T>>
+			struct nested_2 {
+				// 3: if
+				using type = std::remove_reference_t<decltype(aml::unwrap(std::declval<T>()))>;
+			};
+			template<template <class, class...> class Container, class T, class... Params>
+			struct nested_2<Container<T, Params...>, true> {
+				// 3: else
+				using type = T;
+			};
+			using type = typename nested_2<T>::type;
+		};
+		template<class T>
+		struct nested_1<T, std::void_t<typename T::type>> {
+			// 2: if
+			using type = typename T::type;
+		};
+		using type = typename nested_1<T>::type;
 	};
+
+	template<class T>
+	struct get_value_type_impl<T, std::void_t<typename T::value_type>> {
+		// 1: if
+		using type = typename T::value_type;
+	};
+
 } // namespace detail
 
 /**
 	@brief Get value type of container
-	@details If the type doesn't have an type alias of value_type - creates compile-time error
 */
 template<class T>
-using get_value_type = typename detail::template get_value_type_impl<T>::type;
+using get_value_type = typename detail::template get_value_type_impl<aml::remove_cvref<T>>::type;
 
 template<class T>
 using remove_ptr_and_ref = std::remove_reference_t<std::remove_pointer_t<std::decay_t<T>>>;

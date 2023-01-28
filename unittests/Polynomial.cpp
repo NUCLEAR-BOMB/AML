@@ -51,6 +51,7 @@ TEST(PolynomialTest, degree_2)
 	const auto c_res = aml::solve(aml::Polynomial(1.f, 2.f, 3.f));
 
 	ASSERT_TRUE(c_res.has_roots());
+	ASSERT_FALSE(c_res.has_real_roots());
 
 	ASSERT_EQ(aml::get<0>(c_res), aml::Complex(-0.33333333f, 0.47140452f));
 }

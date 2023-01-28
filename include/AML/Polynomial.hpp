@@ -121,6 +121,10 @@ public:
 	bool has_roots() const noexcept {
 		return this->container[0].has_value();
 	}
+	[[nodiscard]] constexpr
+	bool has_real_roots() const {
+		return this->container[0].value().is_real();
+	}
 
 	constexpr
 	operator const real_value_type&() const {
@@ -215,7 +219,7 @@ auto solve(Pol&& polynomial) noexcept
 
 	PolynomialRoot<aml::get_value_type<Pol>, 2> roots;
 
-	if (D <equal> 0) {
+	if (D <equal> zero) {
 		roots.append(-b / (2 * a));
 		return roots;
 	}

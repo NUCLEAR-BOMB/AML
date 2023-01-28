@@ -137,7 +137,22 @@ TEST(ComplexTest, structured_binding)
 		EXPECT_FLOAT_EQ(r, 1.f);
 		EXPECT_FLOAT_EQ(i, 1.f);
 	}
+}
 
+TEST(ComplexTest, lvalue_reference)
+{
+	int r = 100, i = 10;
+
+	Complex<int&> a(r, i);
+
+	EXPECT_EQ(aml::Re(a), 100);
+	EXPECT_EQ(aml::Im(a), 10);
+
+	r = 0;
+	i = -1;
+
+	EXPECT_EQ(aml::Re(a), 0);
+	EXPECT_EQ(aml::Im(a), -1);
 }
 
 

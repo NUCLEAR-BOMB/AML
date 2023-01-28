@@ -104,4 +104,34 @@ TEST(ToolsOther, custom_type) {
 	ASSERT_EQ((int)aml::one, 1);
 }
 
+namespace Test_get_value_type
+{
+	template<class T>
+	struct Some_container1 {
+		using value_type = float;
+		using type = char;
+	};
+
+	static_assert(std::is_same_v<aml::get_value_type<Some_container1<int>>, float>);
+	
+	template<class T>
+	struct Some_container2 {
+		using type = int;
+	};
+	static_assert(std::is_same_v<aml::get_value_type<Some_container2<double>>, int>);
+
+	template<class T>
+	struct Some_container3 {
+		static constexpr short value = (short)1000;
+	};
+	static_assert(std::is_same_v<aml::get_value_type<Some_container3<int>>, short>);
+
+	template<class T>
+	struct Some_container4 {
+
+	};
+	static_assert(std::is_same_v<aml::get_value_type<Some_container4<double>>, double>);
+}
+
+
 }

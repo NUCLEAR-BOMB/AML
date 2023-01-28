@@ -99,9 +99,16 @@ bool operator()(const Left& left, const Right& right) const noexcept
 		using common = std::common_type_t<Left, Right>;
 		return (static_cast<common>(left) == static_cast<common>(right));
 	}
-	else {
+	else if constexpr (std::is_invocable_r_v<bool, std::equal_to<>, Left, Right>) {
 		return (left == right);
 	}
+	else if constexpr (std::is_convertible_v<Left, Right>) {
+		return (left == static_cast<Left>(right));
+	}
+	else if constexpr (std::is_constructible_v<Right, Left>) {
+		return (static_cast<Right>(left) == right);
+	}
+	AML_UNREACHABLE;
 }
 };
 

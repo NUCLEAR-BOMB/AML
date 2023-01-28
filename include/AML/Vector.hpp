@@ -259,7 +259,7 @@ public:
 
 		@see aml::zero
 	*/
-	constexpr
+	AML_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::zero_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
 	{
 		aml::static_for<Size>([&](const auto i) {
@@ -273,7 +273,7 @@ public:
 
 		@see aml::one
 	*/
-	constexpr
+	AML_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::one_t) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		aml::static_for<Size>([&](const auto i) {
@@ -287,7 +287,7 @@ public:
 
 		@see aml::unit
 	*/
-	template<std::size_t Dir> constexpr 
+	template<std::size_t Dir> AML_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::unit_t<Dir>) noexcept(std::is_nothrow_copy_assignable_v<value_type>) 
 	{
 		static_assert(Base::has_index(Dir), "Unit must be in vector's range");

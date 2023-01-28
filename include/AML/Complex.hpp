@@ -4,6 +4,7 @@
 #include <AML/MathFunctions.hpp>
 
 #include <iostream>
+#include <functional>
 
 namespace aml
 {
@@ -15,14 +16,17 @@ public:
 
 	friend class Complex;
 
-	using value_type = T;
+	using value_type = std::conditional_t<std::is_lvalue_reference_v<T>, 
+		std::reference_wrapper<std::remove_reference_t<T>>, 
+		T
+	>;
 
 	using real_type = value_type;
 	using imag_type = value_type;
 
 	static constexpr std::size_t static_size = 2;
 
-	using container_type = T[static_size];
+	using container_type = value_type[static_size];
 
 	constexpr
 	Complex() noexcept {
@@ -41,21 +45,21 @@ public:
 
 	template<class U> constexpr
 	explicit Complex(const Complex<U>& other) noexcept 
-		: container{static_cast<T>(other.container[RE]), static_cast<T>(other.container[IM])}
+		: container{static_cast<value_type>(other.container[RE]), static_cast<value_type>(other.container[IM])}
 	{}
 
 	constexpr
 	explicit Complex([[maybe_unused]] const aml::zero_t) noexcept
-		: container{static_cast<T>(0), static_cast<T>(0)} {}
+		: container{static_cast<value_type>(0), static_cast<value_type>(0)} {}
 
 	constexpr
 	explicit Complex([[maybe_unused]] const aml::one_t) noexcept
-		: container{static_cast<T>(1), static_cast<T>(1)} {}
+		: container{static_cast<value_type>(1), static_cast<value_type>(1)} {}
 
 	template<std::size_t Dir> constexpr
 	explicit Complex([[maybe_unused]] const aml::unit_t<Dir>) noexcept
-		: container{ (Dir == 0) ? static_cast<T>(1) : static_cast<T>(0),
-					 (Dir == 1) ? static_cast<T>(1) : static_cast<T>(0)} {
+		: container{ (Dir == 0) ? static_cast<value_type>(1) : static_cast<value_type>(0),
+					 (Dir == 1) ? static_cast<value_type>(1) : static_cast<value_type>(0)} {
 		static_assert(Dir < static_size, "Unit direction out of range");
 	}
 
@@ -70,16 +74,21 @@ public:
 
 	template<class U> constexpr
 	Complex& operator=(const U& other) noexcept {
-		this->container[RE] = static_cast<T>(other);
-		this->container[IM] = static_cast<T>(0);
+		this->container[RE] = static_cast<value_type>(other);
+		this->container[IM] = static_cast<value_type>(0);
 		return *this;
 	}
 
-	template<class T> constexpr
-	friend auto& Re(Complex<T>&) noexcept;
+	[[nodiscard]] constexpr
+	bool is_real() const noexcept {
+		return aml::is_zero(this->container[IM]);
+	}
 
-	template<class T> constexpr
-	friend auto& Im(Complex<T>&) noexcept;
+	template<class U> constexpr
+	friend auto& Re(Complex<U>&) noexcept;
+
+	template<class U> constexpr
+	friend auto& Im(Complex<U>&) noexcept;
 
 private:
 	static constexpr std::size_t RE = 0;
