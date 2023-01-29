@@ -282,17 +282,19 @@ inline constexpr bool is_specialization = detail::template is_specialization_imp
 namespace detail
 {
 	template<class T, class = void>
-	struct has_value_member : std::false_type {};
-
+	struct unwrap_has_value_member : std::false_type {};
 	template<class T>
-	struct has_value_member<T, std::void_t<decltype(T::value, 0)>> : std::true_type {};
-
+	struct unwrap_has_value_member<T, std::void_t<decltype(T::value, 0)>> : std::true_type {};
 
 	template<class T, class = void>
-	struct has_get_method : std::false_type {};
-
+	struct unwrap_has_get_method : std::false_type {};
 	template<class T>
-	struct has_get_method<T, std::void_t<decltype(std::declval<T>().get(), 0)>> : std::true_type {};
+	struct unwrap_has_get_method<T, std::void_t<decltype(std::declval<T>().get(), 0)>> : std::true_type {};
+
+	template<class T, class = void>
+	struct unwrap_has_v_member : std::false_type {};
+	template<class T>
+	struct unwrap_has_v_member<T, std::void_t<decltype(T::v, 0)>> : std::true_type {};
 }
 
 template<class T> constexpr
@@ -300,16 +302,16 @@ decltype(auto) unwrap(T&& val) noexcept
 {
 	using type = aml::remove_cvref<T>;
 
-	if constexpr (detail::template has_value_member<type>::value) {
+	if constexpr (detail::template unwrap_has_value_member<type>{}) {
 		return std::forward<T>(val).value;
-	} else if constexpr (detail::template has_get_method<type>::value) {
+	} else if constexpr (detail::template unwrap_has_get_method<type>{}) {
 		return std::forward<T>(val).get();
+	} else if constexpr (detail::template unwrap_has_v_member<type>{}) {
+		return std::forward<T>(val).v;
 	} else {
 		return std::forward<T>(val);
 	}
 }
-
-
 
 namespace detail
 {
@@ -629,15 +631,15 @@ namespace detail
 template<class T>
 using get_value_type = typename detail::template get_value_type_impl<aml::remove_cvref<T>>::type;
 
-template<class T>
-using remove_ptr_and_ref = std::remove_reference_t<std::remove_pointer_t<std::decay_t<T>>>;
+//template<class T>
+//using remove_ptr_and_ref = std::remove_reference_t<std::remove_pointer_t<std::decay_t<T>>>;
 
-template<class T, class From>
-inline constexpr bool is_immutable_ref = std::is_constructible_v<T, const From&> || 
-										 std::is_assignable_v<T, const From&>;
+//template<class T, class From>
+//inline constexpr bool is_immutable_ref = std::is_constructible_v<T, const From&> || 
+//										 std::is_assignable_v<T, const From&>;
 
-template<class T>
-inline constexpr bool is_const_ref = std::is_const_v<std::remove_reference_t<T>>;
+//template<class T>
+//inline constexpr bool is_const_ref = std::is_const_v<std::remove_reference_t<T>>;
 
 namespace detail
 {
