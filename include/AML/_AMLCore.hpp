@@ -104,6 +104,16 @@
 	#define AML_CONSTEVAL constexpr
 #endif
 
+#ifdef __cpp_lib_is_constant_evaluated	
+	#define AML_IS_CONSTANT_EVALUATED() ::std::is_constant_evaluated()
+#else
+	#if AML_MSVC || AML_GCC || AML_CLANG
+		#define AML_IS_CONSTANT_EVALUATED() __builtin_is_constant_evaluated()
+	#else
+		#define AML_IS_CONSTANT_EVALUATED() (false)
+	#endif
+#endif
+
 #ifdef NDEBUG
 	#define AML_DEBUG 0
 #else

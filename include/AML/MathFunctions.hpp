@@ -2,18 +2,23 @@
 
 #include <AML/MathAlgorithms.hpp>
 
+#include <cmath>
+
 namespace aml {
 
-template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
+template<class T> [[nodiscard]] constexpr
 auto sqrt(const T& val) noexcept 
 {
-	T start_val;
+	using common = std::common_type_t<T, float>;
 
-	if		(val < T(10000))  start_val = T(44.72135955)  + T(0.011180339887)   * (val - T(2000));
-	else if (val < T(200000)) start_val = T(1000)		  + T(0.0005)			* (val - T(1000000));
-	else					  start_val = T(2236.0679775) + T(0.00022360679775) * (val - T(5000000));
-
-	return aml::selectable_convert<OutType>(aml::algorithms::newton_sqrt<true>(val, start_val));
+	if (AML_IS_CONSTANT_EVALUATED()) 
+	{
+		return static_cast<common>(aml::algorithms::newton_sqrt(static_cast<common>(val)));
+	}
+	else 
+	{
+		return static_cast<common>(::std::sqrt(static_cast<common>(val)));
+	}
 }
 
 template<class Left, class Right> [[nodiscard]] constexpr
