@@ -196,14 +196,14 @@ void logerror(
 	#define AML_DEBUG_ERROR(...) \
 		::aml::logerror(__LINE__, AML_CURRENT_FUNCTION, __FILE__, __VA_ARGS__)
 #else /// !AML_DEBUG
-	#define AML_DEBUG_ERROR(errmsg) ((void)0)
+	#define AML_DEBUG_ERROR(...) ((void)0)
 #endif /// !AML_DEBUG
 
 #if AML_DEBUG
 	#define AML_DEBUG_VERIFY(expression, ...)	\
 		do { if (expression) {} else { AML_DEBUG_ERROR(__VA_ARGS__); } } while (0)
 #else // !AML_DEBUG
-	#define AML_DEBUG_VERIFY(expression, errmsg) ((void)0)
+	#define AML_DEBUG_VERIFY(expression, ...) ((void)0)
 #endif // !AML_DEBUG
 
 }

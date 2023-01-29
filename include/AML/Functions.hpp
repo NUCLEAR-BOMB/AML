@@ -38,7 +38,7 @@ decltype(auto) max(First&& first, Second&& second) noexcept {
 	@brief Maximum element from input variadic arguments
 */
 template<class OutType = aml::selectable_unused, class First, class Second, class... Rest> [[nodiscard]] constexpr
-decltype(auto) max(First&& first, Second&& second, Rest&&... rest) noexcept 
+auto max(First&& first, Second&& second, Rest&&... rest) noexcept 
 {
 	using outtype = std::common_type_t<First, Second, Rest...>;
 

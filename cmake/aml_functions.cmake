@@ -30,6 +30,23 @@ macro(aml_find_gtest)
 	endif()
 endmacro()
 
+macro(aml_find_googlebenchmark)
+	set(BENCHMARK_ENABLE_TESTING NO)
+
+	find_package(benchmark QUIET)
+	if (NOT benchmark_FOUND)
+		include(FetchContent)
+		
+		FetchContent_Declare(
+			googlebenchmark
+			GIT_REPOSITORY https://github.com/google/benchmark.git
+			GIT_TAG        d572f4777349d43653b21d6c2fc63020ab326db2 # v1.7.1
+		)
+
+		FetchContent_MakeAvailable(googlebenchmark)
+	endif()
+endmacro()
+
 function(aml_inherit_compile_options target scope targetfrom)
 	get_target_property(options ${targetfrom} INTERFACE_COMPILE_OPTIONS)
 	if (options STREQUAL "options-NOTFOUND")

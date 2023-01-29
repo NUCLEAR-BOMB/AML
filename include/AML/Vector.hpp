@@ -363,7 +363,7 @@ public:
 		@attention If the new size (<tt>OtherSize</tt>) is larger than the current size (<tt>Size</tt>), the remaining elements will be filled with 0
 	*/
 	template<Vectorsize OtherSize, class OtherT = value_type> [[nodiscard]] constexpr
-	auto&& resize() const noexcept
+	auto resize() const noexcept
 	{
 		Vector<OtherT, OtherSize> out;
 
@@ -375,7 +375,7 @@ public:
 			}
 		});
 
-		return std::move(out);
+		return out;
 	}
 
 	template<class U = value_type> [[nodiscard]] constexpr

@@ -9,6 +9,7 @@ aml_set_option(AML_DOC 			NO 		BOOL 	"Build AML doxygen doc")
 aml_set_option(AML_TESTS		YES		BOOL 	"Build AML unittests")
 aml_set_option(AML_DOC_LATEX	NO		BOOL 	"Generate doxygen LaTeX")
 aml_set_option(AML_DOC_HTML		YES		BOOL 	"Generate doxygen HTML")
+aml_set_option(AML_BENCHMARK	NO		BOOL	"Build AML benchmark")
 
 aml_set_option(AML_STD			"17"	STRING	"AML lib C++ standard")
 
@@ -46,4 +47,8 @@ endif()
 if (AML_TESTS)
 	enable_testing()
 	add_subdirectory(unittests)
+endif()
+
+if (AML_BENCHMARK)
+	add_subdirectory(benchmark)
 endif()
