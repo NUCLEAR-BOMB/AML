@@ -156,4 +156,6 @@ TEST(ComplexTest, lvalue_reference)
 }
 
 
+static_assert(std::is_same_v<aml::common_type<aml::Complex<int>, aml::Complex<unsigned long>, aml::Complex<float>>, aml::Complex<float>>);
+
 }

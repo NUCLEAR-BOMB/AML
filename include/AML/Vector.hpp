@@ -686,12 +686,12 @@ template<aml::is_support_dynamic_vector_container Container>
 #else // !AML_CXX20
 template<class Container>
 #endif // !AML_CXX20
-class Vector<Container, dynamic_extent> /** @cond */: public detail::VectorBase<aml::get_value_type<Container>, dynamic_extent> /** @endcond */
+class Vector<Container, dynamic_extent> /** @cond */: public detail::VectorBase<aml::value_type_of<Container>, dynamic_extent> /** @endcond */
 {
 private:
 	friend class Vector;
 
-	using Base = detail::VectorBase<aml::get_value_type<Container>, dynamic_extent>;
+	using Base = detail::VectorBase<aml::value_type_of<Container>, dynamic_extent>;
 public:
 
 	/**
@@ -832,7 +832,7 @@ public:
 	explicit Vector(const Vector<U, aml::dynamic_extent>& other) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.size())) 
 	{
-		using other_value_type = aml::get_value_type<decltype(other)>;
+		using other_value_type = aml::value_type_of<decltype(other)>;
 
 		std::transform(other.cbegin(), other.cend(), this->begin(),
 			[](const other_value_type& val) {
@@ -850,7 +850,7 @@ public:
 	explicit Vector(const Vector<U, OtherSize>& other) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.static_size))
 	{
-		using other_value_type = aml::get_value_type<decltype(other)>;
+		using other_value_type = aml::value_type_of<decltype(other)>;
 
 		std::transform(other.cbegin(), other.cend(), this->container.begin(),
 			[](const other_value_type& val) {
@@ -1151,8 +1151,8 @@ const auto&& get(const Vector<T, Size>&& vec) noexcept
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator+(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
-	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() + 
-							  std::declval<aml::get_value_type<decltype(right)>>());
+	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() + 
+							  std::declval<aml::value_type_of<decltype(right)>>());
 	AML_OP_BODY1(out_type, left[i] + right[i]);
 }
 
@@ -1183,8 +1183,8 @@ auto& operator+=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& r
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator-(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
-	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() -
-							  std::declval<aml::get_value_type<decltype(right)>>());
+	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() -
+							  std::declval<aml::value_type_of<decltype(right)>>());
 	AML_OP_BODY1(out_type, left[i] - right[i]);
 }
 
@@ -1218,7 +1218,7 @@ auto& operator-=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& r
 */
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator*(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
-	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() * 
+	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() * 
 							  std::declval<Right>());
 	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] * right);
 }
@@ -1272,7 +1272,7 @@ auto& operator*=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
 */
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
-	using out_type = decltype(std::declval<aml::get_value_type<decltype(left)>>() / 
+	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() / 
 							  std::declval<Right>());
 	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] / right);
 }
@@ -1293,7 +1293,7 @@ auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept 
 template<class Left, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator/(const Left& left, const Vector<Right, RightSize>& right) noexcept {
 	using out_type = decltype(std::declval<Left>() / 
-							  std::declval<aml::get_value_type<decltype(right)>>());
+							  std::declval<aml::value_type_of<decltype(right)>>());
 	AML_OP_BODY3(out_type, right, Right, right.is_dynamic(), left / right[i]);
 }
 
@@ -1324,7 +1324,7 @@ auto& operator/=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
 */
 template<class Left, Vectorsize LeftSize> [[nodiscard]] constexpr
 auto operator-(const Vector<Left, LeftSize>& left) noexcept {
-	using out_type = aml::get_value_type<Vector<Left, LeftSize>>;
+	using out_type = aml::value_type_of<Vector<Left, LeftSize>>;
 	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), -left[i]);
 }
 
@@ -1409,7 +1409,7 @@ bool operator!=(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 template<class OutType = selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
 auto dist(const aml::Vector<T, Size>& vec) noexcept 
 {
-	using outtype = std::common_type_t<float, aml::get_value_type<decltype(vec)>>;
+	using outtype = std::common_type_t<float, aml::value_type_of<decltype(vec)>>;
 	outtype out = aml::sqr<outtype>(vec[VI::first]);
 
 	AML_VECTOR_FOR_LOOP(1, vec,				\
@@ -1522,8 +1522,8 @@ auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 		static_assert((left.static_size == 3), "The size of the vectors must be equal to 3");
 	}
 
-	using left_value_type = aml::get_value_type<decltype(left)>;
-	using right_value_type = aml::get_value_type<decltype(right)>;
+	using left_value_type = aml::value_type_of<decltype(left)>;
+	using right_value_type = aml::value_type_of<decltype(right)>;
 
 	using out_type = decltype((std::declval<left_value_type>()* std::declval<right_value_type>()) -
 		(std::declval<left_value_type>() * std::declval<right_value_type>()));
@@ -1629,6 +1629,26 @@ namespace detail
 /// Checks if @p T is a vector from linear algebra
 template<class T>
 inline constexpr bool is_vector = detail::is_vector_impl<T>::value;
+
+
+template<class... Ts, Vectorsize Size>
+struct common_type_body<aml::Vector<Ts, Size>...> {
+	using type = aml::Vector<aml::common_type<Ts...>, Size>;
+};
+
+template<class First, class... Ts>
+struct common_type_body<aml::Vector<First, aml::dynamic_extent>, aml::Vector<Ts, aml::dynamic_extent>...> 
+{
+	static_assert((aml::is_same_specialization<First, Ts> && ...));
+
+	using common_val_type = std::common_type_t<aml::container_value_type<First>, aml::container_value_type<Ts>...>;
+
+	using cont_type = aml::rebind_container<First, common_val_type>;
+
+	using type = aml::Vector<cont_type, aml::dynamic_extent>;
+};
+
+
 
 /**
 	@brief Namespace for short aliases of the @ref aml::Vector<T, Size> type

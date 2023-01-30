@@ -101,25 +101,25 @@ namespace Test_get_value_type
 		using type = char;
 	};
 
-	static_assert(std::is_same_v<aml::get_value_type<Some_container1<int>>, float>);
+	static_assert(std::is_same_v<aml::value_type_of<Some_container1<int>>, float>);
 	
 	template<class T>
 	struct Some_container2 {
 		using type = int;
 	};
-	static_assert(std::is_same_v<aml::get_value_type<Some_container2<double>>, int>);
+	static_assert(std::is_same_v<aml::value_type_of<Some_container2<double>>, int>);
 
 	template<class T>
 	struct Some_container3 {
 		static constexpr short value = (short)1000;
 	};
-	static_assert(std::is_same_v<aml::get_value_type<Some_container3<int>>, short>);
+	static_assert(std::is_same_v<aml::value_type_of<Some_container3<int>>, short>);
 
 	template<class T>
 	struct Some_container4 {
 
 	};
-	static_assert(std::is_same_v<aml::get_value_type<Some_container4<double>>, double>);
+	static_assert(std::is_same_v<aml::value_type_of<Some_container4<double>>, double>);
 }
 
 

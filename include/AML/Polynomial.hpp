@@ -217,7 +217,7 @@ auto solve(Pol&& polynomial) noexcept
 
 	const auto D = sqr(b) - (4 * a * c);
 
-	PolynomialRoot<aml::get_value_type<Pol>, 2> roots;
+	PolynomialRoot<aml::value_type_of<Pol>, 2> roots;
 
 	if (D <equal> zero) {
 		roots.append(-b / (2 * a));

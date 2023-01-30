@@ -645,4 +645,8 @@ static_assert(aml::is_vector<Vector<int, 3>>);
 static_assert(aml::is_vector<DVector<int>>);
 static_assert(!aml::is_vector<int>);
 
+static_assert(std::is_same_v<aml::common_type<aml::Vector<int, 2>, aml::Vector<float, 2>>, aml::Vector<float, 2>>);
+static_assert(std::is_same_v<aml::common_type<aml::DVector<float>, aml::DVector<double>>, aml::DVector<double>>);
+
+
 }

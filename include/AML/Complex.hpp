@@ -120,7 +120,7 @@ const auto& Im(const Complex<T>& c) noexcept { return aml::Im(const_cast<Complex
 
 template<class T> constexpr
 auto Im([[maybe_unused]] T&&) noexcept {
-	return static_cast<T>(aml::zero);
+	return static_cast<aml::remove_cvref<T>>(aml::zero);
 }
 
 template<class T> [[nodiscard]] constexpr
@@ -169,7 +169,7 @@ const auto& get(const Complex<T>& val) noexcept {
 
 
 template<class T>
-inline constexpr bool is_complex = aml::is_specialization<T, aml::Complex>;
+inline constexpr bool is_complex = aml::is_specialization_of<T, aml::Complex>;
 
 // vvvvvv + vvvvvv
 template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_complex<Right>, int> = 0> constexpr
@@ -292,5 +292,10 @@ std::ostream& operator<<(std::ostream& os, const Complex<T>& right) {
 	os << '(' << aml::Re(right) << ',' << aml::Im(right) << ")\n";
 	return os;
 }
+
+template<class... Ts>
+struct common_type_body<aml::Complex<Ts>...> {
+	using type = aml::Complex<aml::common_type<Ts...>>;
+};
 
 }

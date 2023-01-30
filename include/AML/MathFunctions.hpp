@@ -13,11 +13,19 @@ auto sqrt(const T& val) noexcept
 
 	if (AML_IS_CONSTANT_EVALUATED()) 
 	{
-		return static_cast<common>(aml::algorithms::newton_sqrt(static_cast<common>(val)));
+		return static_cast<common>(
+			aml::algorithms::newton_sqrt(
+				static_cast<common>(val)
+			)
+		);
 	}
 	else 
 	{
-		return static_cast<common>(::std::sqrt(static_cast<common>(val)));
+		return static_cast<common>(
+			::std::sqrt(
+				static_cast<common>(val)
+			)
+		);
 	}
 }
 

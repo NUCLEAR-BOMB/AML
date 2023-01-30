@@ -273,8 +273,34 @@ namespace detail
 }
 
 template<class T, template <class...> class TP>
-inline constexpr bool is_specialization = detail::template is_specialization_impl<T, TP>::value;
+inline constexpr bool is_specialization_of = detail::template is_specialization_impl<T, TP>::value;
 
+namespace detail
+{
+	template<template<class...> class, template<class...> class>
+	struct is_template_same_impl : std::false_type {};
+
+	template<template<class...> class TT>
+	struct is_template_same_impl<TT, TT> : std::true_type {};
+}
+
+template<template<class...> class First, template<class...> class Second>
+inline constexpr bool is_template_same = detail::template is_template_same_impl<First, Second>::value;
+
+namespace detail
+{
+	template<class First, class Second>
+	struct is_same_specialization_impl;
+
+	template<template<class...> class First, template<class...> class Second, class... FirstParams, class... SecondParams>
+	struct is_same_specialization_impl<First<FirstParams...>, Second<SecondParams...>>
+	{
+		static constexpr bool value = aml::is_template_same<First, Second>;
+	};
+}
+
+template<class First, class Second>
+inline constexpr bool is_same_specialization = detail::template is_same_specialization_impl<First, Second>::value;
 
 namespace detail
 {
@@ -439,6 +465,15 @@ template<std::size_t Bits>
 using floating_point_from_bits = floating_point_from_bytes<(Bits + (CHAR_BIT - 1)) / CHAR_BIT>;
 
 
+template<class... Ts>
+struct common_type_body 
+{
+	using type = std::common_type_t<Ts...>;
+};
+
+template<class... Ts>
+using common_type = typename common_type_body<Ts...>::type;
+
 namespace detail
 {
 	template<typename From, typename To, typename = void>
@@ -513,7 +548,7 @@ using container_parameters = typename detail::template container_parameters_impl
 	@brief Template type alias of @p Container value type
 */
 template<class Container>
-using container_value = typename detail::template container_value_impl<Container>::type;
+using container_value_type = typename detail::template container_value_impl<Container>::type;
 
 namespace detail
 {
@@ -626,7 +661,7 @@ namespace detail
 	@brief Get value type of container
 */
 template<class T>
-using get_value_type = typename detail::template get_value_type_impl<aml::remove_cvref<T>>::type;
+using value_type_of = typename detail::template get_value_type_impl<aml::remove_cvref<T>>::type;
 
 //template<class T>
 //using remove_ptr_and_ref = std::remove_reference_t<std::remove_pointer_t<std::decay_t<T>>>;
