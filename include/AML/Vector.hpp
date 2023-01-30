@@ -52,7 +52,7 @@ namespace VI {
 		@tparam I Index of vector field number
 	*/
 	template<Vectorsize I>
-	using index = std::integral_constant<Vectorsize, I>;
+	using index = aml::constant_t<I>;
 
 	inline constexpr index<0> X{}; ///< @c x 1D variable using indexes
 	inline constexpr index<1> Y{}; ///< @c y 2D variable using indexes
@@ -221,7 +221,7 @@ public:
 		@tparam ArraySize Input array size
 		@param Array Input array
 	*/
-	template<std::size_t ArraySize> constexpr
+	template<std::size_t ArraySize> AML_CONSTEVAL
 	Vector(const value_type (&Array)[ArraySize]) AML_NOEXCEPT_EXPR(std::is_nothrow_copy_assignable_v<value_type>)
 	{
 		static_assert(ArraySize == Size, 
@@ -448,7 +448,12 @@ public:
 
 		@see aml::VI namespace
 	*/
-	template<size_type I> /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
+	template<size_type I> 
+#if !AML_MSVC 
+		AML_CONSTEVAL
+#else
+		constexpr
+#endif
 	reference operator[]([[maybe_unused]] const VI::index<I>) noexcept 
 	{
 		static_assert(I < Size, "Static vector index out of range");
@@ -474,7 +479,12 @@ public:
 
 		@see VI namespace
 	*/
-	template<size_type I> /** @cond */ AML_FORCEINLINE /** @endcond */ constexpr
+	template<size_type I> 
+#if !AML_MSVC
+		AML_CONSTEVAL
+#else
+		constexpr
+#endif
 	const_reference operator[]([[maybe_unused]] const VI::index<I>) const noexcept {
 		return const_cast<Vector&>(*this)[VI::index<I>{}];
 	}

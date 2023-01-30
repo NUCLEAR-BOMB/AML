@@ -113,7 +113,7 @@ TEST(ComplexTest, sqrt)
 
 	auto b = aml::sqrt(a);
 
-	EXPECT_EQ(b, Complex(3.47434402f, -1.43912029f));
+	EXPECT_EQ(b, Complex(3.4743442f, -1.43912049f));
 }
 
 TEST(ComplexTest, structured_binding)

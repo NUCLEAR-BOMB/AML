@@ -40,7 +40,7 @@ public:
 
 	template<class Real> constexpr
 	Complex(Real&& r) noexcept
-		: container{ std::forward<Real>(r), static_cast<value_type>(0) }
+		: container{ std::forward<Real>(r), static_cast<value_type>(aml::zero) }
 	{}
 
 	template<class U> constexpr
@@ -50,16 +50,16 @@ public:
 
 	constexpr
 	explicit Complex([[maybe_unused]] const aml::zero_t) noexcept
-		: container{static_cast<value_type>(0), static_cast<value_type>(0)} {}
+		: container{static_cast<value_type>(aml::zero), static_cast<value_type>(aml::zero)} {}
 
 	constexpr
 	explicit Complex([[maybe_unused]] const aml::one_t) noexcept
-		: container{static_cast<value_type>(1), static_cast<value_type>(1)} {}
+		: container{ static_cast<value_type>(aml::one), static_cast<value_type>(aml::one) } {}
 
 	template<std::size_t Dir> constexpr
 	explicit Complex([[maybe_unused]] const aml::unit_t<Dir>) noexcept
-		: container{ (Dir == 0) ? static_cast<value_type>(1) : static_cast<value_type>(0),
-					 (Dir == 1) ? static_cast<value_type>(1) : static_cast<value_type>(0)} {
+		: container{ (Dir == 0) ? static_cast<value_type>(aml::one) : static_cast<value_type>(aml::zero),
+					 (Dir == 1) ? static_cast<value_type>(aml::one) : static_cast<value_type>(aml::zero)} {
 		static_assert(Dir < static_size, "Unit direction out of range");
 	}
 
@@ -75,7 +75,7 @@ public:
 	template<class U> constexpr
 	Complex& operator=(const U& other) noexcept {
 		this->container[RE] = static_cast<value_type>(other);
-		this->container[IM] = static_cast<value_type>(0);
+		this->container[IM] = static_cast<value_type>(aml::zero);
 		return *this;
 	}
 
@@ -118,19 +118,19 @@ auto& Im(Complex<T>& c) noexcept { return c.container[Complex<T>::IM]; }
 template<class T> constexpr
 const auto& Im(const Complex<T>& c) noexcept { return aml::Im(const_cast<Complex<T>&>(c)); }
 
-template<class T> AML_CONSTEVAL
+template<class T> constexpr
 auto Im([[maybe_unused]] T&&) noexcept {
-	return static_cast<T>(0);
+	return static_cast<T>(aml::zero);
 }
 
 template<class T> [[nodiscard]] constexpr
 auto to_real(T&& val) noexcept {
-	return Complex<T>(std::forward<T>(val), static_cast<T>(0));
+	return Complex<T>(std::forward<T>(val), static_cast<T>(aml::zero));
 }
 
 template<class T> [[nodiscard]] constexpr
 auto to_imag(T&& val) noexcept {
-	return Complex<T>(static_cast<T>(0), std::forward<T>(val));
+	return Complex<T>(static_cast<T>(aml::zero), std::forward<T>(val));
 }
 
 }
@@ -245,7 +245,7 @@ auto floor(const Complex<T>& val) noexcept {
 	return Complex(aml::floor(Re(val)), aml::floor(Im(val))); }
 template<class T> [[nodiscard]] constexpr
 auto ceil(const Complex<T>& val) noexcept {
-	return Complex(aml::ceil(Re(val)), amk::ceil(Im(val))); }
+	return Complex(aml::ceil(Re(val)), aml::ceil(Im(val))); }
 template<class T> [[nodiscard]] constexpr
 auto round(const Complex<T>& val) noexcept {
 	return Complex(aml::round(Re(val)), aml::round(Im(val))); }

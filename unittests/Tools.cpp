@@ -12,7 +12,7 @@ namespace {
 TEST(static_for_test, no_arg)
 {
 	int a = 0;
-	static_for<0, 10>([&] {
+	aml::static_for<0, 10>([&]{
 		a += 2;
 	});
 	ASSERT_EQ(a, 20);

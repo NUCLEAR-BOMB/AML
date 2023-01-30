@@ -100,14 +100,11 @@ struct constant_t {
 	using value_type = decltype(V);
 	using type = constant_t<V>;
 
-	template<class T>
-	constexpr operator T() const noexcept { return V; }
+	AML_CONSTEVAL 
+	operator value_type() const noexcept { return value; }
 
-	constexpr operator std::integral_constant<value_type, value>() const noexcept {
-		return std::integral_constant<value_type, value>{};
-	}
-
-	constexpr value_type operator()() const noexcept { return V; }
+	AML_CONSTEVAL 
+	value_type operator()() const noexcept { return value; }
 };
 
 /// @endcond
@@ -179,13 +176,13 @@ namespace detail
 	{
 		if constexpr (std::is_invocable_v<Function>) // checks if function hasn't any arguments
 		{
-			if constexpr (!std::is_void_v<std::invoke_result_t<Function>>) {
+			if constexpr (!std::is_void_v<decltype(std::invoke(fun))>) {
 				static_assert(!sizeof(Function*), "Functions/lambda must return void");
 			} else {
 				std::invoke(fun);
 			}
 		} else {
-			if constexpr (!std::is_void_v<std::invoke_result_t<Function, FunVal>>) {
+			if constexpr (!std::is_void_v<decltype(std::invoke(fun, std::forward<FunVal>(val)))>) {
 				static_assert(!sizeof(Function*), "Functions/lambda must return void");
 			} else {
 				std::invoke(fun, std::forward<FunVal>(val));
