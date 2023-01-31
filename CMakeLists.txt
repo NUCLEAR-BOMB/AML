@@ -40,6 +40,9 @@ target_compile_options	  (${PROJECT_NAME} INTERFACE
 
 aml_add_native_visualizer(${PROJECT_NAME})
 
+source_group(TREE ${AML_INCLUDE_PATH} FILES ${HEADER_FILES})
+
+
 if (AML_DOC)
 	add_subdirectory(doc)
 endif()
