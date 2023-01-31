@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <AML/Algorithms/Newtons_method.hpp>
+#include <AML/Algorithms/Power.hpp>
 
 namespace {
 
@@ -41,6 +42,27 @@ TEST(Newtons_method_test, with_max_iter)
 
 	auto res2 = aml::algorithms::raw_newtons_method_with_max_iteration<int>(fun, 10u, 100);
 	ASSERT_FLOAT_EQ(res2, 10.f);
+}
+
+TEST(Power_test, binary_pow)
+{
+	auto res1 = aml::algorithms::binary_pow(10ull, 10u);
+	ASSERT_EQ(res1, 10000000000);
+
+	auto res2 = aml::algorithms::binary_pow(1.1, 1000);
+	ASSERT_DOUBLE_EQ(res2, 2.4699329180059931e+41);
+}
+
+TEST(Power_test, fast_pow)
+{
+	[[maybe_unused]]
+	auto res1 = aml::algorithms::fast_precise_pow(5., 5.);
+	
+	[[maybe_unused]]
+	auto res2 = aml::algorithms::fast_pow(12.3456, 3.733);
+
+	[[maybe_unused]]
+	auto res3 = aml::algorithms::fast_precise_pow2(1000.5, 1.123456789);
 }
 
 
