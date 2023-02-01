@@ -8,7 +8,7 @@ namespace algorithms
 {
 
 template<class T, class E> [[nodiscard]] constexpr
-T binary_pow(T val, E exp) noexcept
+T squaring_pow(T val, E exp) noexcept
 {
 	static_assert(!std::is_floating_point_v<E>, "The exponent type must be a non floating point type");
 	
@@ -82,7 +82,7 @@ double fast_pow(double val, double exp) noexcept
 }
 
 [[nodiscard]] inline
-double fast_precise_pow2(double val, double exp) noexcept
+double fast_precise_pow2(const double val, const double exp) noexcept
 {
 	AML_DEBUG_VERIFY(exp >= 1.0, "The exponent must be larger or equal to 1");
 
@@ -92,10 +92,9 @@ double fast_precise_pow2(double val, double exp) noexcept
 	const auto e = static_cast<integer_t>(exp);
 
 	const auto x = aml::algorithms::fast_pow(val, (exp - e));
-	const auto r = aml::algorithms::binary_pow(val, e);
+	const auto r = aml::algorithms::squaring_pow(val, e);
 
 	return r * x;
-
 }
 
 

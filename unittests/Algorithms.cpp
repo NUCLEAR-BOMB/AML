@@ -44,12 +44,12 @@ TEST(Newtons_method_test, with_max_iter)
 	ASSERT_FLOAT_EQ(res2, 10.f);
 }
 
-TEST(Power_test, binary_pow)
+TEST(Power_test, squaring_pow)
 {
-	auto res1 = aml::algorithms::binary_pow(10ull, 10u);
+	auto res1 = aml::algorithms::squaring_pow(10ull, 10u);
 	ASSERT_EQ(res1, 10000000000);
 
-	auto res2 = aml::algorithms::binary_pow(1.1, 1000);
+	auto res2 = aml::algorithms::squaring_pow(1.1, 1000);
 	ASSERT_DOUBLE_EQ(res2, 2.4699329180059931e+41);
 }
 

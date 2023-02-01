@@ -268,4 +268,14 @@ decltype(auto) round(T&& val) noexcept
 	}
 }
 
+template<class T> [[nodiscard]] constexpr
+bool is_gteq_zero(const T& val) noexcept
+{
+	if constexpr (std::is_unsigned_v<T>) {
+		return val;
+	} else {
+		return (val >= static_cast<T>(aml::zero));
+	}
+}
+
 }
