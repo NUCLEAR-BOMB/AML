@@ -205,6 +205,7 @@ void logerror(
 #if AML_DEBUG
 	#define AML_DEBUG_ERROR(...) \
 		::aml::logerror(__LINE__, AML_CURRENT_FUNCTION, __FILE__, __VA_ARGS__)
+
 #else /// !AML_DEBUG
 	#define AML_DEBUG_ERROR(...) ((void)0)
 #endif /// !AML_DEBUG

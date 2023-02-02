@@ -11,6 +11,7 @@
 #include <vector>
 #include <list>
 #include <deque>
+#include <array>
 
 #ifdef AML_LIBRARY
 	#define AML_LIBRARY_TOOLS
@@ -334,6 +335,40 @@ decltype(auto) unwrap(T&& val) noexcept
 	} else {
 		return std::forward<T>(val);
 	}
+}
+
+namespace detail
+{
+	template<std::size_t Pos, class First, class... Rest>
+	struct get_variadic_impl {
+		static decltype(auto) get(First&&, Rest&&... args) {
+			return get_variadic_impl<Pos - 1, Rest...>::get(std::forward<Rest>(args)...);
+		}
+	};
+
+	template<class First, class... Rest>
+	struct get_variadic_impl<0, First, Rest...> {
+		static decltype(auto) get(First&& first, Rest&&...) {
+			return std::forward<First>(first);
+		}
+	};
+}
+
+template<std::size_t Pos, class... Args> constexpr
+decltype(auto) get_variadic(Args&&... args) noexcept {
+	return detail::template get_variadic_impl<Pos, Args...>::get(std::forward<Args>(args)...);
+}
+
+constexpr bool is_digit(unsigned char chr) noexcept {
+	return (chr >= '0' && '9' >= chr);
+}
+
+constexpr bool is_graph(unsigned char chr) noexcept {
+	return (chr >= '!' && '~' >= chr);
+}
+
+constexpr bool is_space(unsigned char chr) noexcept {
+	return (chr >= '\t' && '\r' >= chr) || (chr == ' ');
 }
 
 namespace detail
@@ -701,5 +736,106 @@ namespace detail
 
 template<class Func>
 using function_traits = detail::template function_traits_impl<Func>;
+
+
+template<class T, std::size_t ReserveSize>
+class Pushable_array : private std::array<T, ReserveSize>
+{
+	using Base = std::array<T, ReserveSize>;
+public:
+
+	static constexpr auto static_reserved_size = ReserveSize;
+
+	using container_type = std::array<T, ReserveSize>;
+
+	using Base::value_type;
+	using Base::size_type;
+
+	using Base::reference;
+	using Base::const_reference;
+
+	using Base::iterator;
+	using Base::const_iterator;
+	using Base::reverse_iterator;
+	using Base::const_reverse_iterator;
+
+	using Base::front;
+	using Base::data;
+
+	using Base::begin;
+	using Base::cbegin;
+	using Base::rend;
+	using Base::crend;
+	
+	using Base::fill;
+	using Base::swap;
+
+	constexpr
+	Pushable_array() noexcept
+		: m_current_size(0) 
+		, Base{} {}
+
+	[[nodiscard]] constexpr 
+	size_type size() const noexcept { return m_current_size; }
+
+	[[nodiscard]] constexpr
+	bool empty() const noexcept {
+		return (m_current_size == 0);
+	}
+
+	constexpr iterator end() noexcept { return this->Base::begin() + this->size(); }
+	constexpr const_iterator end() const noexcept { return this->Base::begin() + this->size(); }
+	constexpr const_iterator cend() const noexcept { return this->end(); }
+
+	constexpr reverse_iterator rbegin() noexcept { return this->Base::rend() - this->size(); }
+	constexpr const_reverse_iterator rbegin() const noexcept { return this->Base::rend() - this->size(); }
+	constexpr const_reverse_iterator crbegin() const noexcept { return this->rbegin(); }
+
+	constexpr reference back() noexcept {
+		return (*this)[m_current_size - 1];
+	}
+	constexpr const_reference back() const noexcept {
+		return (*this)[m_current_size - 1];
+	}
+
+	[[nodiscard]] static AML_CONSTEVAL
+	size_type reserved_size() noexcept {
+		return ReserveSize;
+	}
+
+	constexpr
+	void push_back(const value_type& value) noexcept 
+	{
+		AML_DEBUG_VERIFY(m_current_size < reserved_size(), "Maximum limit is used");
+		this->Base::operator[](m_current_size) = value;
+		++m_current_size;
+	}
+
+	constexpr
+	value_type pop_back() const noexcept {
+		--m_current_size;
+		return this->Base::operator[](m_current_size);
+	}
+
+	constexpr
+	void resize(size_type new_size) noexcept {
+		AML_DEBUG_VERIFY(new_size < reserved_size(), "Maximum limit is used");
+		m_current_size = new_size;
+	}
+
+	constexpr
+	reference operator[](size_type index) noexcept {
+		AML_DEBUG_VERIFY(index < size(), "Out of range");
+		return this->Base::operator[](index);
+	}
+	constexpr
+	const_reference operator[](size_type index) const noexcept {
+		return const_cast<Pushable_array&>(*this)[index];
+	}
+
+
+private:
+	mutable size_type m_current_size;
+};
 
 }

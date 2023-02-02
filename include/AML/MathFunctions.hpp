@@ -1,6 +1,7 @@
 #pragma once
 
-#include <AML/MathAlgorithms.hpp>
+#include <AML/Algorithms/Power.hpp>
+#include <AML/Algorithms/Newtons_method.hpp>
 
 #include <cmath>
 
@@ -11,22 +12,22 @@ auto sqrt(const T& val) noexcept
 {
 	using common = std::common_type_t<T, float>;
 
-	if (AML_IS_CONSTANT_EVALUATED()) 
-	{
-		return static_cast<common>(
-			aml::algorithms::newton_sqrt(
-				static_cast<common>(val)
-			)
-		);
-	}
-	else 
-	{
+	//if (AML_IS_CONSTANT_EVALUATED()) 
+	//{
+	//	return static_cast<common>(
+	//		aml::algorithms::newton_sqrt(
+	//			static_cast<common>(val)
+	//		)
+	//	);
+	//}
+	//else 
+	//{
 		return static_cast<common>(
 			::std::sqrt(
 				static_cast<common>(val)
 			)
 		);
-	}
+	//}
 }
 
 template<class Left, class Right> [[nodiscard]] constexpr

@@ -62,7 +62,7 @@ TEST(Power_test, fast_pow)
 	auto res2 = aml::algorithms::fast_pow(12.3456, 3.733);
 
 	[[maybe_unused]]
-	auto res3 = aml::algorithms::fast_precise_pow2(1000.5, 1.123456789);
+	auto res3 = aml::algorithms::fast_precise_pow2(1000.5, 3.23);
 }
 
 

@@ -3,6 +3,7 @@
 
 #include <AML/Tools.hpp>
 #include <limits>
+#include <string_view>
 
 #ifdef AML_LIBRARY
 	#define AML_LIBRARY_FUNCTIONS
@@ -276,6 +277,42 @@ bool is_gteq_zero(const T& val) noexcept
 	} else {
 		return (val >= static_cast<T>(aml::zero));
 	}
+}
+
+[[nodiscard]] constexpr
+auto string_to_double(const char* const str, std::size_t size) noexcept
+{
+	using flt_type = double;
+
+	flt_type out = 0.;
+
+	const auto* const str_end = str + size;
+
+	const auto dot_it = [&]() {
+		auto it = str;
+		for (; it != str_end; ++it) {
+			if (*it == '.') return it;
+		}
+		return it;
+	}();
+	
+	auto it = (dot_it - 1);
+	flt_type pos = 1.0;
+	for (;; --it, pos *= 10.0)
+	{
+		out += static_cast<flt_type>(*it - '0') * pos;
+		if (it == str) break;
+	}
+	if (dot_it == str_end) return out;
+
+	pos = 1.0 / 10.0;
+	it = (dot_it + 1);
+	for (; it != str_end; ++it, pos /= 10.0)
+	{
+		out += static_cast<flt_type>(*it - '0') * pos;
+	}
+
+	return out;
 }
 
 }

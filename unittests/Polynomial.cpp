@@ -42,6 +42,7 @@ TEST(PolynomialTest, degree_2)
 {
 	const Polynomial a(1.f, 5.f, 3.f);
 
+
 	const auto a_res = aml::solve(a);
 	ASSERT_FLOAT_EQ(a_res, -0.23240812f);
 
