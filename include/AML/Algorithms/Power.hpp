@@ -28,7 +28,7 @@ T squaring_pow(T val, E exp) noexcept
 }
 
 template<class T> [[nodiscard]]
-auto fast_precise_pow(const T& val, const T& exp) noexcept
+auto fast_precise_pow(const T val, const T exp) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_iec559, "Requires IEEE-comliant for T");
 
@@ -81,17 +81,15 @@ double fast_pow(double val, double exp) noexcept
 	return val;
 }
 
-[[nodiscard]] inline
-double fast_precise_pow2(const double val, const double exp) noexcept
+// faster that msvc std::pow on big values
+template<class T> [[nodiscard]] inline
+double fast_precise_pow2(const T val, const T exp) noexcept
 {
 	AML_DEBUG_VERIFY(exp >= 1.0, "The exponent must be larger or equal to 1");
 
-	using integer_t = std::int32_t;
-	static_assert(sizeof(integer_t) == (sizeof(val) / 2));
+	const auto e = static_cast<std::uint64_t>(exp);
 
-	const auto e = static_cast<integer_t>(exp);
-
-	const auto x = aml::algorithms::fast_pow(val, (exp - e));
+	const auto x = aml::algorithms::fast_precise_pow(val, (exp - e));
 	const auto r = aml::algorithms::squaring_pow(val, e);
 
 	return r * x;

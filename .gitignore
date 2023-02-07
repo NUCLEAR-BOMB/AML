@@ -4,7 +4,8 @@
 !.gitignore
 !include/
 !source/
-!unittests/
+# !unittests/
+!tests/
 !doc/
 !examples/
 !cmake/

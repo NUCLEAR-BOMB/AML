@@ -13,25 +13,26 @@ template<class T>
 class Complex
 {
 public:
-
+	template<class U>
 	friend class Complex;
 
 	using value_type = std::conditional_t<std::is_lvalue_reference_v<T>, 
-		std::reference_wrapper<std::remove_reference_t<T>>, 
+		aml::reference_wrapper<std::remove_reference_t<T>>, 
 		T
 	>;
 
 	using real_type = value_type;
 	using imag_type = value_type;
 
+	using reference = T&;
+	using const_reference = const T&;
+
 	static constexpr std::size_t static_size = 2;
 
 	using container_type = value_type[static_size];
 
 	constexpr
-	Complex() noexcept {
-
-	}
+	Complex() noexcept = default;
 
 	template<class Real, class Imag> constexpr
 	Complex(Real&& r, Imag&& i) noexcept
@@ -85,10 +86,10 @@ public:
 	}
 
 	template<class U> constexpr
-	friend auto& Re(Complex<U>&) noexcept;
+	friend typename Complex<U>::reference Re(Complex<U>&) noexcept;
 
 	template<class U> constexpr
-	friend auto& Im(Complex<U>&) noexcept;
+	friend typename Complex<U>::reference Im(Complex<U>&) noexcept;
 
 private:
 	static constexpr std::size_t RE = 0;
@@ -104,20 +105,27 @@ template<class RealT>
 Complex(RealT&&) -> Complex<RealT>;
 
 template<class T> constexpr
-auto& Re(Complex<T>& c) noexcept { return c.container[Complex<T>::RE]; }
+typename Complex<T>::reference Re(Complex<T>& c) noexcept { 
+	return c.container[Complex<T>::RE]; 
+}
 template<class T> constexpr
-const auto& Re(const Complex<T>& c) noexcept { return aml::Re(const_cast<Complex<T>&>(c)); }
-
+typename Complex<T>::const_reference Re(const Complex<T>& c) noexcept { 
+	return aml::Re(const_cast<Complex<T>&>(c)); 
+}
 template<class T> constexpr
 decltype(auto) Re(T&& val) noexcept {
 	return std::forward<T>(val);
 }
 
-template<class T> constexpr
-auto& Im(Complex<T>& c) noexcept { return c.container[Complex<T>::IM]; }
-template<class T> constexpr
-const auto& Im(const Complex<T>& c) noexcept { return aml::Im(const_cast<Complex<T>&>(c)); }
 
+template<class T> constexpr
+typename Complex<T>::reference Im(Complex<T>& c) noexcept { 
+	return c.container[Complex<T>::IM]; 
+}
+template<class T> constexpr
+typename Complex<T>::const_reference Im(const Complex<T>& c) noexcept { 
+	return aml::Im(const_cast<Complex<T>&>(c));
+}
 template<class T> constexpr
 auto Im([[maybe_unused]] T&&) noexcept {
 	return static_cast<aml::remove_cvref<T>>(aml::zero);
@@ -125,12 +133,12 @@ auto Im([[maybe_unused]] T&&) noexcept {
 
 template<class T> [[nodiscard]] constexpr
 auto to_real(T&& val) noexcept {
-	return Complex<T>(std::forward<T>(val), static_cast<T>(aml::zero));
+	return Complex<T>(std::forward<T>(val), static_cast<aml::remove_cvref<T>>(aml::zero));
 }
 
 template<class T> [[nodiscard]] constexpr
 auto to_imag(T&& val) noexcept {
-	return Complex<T>(static_cast<T>(aml::zero), std::forward<T>(val));
+	return Complex<T>(static_cast<aml::remove_cvref<T>>(aml::zero), std::forward<T>(val));
 }
 
 }
@@ -235,9 +243,14 @@ template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_comple
 bool operator==(const Left& left, const Right& right) noexcept {
 	return ( Re(left) <equal> Re(right) ) && ( Im(left) <equal> Im(right) );
 }
-template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_complex<Right>, int> = 0>
+template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_complex<Right>, int> = 0> constexpr
 bool operator!=(const Left& left, const Right& right) noexcept {
 	return !(left == right);
+}
+
+template<class T> constexpr
+auto operator-(const Complex<T>& left) noexcept {
+	return aml::Complex(-Re(left), -Im(left));
 }
 
 template<class T> [[nodiscard]] constexpr 
@@ -293,9 +306,17 @@ std::ostream& operator<<(std::ostream& os, const Complex<T>& right) {
 	return os;
 }
 
-template<class... Ts>
-struct common_type_body<aml::Complex<Ts>...> {
-	using type = aml::Complex<aml::common_type<Ts...>>;
+template<class First, class Second> 
+struct common_type_body<aml::Complex<First>, aml::Complex<Second>> {
+	using type = aml::Complex<aml::common_type<First, Second>>;
+};
+template<class First, class Second>
+struct common_type_body<First, aml::Complex<Second>> {
+	using type = aml::Complex<aml::common_type<First, Second>>;
+};
+template<class First, class Second>
+struct common_type_body<aml::Complex<First>, Second> {
+	using type = aml::Complex<aml::common_type<First, Second>>;
 };
 
 }

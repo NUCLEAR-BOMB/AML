@@ -49,7 +49,8 @@ endif()
 
 if (AML_TESTS)
 	enable_testing()
-	add_subdirectory(unittests)
+	#add_subdirectory(unittests)
+	add_subdirectory(test)
 endif()
 
 if (AML_BENCHMARK)

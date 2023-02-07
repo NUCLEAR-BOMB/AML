@@ -13,6 +13,10 @@
 #include <deque>
 #include <array>
 
+#if AML_CXX20
+	#include <memory>
+#endif
+
 #ifdef AML_LIBRARY
 	#define AML_LIBRARY_TOOLS
 #else
@@ -48,6 +52,39 @@ template<class T>
 using type_identity = typename std::template type_identity<T>::type;
 #endif
 
+template<class T>
+class reference_wrapper
+{
+public:
+	static_assert(!std::is_reference_v<T>);
+
+	using type = T;
+
+	using container_type = std::add_pointer_t<T>;
+
+	constexpr reference_wrapper(T& r) noexcept
+		: m_ptr(std::addressof(r)) {}
+	constexpr reference_wrapper(T&&) noexcept = delete;
+
+	constexpr reference_wrapper(const reference_wrapper&) noexcept = default;
+	constexpr reference_wrapper& operator=(const reference_wrapper&) noexcept = default;
+
+	constexpr operator type& () const noexcept { return *m_ptr; }
+	constexpr type& get() const noexcept { return *m_ptr; }
+
+private:
+	container_type m_ptr;
+};
+
+template<class T>
+reference_wrapper(T&) -> reference_wrapper<T>;
+
+template<class T>
+struct type_wrapper { T value; };
+
+template<class... Rest>
+inline constexpr bool always_false = ((sizeof(type_wrapper<Rest>*) == 0) && ...);
+
 /// Wrapper around @c std::size_t
 struct size_initializer
 {
@@ -76,22 +113,22 @@ struct fill_initializer
 
 /// Type of @ref zero
 struct zero_t {
-	template<class T>
-	explicit constexpr operator T() const noexcept { return static_cast<T>(0); }
+	template<class T> AML_CONSTEVAL
+	explicit operator T() const noexcept { return static_cast<T>(0); }
 };
 
 /// Type of @ref one
 struct one_t {
-	template<class T>
-	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
+	template<class T> AML_CONSTEVAL
+	explicit operator T() const noexcept { return static_cast<T>(1); }
 };
 
 /// Type of @ref unit
 template<std::size_t Direction>
 struct unit_t {
 	static constexpr auto dir = Direction;
-	template<class T>
-	explicit constexpr operator T() const noexcept { return static_cast<T>(1); }
+	template<class T> AML_CONSTEVAL
+	explicit operator T() const noexcept { return static_cast<T>(1); }
 };
 
 /// Clone of std::integral_constant ?
@@ -162,6 +199,16 @@ namespace detail {
 template<class T>
 inline constexpr bool is_complete = detail::is_complete_impl<T>::value;
 
+template<class T> [[nodiscard]] constexpr
+auto to_unsigned(const T& val) noexcept {
+	return static_cast<std::make_unsigned_t<T>>(val);
+}
+template<class T> [[nodiscard]] constexpr
+auto to_signed(const T& val) noexcept {
+	return static_cast<std::make_signed_t<T>>(val);
+}
+
+
 /**
 	@brief Max recursion level for #aml::static_for
 	@details If the value is greater, then runtime for loop is used
@@ -178,13 +225,13 @@ namespace detail
 		if constexpr (std::is_invocable_v<Function>) // checks if function hasn't any arguments
 		{
 			if constexpr (!std::is_void_v<decltype(std::invoke(fun))>) {
-				static_assert(!sizeof(Function*), "Functions/lambda must return void");
+				static_assert(aml::always_false<Function>, "Functions/lambda must return void");
 			} else {
 				std::invoke(fun);
 			}
 		} else {
 			if constexpr (!std::is_void_v<decltype(std::invoke(fun, std::forward<FunVal>(val)))>) {
-				static_assert(!sizeof(Function*), "Functions/lambda must return void");
+				static_assert(aml::always_false<Function>, "Functions/lambda must return void");
 			} else {
 				std::invoke(fun, std::forward<FunVal>(val));
 			}
@@ -260,8 +307,16 @@ void variadic_loop(Args&&... args, Function&& fun) noexcept {
 #endif
 
 template<std::size_t I, class T> constexpr
-decltype(auto) get(T&& val) noexcept(noexcept(std::forward<T>(val).get<I>())) {
-	return std::forward<T>(val).get<I>();
+decltype(auto) get(T&& val) noexcept(noexcept(std::forward<T>(val).template get<I>())) {
+	return std::forward<T>(val).template get<I>();
+}
+
+template<class T> constexpr
+void swap(T& left, T& right) noexcept 
+{
+	T tmp_ = std::move(left);
+	left = std::move(right);
+	right = std::move(tmp_);
 }
 
 namespace detail
@@ -500,14 +555,37 @@ template<std::size_t Bits>
 using floating_point_from_bits = floating_point_from_bytes<(Bits + (CHAR_BIT - 1)) / CHAR_BIT>;
 
 
-template<class... Ts>
+template<class First, class Second>
 struct common_type_body 
 {
-	using type = std::common_type_t<Ts...>;
+	using type = std::common_type_t<First, Second>;
 };
 
+namespace detail
+{
+	template<class... Ts>
+	struct common_type_impl;
+
+	template<class First>
+	struct common_type_impl<First> {
+		using type = First;
+	};
+
+	template<class First, class Second> 
+	struct common_type_impl<First, Second> 
+		: common_type_body<First, Second> {};
+
+	template<class T>
+	struct common_type_impl<T, T> : common_type_impl<T> {};
+
+	template<class First, class Second, class... Rest>
+	struct common_type_impl<First, Second, Rest...>	
+		: common_type_impl<typename common_type_impl<First, Second>::type, Rest...>
+	{};
+}
+
 template<class... Ts>
-using common_type = typename common_type_body<Ts...>::type;
+using common_type = typename detail::template common_type_impl<Ts...>::type;
 
 namespace detail
 {
@@ -655,39 +733,58 @@ constexpr void verify_container_parameters() noexcept {
 	static_assert(std::is_same_v<lp, rp>, "The parameters of the containers must be the same");
 }
 
+namespace detail
+{
+	template<class First, class... Rest>
+	struct container_common_type_impl 
+	{
+		static_assert((aml::is_same_specialization<First, Rest> && ...));
+
+		using type = aml::rebind_container< First,
+			aml::common_type<
+				aml::container_value_type<First>, 
+				aml::container_value_type<Rest>...
+			>
+		>;
+	};
+}
+
+template<class... Containers>
+using container_common_type = typename detail::template container_common_type_impl<Containers...>::type;
+
 namespace detail 
 {
 	// meta if else
-	template<class T, class = void>
+	template<class T1, class = void>
 	struct get_value_type_impl {
 		// 1: else
-		template<class T, class = void>
+		template<class T2, class = void>
 		struct nested_1 {
 			// 2: else
-			template<class T, bool = std::is_same_v<std::remove_reference_t<decltype(aml::unwrap(std::declval<T>()))>, T>>
+			template<class T3, bool = std::is_same_v<std::remove_reference_t<decltype(aml::unwrap(std::declval<T3>()))>, T3>>
 			struct nested_2 {
 				// 3: if
-				using type = std::remove_reference_t<decltype(aml::unwrap(std::declval<T>()))>;
+				using type = std::remove_reference_t<decltype(aml::unwrap(std::declval<T3>()))>;
 			};
-			template<template <class, class...> class Container, class T, class... Params>
-			struct nested_2<Container<T, Params...>, true> {
+			template<template <class, class...> class Container, class T3, class... Params>
+			struct nested_2<Container<T3, Params...>, true> {
 				// 3: else
-				using type = T;
+				using type = T3;
 			};
-			using type = typename nested_2<T>::type;
+			using type = typename nested_2<T2>::type;
 		};
-		template<class T>
-		struct nested_1<T, std::void_t<typename T::type>> {
+		template<class T2>
+		struct nested_1<T2, std::void_t<typename T2::type>> {
 			// 2: if
-			using type = typename T::type;
+			using type = typename T2::type;
 		};
-		using type = typename nested_1<T>::type;
+		using type = typename nested_1<T1>::type;
 	};
 
-	template<class T>
-	struct get_value_type_impl<T, std::void_t<typename T::value_type>> {
+	template<class T1>
+	struct get_value_type_impl<T1, std::void_t<typename T1::value_type>> {
 		// 1: if
-		using type = typename T::value_type;
+		using type = typename T1::value_type;
 	};
 
 } // namespace detail
@@ -737,7 +834,6 @@ namespace detail
 template<class Func>
 using function_traits = detail::template function_traits_impl<Func>;
 
-
 template<class T, std::size_t ReserveSize>
 class Pushable_array : private std::array<T, ReserveSize>
 {
@@ -748,16 +844,15 @@ public:
 
 	using container_type = std::array<T, ReserveSize>;
 
-	using Base::value_type;
-	using Base::size_type;
-
-	using Base::reference;
-	using Base::const_reference;
-
-	using Base::iterator;
-	using Base::const_iterator;
-	using Base::reverse_iterator;
-	using Base::const_reverse_iterator;
+	using value_type = typename Base::value_type;
+	using size_type = typename Base::size_type;
+	using reference = typename Base::reference;
+	using const_reference = typename Base::const_reference;
+	using iterator = typename Base::iterator;
+	using const_iterator = typename Base::const_iterator;
+	using reverse_iterator = typename Base::reverse_iterator;
+	using const_reverse_iterator = typename Base::const_reverse_iterator;
+	using difference_type = typename Base::difference_type;
 
 	using Base::front;
 	using Base::data;
@@ -772,8 +867,21 @@ public:
 
 	constexpr
 	Pushable_array() noexcept
-		: m_current_size(0) 
-		, Base{} {}
+		: Base{}
+		, m_current_size(0) {}
+
+private:
+
+	template<std::size_t N, std::size_t... Idx> constexpr
+	Pushable_array(const value_type (&arr)[N], std::index_sequence<Idx...>) noexcept
+		: Base{arr[Idx]...}
+		, m_current_size(N) {}
+
+public:
+
+	template<std::size_t N> constexpr
+	Pushable_array(const value_type (&arr)[N]) noexcept
+		: Pushable_array(arr, std::make_index_sequence<N>{}) {}
 
 	[[nodiscard]] constexpr 
 	size_type size() const noexcept { return m_current_size; }
@@ -783,12 +891,12 @@ public:
 		return (m_current_size == 0);
 	}
 
-	constexpr iterator end() noexcept { return this->Base::begin() + this->size(); }
-	constexpr const_iterator end() const noexcept { return this->Base::begin() + this->size(); }
+	constexpr iterator end() noexcept { return this->Base::begin() + static_cast<difference_type>(this->size()); }
+	constexpr const_iterator end() const noexcept { return this->Base::begin() + static_cast<difference_type>(this->size()); }
 	constexpr const_iterator cend() const noexcept { return this->end(); }
 
-	constexpr reverse_iterator rbegin() noexcept { return this->Base::rend() - this->size(); }
-	constexpr const_reverse_iterator rbegin() const noexcept { return this->Base::rend() - this->size(); }
+	constexpr reverse_iterator rbegin() noexcept { return this->Base::rend() - static_cast<difference_type>(this->size()); }
+	constexpr const_reverse_iterator rbegin() const noexcept { return this->Base::rend() - static_cast<difference_type>(this->size()); }
 	constexpr const_reverse_iterator crbegin() const noexcept { return this->rbegin(); }
 
 	constexpr reference back() noexcept {
@@ -811,8 +919,22 @@ public:
 		++m_current_size;
 	}
 
+	template<class... Args> AML_CONSTEXPR
+	void emplace_back(Args&&... args) noexcept 
+	{
+		AML_DEBUG_VERIFY(m_current_size < reserved_size(), "Maximum limit is used");
+		auto* pos = &this->Base::operator[](m_current_size);
+
+#if AML_CXX20
+		std::construct_at(pos, std::forward<Args>(args)...);
+#else
+		new (pos) value_type(std::forward<Args>(args)...);
+#endif
+		++m_current_size;
+	}
+
 	constexpr
-	value_type pop_back() const noexcept {
+	value_type pop_back() noexcept {
 		--m_current_size;
 		return this->Base::operator[](m_current_size);
 	}
@@ -835,7 +957,7 @@ public:
 
 
 private:
-	mutable size_type m_current_size;
+	size_type m_current_size;
 };
 
 }

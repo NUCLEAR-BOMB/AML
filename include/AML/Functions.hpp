@@ -100,7 +100,7 @@ bool operator()(const Left& left, const Right& right) const noexcept
 		using common = std::common_type_t<Left, Right>;
 		return (static_cast<common>(left) == static_cast<common>(right));
 	}
-	else if constexpr (std::is_invocable_r_v<bool, std::equal_to<>, Left, Right>) {
+	else if constexpr (std::is_invocable_r_v<bool, std::equal_to<>, decltype(left), decltype(right)>) {
 		return (left == right);
 	}
 	else if constexpr (std::is_constructible_v<Left, decltype(right)> 
@@ -118,6 +118,7 @@ bool operator()(const Left& left, const Right& right) const noexcept
 		static_assert(!sizeof(Left*), "Left and Right types do not have a equal operator");
 	}
 }
+
 };
 
 /**

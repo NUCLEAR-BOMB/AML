@@ -73,10 +73,10 @@ public:
 	Token(cstring_type str) noexcept 
 		: Token()
 	{
-		constexpr auto is_digit = [](unsigned char chr) {
-			return aml::is_digit(chr) || chr == '.';
+		constexpr auto is_digit = [](char chr) {
+			return aml::is_digit(static_cast<unsigned char>(chr)) || chr == '.';
 		};
-		constexpr auto is_bracket = [](unsigned char chr) {
+		constexpr auto is_bracket = [](char chr) {
 			return chr == '(' || chr == ')';
 		};
 
@@ -98,7 +98,9 @@ public:
 			if (m_type == Type::Number && !is_digit(*it)) {
 				end = it; break;
 			}
-			if (m_type == Type::Operator && (!aml::is_graph(*it) || is_digit(*it) || is_bracket(*it))) {
+			if (m_type == Type::Operator && 
+				(!aml::is_graph(static_cast<unsigned char>(*it)) || is_digit(*it) || is_bracket(*it))) 
+			{
 				end = it; break;
 			}
 		}

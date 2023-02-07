@@ -18,7 +18,7 @@ namespace detail
 		{
 			iter_val = static_cast<return_type>(func(std::as_const(iter_val)));
 
-			AML_DEBUG_VERIFY(!(std::isnan(iter_val) || std::isinf(iter_val)), "Iteration value is NaN or infinity");
+			//AML_DEBUG_VERIFY(!(std::isnan(iter_val) || std::isinf(iter_val)), "Iteration value is NaN or infinity");
 
 			if (comp(iter_val, last_val)) break;
 

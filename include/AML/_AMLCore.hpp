@@ -168,9 +168,15 @@
 #endif
 
 #ifndef AML_ALWAYS_NOEXCEPT
-	#define AML_NOEXCEPT_EXPR(...) noexcept(__VA_ARGS__)
+	#define AML_NOEXCEPT(...) noexcept(__VA_ARGS__)
 #else
-	#define AML_NOEXCEPT_EXPR(...) noexcept
+	#define AML_NOEXCEPT(...) noexcept
+#endif
+
+#if AML_CXX20
+	#define AML_CONSTEXPR20 constexpr
+#else
+	#define AML_CONSTEXPR
 #endif
 
 namespace aml {

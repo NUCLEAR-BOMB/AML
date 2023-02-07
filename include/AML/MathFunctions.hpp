@@ -12,31 +12,31 @@ auto sqrt(const T& val) noexcept
 {
 	using common = std::common_type_t<T, float>;
 
-	//if (AML_IS_CONSTANT_EVALUATED()) 
-	//{
-	//	return static_cast<common>(
-	//		aml::algorithms::newton_sqrt(
-	//			static_cast<common>(val)
-	//		)
-	//	);
-	//}
-	//else 
-	//{
+	if (AML_IS_CONSTANT_EVALUATED()) 
+	{
+		if (aml::equal(val, static_cast<common>(0))) return static_cast<common>(0);
+
+		return aml::algorithms::raw_newtons_method<common>([&](auto x) {
+			return static_cast<common>(0.5) * (x + (val / x));
+		}, static_cast<common>(val));
+	}
+	else 
+	{
 		return static_cast<common>(
 			::std::sqrt(
 				static_cast<common>(val)
 			)
 		);
-	//}
+	}
 }
 
 template<class Left, class Right> [[nodiscard]] constexpr
 auto pow(const Left& left, const Right& right) noexcept {
 	if constexpr (std::is_integral_v<Right>) {
 		if (aml::positive(right)) {
-			return algorithms::binary_pow(left, right);
+			return aml::algorithms::squaring_pow(left, right);
 		} else {
-			return (static_cast<Right>(1) / algorithms::binary_pow(left, right));
+			return (static_cast<Right>(1) / aml::algorithms::squaring_pow(left, right));
 		}
 	} else {
 		static_assert(!sizeof(Left*), "Supports only integers values of Right");
