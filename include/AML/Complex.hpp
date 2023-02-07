@@ -241,7 +241,7 @@ auto& operator/=(Complex<Left>& left, const Right& right) noexcept {
 
 template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_complex<Right>, int> = 0> constexpr
 bool operator==(const Left& left, const Right& right) noexcept {
-	return ( Re(left) <equal> Re(right) ) && ( Im(left) <equal> Im(right) );
+	return aml::equal(Re(left), Re(right)) && aml::equal(Im(left), Im(right));
 }
 template<class Left, class Right, std::enable_if_t<is_complex<Left> || is_complex<Right>, int> = 0> constexpr
 bool operator!=(const Left& left, const Right& right) noexcept {

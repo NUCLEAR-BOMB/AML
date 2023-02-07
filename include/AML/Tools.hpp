@@ -13,10 +13,6 @@
 #include <deque>
 #include <array>
 
-#if AML_CXX20
-	#include <memory>
-#endif
-
 #ifdef AML_LIBRARY
 	#define AML_LIBRARY_TOOLS
 #else
@@ -146,6 +142,12 @@ struct constant_t {
 };
 
 /// @endcond
+
+template<std::size_t I>
+using index_t = aml::template constant_t<I>;
+
+template<std::size_t I>
+inline constexpr auto index_v = index_t<I>{};
 
 inline constexpr zero_t zero{}; ///< Shortcut for zero_t{}
 inline constexpr one_t one{};	///< Shortcut for one_t{}
@@ -834,130 +836,47 @@ namespace detail
 template<class Func>
 using function_traits = detail::template function_traits_impl<Func>;
 
-template<class T, std::size_t ReserveSize>
-class Pushable_array : private std::array<T, ReserveSize>
-{
-	using Base = std::array<T, ReserveSize>;
-public:
-
-	static constexpr auto static_reserved_size = ReserveSize;
-
-	using container_type = std::array<T, ReserveSize>;
-
-	using value_type = typename Base::value_type;
-	using size_type = typename Base::size_type;
-	using reference = typename Base::reference;
-	using const_reference = typename Base::const_reference;
-	using iterator = typename Base::iterator;
-	using const_iterator = typename Base::const_iterator;
-	using reverse_iterator = typename Base::reverse_iterator;
-	using const_reverse_iterator = typename Base::const_reverse_iterator;
-	using difference_type = typename Base::difference_type;
-
-	using Base::front;
-	using Base::data;
-
-	using Base::begin;
-	using Base::cbegin;
-	using Base::rend;
-	using Base::crend;
-	
-	using Base::fill;
-	using Base::swap;
-
-	constexpr
-	Pushable_array() noexcept
-		: Base{}
-		, m_current_size(0) {}
-
-private:
-
-	template<std::size_t N, std::size_t... Idx> constexpr
-	Pushable_array(const value_type (&arr)[N], std::index_sequence<Idx...>) noexcept
-		: Base{arr[Idx]...}
-		, m_current_size(N) {}
-
-public:
-
-	template<std::size_t N> constexpr
-	Pushable_array(const value_type (&arr)[N]) noexcept
-		: Pushable_array(arr, std::make_index_sequence<N>{}) {}
-
-	[[nodiscard]] constexpr 
-	size_type size() const noexcept { return m_current_size; }
-
-	[[nodiscard]] constexpr
-	bool empty() const noexcept {
-		return (m_current_size == 0);
+#define AML_DEFINE_BINARY_OP(name, op)	\
+	struct name {																\
+		template<class Left, class Right> constexpr								\
+		auto operator()(Left&& left, Right&& right) const						\
+			noexcept(noexcept(std::forward<Left>(left) == std::forward<Right>(right)))	\
+		-> decltype(std::declval<Left>() op std::declval<Right>())				\
+		{																		\
+			return std::forward<Left>(left) op std::forward<Right>(right);		\
+		}																		\
 	}
 
-	constexpr iterator end() noexcept { return this->Base::begin() + static_cast<difference_type>(this->size()); }
-	constexpr const_iterator end() const noexcept { return this->Base::begin() + static_cast<difference_type>(this->size()); }
-	constexpr const_iterator cend() const noexcept { return this->end(); }
+AML_DEFINE_BINARY_OP(plus,			+);
+AML_DEFINE_BINARY_OP(minus,			-);
+AML_DEFINE_BINARY_OP(multiplies,	*);
+AML_DEFINE_BINARY_OP(divides,		/);
+AML_DEFINE_BINARY_OP(modulus,		%);
+AML_DEFINE_BINARY_OP(equal_to,		==);
 
-	constexpr reverse_iterator rbegin() noexcept { return this->Base::rend() - static_cast<difference_type>(this->size()); }
-	constexpr const_reverse_iterator rbegin() const noexcept { return this->Base::rend() - static_cast<difference_type>(this->size()); }
-	constexpr const_reverse_iterator crbegin() const noexcept { return this->rbegin(); }
+AML_DEFINE_BINARY_OP(not_equal_to,	!=);
+AML_DEFINE_BINARY_OP(greater,		> );
+AML_DEFINE_BINARY_OP(less,			< );
+AML_DEFINE_BINARY_OP(greater_equal, >=);
+AML_DEFINE_BINARY_OP(less_equal,	<=);
 
-	constexpr reference back() noexcept {
-		return (*this)[m_current_size - 1];
-	}
-	constexpr const_reference back() const noexcept {
-		return (*this)[m_current_size - 1];
-	}
+AML_DEFINE_BINARY_OP(assignment,		= );
+AML_DEFINE_BINARY_OP(plus_assign,		+=);
+AML_DEFINE_BINARY_OP(minus_assign,		-=);
+AML_DEFINE_BINARY_OP(multiplies_assign,	*=);
+AML_DEFINE_BINARY_OP(divides_assign,	/=);
 
-	[[nodiscard]] static AML_CONSTEVAL
-	size_type reserved_size() noexcept {
-		return ReserveSize;
-	}
-
-	constexpr
-	void push_back(const value_type& value) noexcept 
+struct negate {
+	template<class T> constexpr
+	auto operator-(T&& left) const 
+		noexcept(noexcept(-std::forward<T>(left)))
+		-> decltype(-std::declval<T>()) 
 	{
-		AML_DEBUG_VERIFY(m_current_size < reserved_size(), "Maximum limit is used");
-		this->Base::operator[](m_current_size) = value;
-		++m_current_size;
+		return -std::forward<T>(left);
 	}
-
-	template<class... Args> AML_CONSTEXPR
-	void emplace_back(Args&&... args) noexcept 
-	{
-		AML_DEBUG_VERIFY(m_current_size < reserved_size(), "Maximum limit is used");
-		auto* pos = &this->Base::operator[](m_current_size);
-
-#if AML_CXX20
-		std::construct_at(pos, std::forward<Args>(args)...);
-#else
-		new (pos) value_type(std::forward<Args>(args)...);
-#endif
-		++m_current_size;
-	}
-
-	constexpr
-	value_type pop_back() noexcept {
-		--m_current_size;
-		return this->Base::operator[](m_current_size);
-	}
-
-	constexpr
-	void resize(size_type new_size) noexcept {
-		AML_DEBUG_VERIFY(new_size < reserved_size(), "Maximum limit is used");
-		m_current_size = new_size;
-	}
-
-	constexpr
-	reference operator[](size_type index) noexcept {
-		AML_DEBUG_VERIFY(index < size(), "Out of range");
-		return this->Base::operator[](index);
-	}
-	constexpr
-	const_reference operator[](size_type index) const noexcept {
-		return const_cast<Pushable_array&>(*this)[index];
-	}
-
-
-private:
-	size_type m_current_size;
 };
+
+
+#undef AML_DEFINE_BINARY_OP
 
 }

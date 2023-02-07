@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AML/Functions.hpp>
+#include <AML/Containers.hpp>
 
 #include <string_view>
 #include <cstddef>
@@ -25,7 +26,7 @@ private:
 		Right
 	};
 
-	using operator_args_type = aml::Pushable_array<double, StringSize>;
+	using operator_args_type = aml::fixed_vector<double, StringSize>;
 
 	struct operator_signature
 	{
@@ -123,7 +124,7 @@ private:
 	string_view_type m_value;
 }; // class Token
 
-	using stack_type = aml::Pushable_array<Token, StringSize>;
+	using stack_type = aml::fixed_vector<Token, StringSize>;
 
 private:
 	constexpr

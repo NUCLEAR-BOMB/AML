@@ -45,22 +45,15 @@ using Vectorsize = std::size_t;
 	@see Vector<T, Size> @n
 			Vector<Container, dynamic_extent>
 */
-namespace VI {
-	/**
-		@brief Template type alias to access the vector field at compile time
-
-		@tparam I Index of vector field number
-	*/
-	template<Vectorsize I>
-	using index = aml::constant_t<I>;
-
-	inline constexpr index<0> X{}; ///< @c x 1D variable using indexes
-	inline constexpr index<1> Y{}; ///< @c y 2D variable using indexes
-	inline constexpr index<2> Z{}; ///< @c z 3D variable using indexes
-	inline constexpr index<3> W{}; ///< @c w 4D variable using indexes
-	inline constexpr index<4> V{}; ///< @c v 5D variable using indexes
-
-	inline constexpr index<0> first{}; ///< Index of first vector element
+namespace VI 
+{
+	inline constexpr index_t<0> X{}; ///< @c x 1D variable using indexes
+	inline constexpr index_t<1> Y{}; ///< @c y 2D variable using indexes
+	inline constexpr index_t<2> Z{}; ///< @c z 3D variable using indexes
+	inline constexpr index_t<3> W{}; ///< @c w 4D variable using indexes
+	inline constexpr index_t<4> V{}; ///< @c v 5D variable using indexes
+						  
+	inline constexpr index_t<0> first{}; ///< Index of first vector element
 } // namespace VI
 
 namespace detail 
@@ -298,7 +291,7 @@ public:
 	{
 		static_assert(Base::has_index(Dir), "Unit must be in vector's range");
 
-		(*this)[VI::index<Dir>{}] = static_cast<value_type>(aml::one);
+		(*this)[aml::index_v<Dir>] = static_cast<value_type>(aml::one);
 	}
 
 private:
@@ -390,7 +383,7 @@ private:
 	
 	template<class ArrayT, Vectorsize... Idx> constexpr
 	decltype(auto) to_array_impl([[maybe_unused]] std::integer_sequence<Vectorsize, Idx...>) const noexcept {
-		return std::array<ArrayT, Size>{static_cast<ArrayT>((*this)[VI::index<Idx>{}])...};
+		return std::array<ArrayT, Size>{static_cast<ArrayT>((*this)[aml::index_v<Idx>])...};
 	}
 
 public:
@@ -464,7 +457,7 @@ public:
 #else
 		constexpr
 #endif
-	reference operator[]([[maybe_unused]] const VI::index<I>) noexcept 
+	reference operator[]([[maybe_unused]] const index_t<I>) noexcept 
 	{
 		static_assert(I < Size, "Static vector index out of range");
 		if constexpr (Base::uses_static_array()) {
@@ -495,8 +488,8 @@ public:
 #else
 		constexpr
 #endif
-	const_reference operator[]([[maybe_unused]] const VI::index<I>) const noexcept {
-		return const_cast<Vector&>(*this)[VI::index<I>{}];
+	const_reference operator[]([[maybe_unused]] const index_t<I>) const noexcept {
+		return const_cast<Vector&>(*this)[aml::index_v<I>];
 	}
 
 	/**
@@ -1061,16 +1054,16 @@ namespace aml
 
 template<std::size_t I, class T, Vectorsize Size> constexpr
 	  auto&  get	   (Vector<T, Size>& vec) noexcept 
-	{ return vec[VI::index<I>{}]; }
+	{ return vec[aml::index_v<I>]; }
 template<std::size_t I, class T, Vectorsize Size> constexpr 
 const auto&  get (const Vector<T, Size>& vec) noexcept 
-	{ return vec[VI::index<I>{}]; }
+	{ return vec[aml::index_v<I>]; }
 template<std::size_t I, class T, Vectorsize Size> constexpr
 	  auto&& get	  (Vector<T, Size>&& vec) noexcept 
-	{ return std::move(vec[VI::index<I>{}]); }
+	{ return std::move(vec[aml::index_v<I>]); }
 template<std::size_t I, class T, Vectorsize Size> constexpr
 const auto&& get(const Vector<T, Size>&& vec) noexcept 
-	{ return std::move(vec[VI::index<I>{}]); }
+	{ return std::move(vec[aml::index_v<I>]); }
 
 
 
@@ -1096,7 +1089,7 @@ const auto&& get(const Vector<T, Size>&& vec) noexcept
 		return out;																											\
 	} else if constexpr (firstvec.is_dynamic() || secondvec.is_dynamic()) {													\
 		AML_DEBUG_VERIFY((firstvec.size() == secondvec.size()), "Dynamic vector's and static vector's sizes must be equal");	\
-		using Container_ = typename std::conditional_t<firstvec.is_dynamic(), Left, Right>;						\
+		using Container_ = std::conditional_t<firstvec.is_dynamic(), Left, Right>;						\
 		aml::Vector<rebind_container<Container_, outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\

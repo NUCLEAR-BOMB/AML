@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AML/Complex.hpp>
+#include <AML/Containers.hpp>
 
 #include <utility>
 #include <optional>
@@ -88,7 +89,7 @@ public:
 
 	static constexpr size_type maxrootn = RootNumber;
 
-	using container_type = aml::Pushable_array<value_type, maxrootn>;
+	using container_type = aml::fixed_vector<value_type, maxrootn>;
 
 private:
 	template<class... Ts>
@@ -102,6 +103,9 @@ public:
 	PolynomialRoot(Rest&&... r) noexcept 
 		: container({std::forward<Rest>(r)...})
 	{
+		AML_DEBUG_VERIFY(!aml::equal(this->container.back(), aml::zero), 
+			"Can't make a polynomial with the last zero coefficient ");
+
 		for (const auto& root : container) 
 		{
 			if (root.is_real()) {
@@ -166,6 +170,11 @@ public:
 		if (!this->has_roots()) {
 			root_ptr = root; return;
 		}
+	}
+
+	[[nodiscard]] constexpr
+	reference last() noexcept {
+		return this->container.back();
 	}
 
 	template<size_type I> constexpr reference get() & { static_assert(I < maxrootn, "out of range"); return this->container[I]; }
@@ -248,6 +257,8 @@ auto solve(Pol&& polynomial) noexcept
 
 	return poly_t{(-b + sqrt_D) / (2 * a), (-b - sqrt_D) / (2 * a)};
 }
+
+
 
 template<class... Args> [[nodiscard]] constexpr
 auto solve_polynomial(Args&&... args) noexcept {

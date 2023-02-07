@@ -100,18 +100,18 @@ bool operator()(const Left& left, const Right& right) const noexcept
 		using common = std::common_type_t<Left, Right>;
 		return (static_cast<common>(left) == static_cast<common>(right));
 	}
-	else if constexpr (std::is_invocable_r_v<bool, std::equal_to<>, decltype(left), decltype(right)>) {
+	else if constexpr (std::is_invocable_r_v<bool, aml::equal_to, Left, Right>) {
 		return (left == right);
 	}
 	else if constexpr (std::is_constructible_v<Left, decltype(right)> 
-					   && std::is_invocable_r_v<bool, std::equal_to<>, Left, Left>) {
+					   && std::is_invocable_r_v<bool, aml::equal_to, Left, Left>) {
 		return (left == static_cast<Left>(right));
 	}
 	else if constexpr (std::is_constructible_v<Right, decltype(left)>
-					   && std::is_invocable_r_v<bool, std::equal_to<>, Right, Right>) {
+					   && std::is_invocable_r_v<bool, aml::equal_to, Right, Right>) {
 		return (static_cast<Right>(left) == right);
 	}
-	else if constexpr (std::is_invocable_r_v<bool, std::equal_to<>, decltype(aml::unwrap(std::declval<Left>())), decltype(aml::unwrap(std::declval<Right>()))>) {
+	else if constexpr (std::is_invocable_r_v<bool, aml::equal_to, decltype(aml::unwrap(std::declval<Left>())), decltype(aml::unwrap(std::declval<Right>()))>) {
 		return (aml::unwrap(left) == aml::unwrap(right));
 	}
 	else {
