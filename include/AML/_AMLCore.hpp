@@ -92,28 +92,6 @@
 	#define AML_UNIX 0
 #endif
 
-#ifdef __cpp_constexpr_dynamic_alloc
-	#define AML_CONSTEXPR_DYNAMIC_ALLOC constexpr
-#else
-	#define AML_CONSTEXPR_DYNAMIC_ALLOC
-#endif
-
-#ifdef __cpp_consteval
-	#define AML_CONSTEVAL consteval
-#else
-	#define AML_CONSTEVAL constexpr
-#endif
-
-#ifdef __cpp_lib_is_constant_evaluated	
-	#define AML_IS_CONSTANT_EVALUATED() ::std::is_constant_evaluated()
-#else
-	#if AML_MSVC || AML_GCC || AML_CLANG
-		#define AML_IS_CONSTANT_EVALUATED() __builtin_is_constant_evaluated()
-	#else
-		#define AML_IS_CONSTANT_EVALUATED() (false)
-	#endif
-#endif
-
 #ifdef NDEBUG
 	#define AML_DEBUG 0
 #else
@@ -141,6 +119,28 @@
 
 #if !AML_CXX17 && !defined(__INTELLISENSE__)
 	#error C++17 or higher is required
+#endif
+
+#if AML_CXX20	
+	#define AML_IS_CONSTANT_EVALUATED() ::std::is_constant_evaluated()
+#else
+	#if AML_MSVC || AML_GCC || AML_CLANG
+		#define AML_IS_CONSTANT_EVALUATED() __builtin_is_constant_evaluated()
+	#else
+		#define AML_IS_CONSTANT_EVALUATED() (false)
+	#endif
+#endif
+
+#if AML_CXX20
+	#define AML_CONSTEXPR20 constexpr
+#else
+	#define AML_CONSTEXPR20
+#endif
+
+#if defined(__cpp_consteval) && !AML_MSVC
+	#define AML_CONSTEVAL consteval
+#else
+	#define AML_CONSTEVAL constexpr
 #endif
 
 #if AML_MSVC || defined(__FUNCSIG__)
@@ -171,12 +171,6 @@
 	#define AML_NOEXCEPT(...) noexcept(__VA_ARGS__)
 #else
 	#define AML_NOEXCEPT(...) noexcept
-#endif
-
-#if AML_CXX20
-	#define AML_CONSTEXPR20 constexpr
-#else
-	#define AML_CONSTEXPR
 #endif
 
 namespace aml {

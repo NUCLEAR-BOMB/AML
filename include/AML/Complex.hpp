@@ -86,10 +86,10 @@ public:
 	}
 
 	template<class U> constexpr
-	friend typename Complex<U>::reference Re(Complex<U>&) noexcept;
+	friend decltype(auto) Re(U&&) noexcept;
 
 	template<class U> constexpr
-	friend typename Complex<U>::reference Im(Complex<U>&) noexcept;
+	friend decltype(auto) Im(U&&) noexcept;
 
 private:
 	static constexpr std::size_t RE = 0;
@@ -104,31 +104,24 @@ Complex(RealT&&, ImagT&&) -> Complex<std::common_type_t<RealT, ImagT>>;
 template<class RealT>
 Complex(RealT&&) -> Complex<RealT>;
 
-template<class T> constexpr
-typename Complex<T>::reference Re(Complex<T>& c) noexcept { 
-	return c.container[Complex<T>::RE]; 
-}
-template<class T> constexpr
-typename Complex<T>::const_reference Re(const Complex<T>& c) noexcept { 
-	return aml::Re(const_cast<Complex<T>&>(c)); 
-}
-template<class T> constexpr
-decltype(auto) Re(T&& val) noexcept {
-	return std::forward<T>(val);
+template<class U> constexpr 
+decltype(auto) Re(U&& c) noexcept 
+{
+	if constexpr (aml::is_specialization_of<U, aml::Complex>) {
+		return std::forward<U>(c).container[aml::remove_cvref<U>::RE];
+	} else {
+		return std::forward<U>(c);
+	}
 }
 
-
-template<class T> constexpr
-typename Complex<T>::reference Im(Complex<T>& c) noexcept { 
-	return c.container[Complex<T>::IM]; 
-}
-template<class T> constexpr
-typename Complex<T>::const_reference Im(const Complex<T>& c) noexcept { 
-	return aml::Im(const_cast<Complex<T>&>(c));
-}
-template<class T> constexpr
-auto Im([[maybe_unused]] T&&) noexcept {
-	return static_cast<aml::remove_cvref<T>>(aml::zero);
+template<class U> constexpr
+decltype(auto) Im([[maybe_unused]] U&& c) noexcept
+{
+	if constexpr (aml::is_specialization_of<U, aml::Complex>) {
+		return std::forward<U>(c).container[aml::remove_cvref<U>::IM];
+	} else {
+		return static_cast<aml::remove_cvref<U>>(aml::zero);
+	}
 }
 
 template<class T> [[nodiscard]] constexpr

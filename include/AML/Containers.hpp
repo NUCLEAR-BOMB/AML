@@ -93,7 +93,7 @@ public:
 		++m_current_size;
 	}
 
-	template<class... Args> AML_CONSTEXPR
+	template<class... Args> constexpr
 	void emplace_back(Args&&... args) noexcept 
 	{
 		AML_DEBUG_VERIFY(m_current_size < reserved_size(), "Maximum limit is used");
@@ -213,6 +213,19 @@ public:
 		static_assert(N == ReserveSize, "The size of the array must be the same");
 	}
 
+	constexpr
+	fixed_valarray([[maybe_unused]] const aml::fill_initializer<value_type> fill_with) noexcept 
+		: Base{} {
+		for (auto& i : static_cast<Base&>(*this)) {
+			i = fill_with.value;
+		}
+	}
+	constexpr fixed_valarray([[maybe_unused]] const aml::zero_t) noexcept
+		: fixed_valarray(aml::fill_initializer<value_type>(aml::zero)) {}
+	constexpr fixed_valarray([[maybe_unused]] const aml::one_t) noexcept
+		: fixed_valarray(aml::fill_initializer<value_type>(aml::one)) {}
+
+
 	[[nodiscard]] static AML_CONSTEVAL
 	size_type size() noexcept { return ReserveSize; }
 };
@@ -244,7 +257,7 @@ namespace detail
 	}
 	template<class Operation, class Left, class Right, std::size_t Size> constexpr
 	auto& do_binary_assign_operation(
-		aml::fixed_valarray<Left, Size> left,
+		aml::fixed_valarray<Left, Size>& left,
 		const aml::fixed_valarray<Right, Size>& right
 	) noexcept 
 	{

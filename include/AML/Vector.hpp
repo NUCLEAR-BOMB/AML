@@ -426,7 +426,7 @@ public:
 	}
 #endif
 
-	[[nodiscard]] AML_CONSTEXPR_DYNAMIC_ALLOC
+	[[nodiscard]] AML_CONSTEXPR20
 	std::string to_string() const noexcept 
 	{
 		std::string str;
@@ -451,12 +451,7 @@ public:
 
 		@see aml::VI namespace
 	*/
-	template<size_type I> 
-#if !AML_MSVC 
-		AML_CONSTEVAL
-#else
-		constexpr
-#endif
+	template<size_type I> AML_CONSTEVAL
 	reference operator[]([[maybe_unused]] const index_t<I>) noexcept 
 	{
 		static_assert(I < Size, "Static vector index out of range");
@@ -482,12 +477,7 @@ public:
 
 		@see VI namespace
 	*/
-	template<size_type I> 
-#if !AML_MSVC
-		AML_CONSTEVAL
-#else
-		constexpr
-#endif
+	template<size_type I> AML_CONSTEVAL
 	const_reference operator[]([[maybe_unused]] const index_t<I>) const noexcept {
 		return const_cast<Vector&>(*this)[aml::index_v<I>];
 	}
@@ -745,7 +735,7 @@ public:
 
 		@warning Does not explicitly initialize elements
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	Vector() AML_NOEXCEPT(std::is_nothrow_default_constructible_v<container_type>) 
 		= default;
 
@@ -756,7 +746,7 @@ public:
 		@tparam ArraySize Input array size
 		@param Array Input array
 	*/
-	template<std::size_t ArraySize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	template<std::size_t ArraySize> AML_CONSTEXPR20
 	Vector(const value_type (&Array)[ArraySize]) AML_NOEXCEPT(noexcept(std::copy_n(Array, ArraySize, this->container.begin())))
 		: Vector(aml::size_initializer(ArraySize)) {
 		std::copy_n(Array, ArraySize, this->container.begin());
@@ -779,7 +769,7 @@ public:
 	*/
 	template<class... Rest, 
 		std::enable_if_t<enable_if_variadic_constructor<Rest...>, int> = 0
-	> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	> AML_CONSTEXPR20
 	explicit Vector(Rest&&... r) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(sizeof...(r))) 
 	{
@@ -797,7 +787,7 @@ public:
 
 		@see aml::size_initializer
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	explicit Vector(const aml::size_initializer initsz) AML_NOEXCEPT(noexcept(this->resize(initsz.size))) {
 		this->resize(initsz.size);
 	}
@@ -807,7 +797,7 @@ public:
 
 		@see aml::zero
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::zero_t) AML_NOEXCEPT(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
 		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(aml::zero))) {
 	}
@@ -817,7 +807,7 @@ public:
 
 		@see aml::one
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 		explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::one_t) AML_NOEXCEPT(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::fill_initializer<value_type>(static_cast<value_type>(0)))>)
 		: Vector(initsz, aml::fill_initializer<value_type>(static_cast<value_type>(aml::one))) {
 	}
@@ -827,7 +817,7 @@ public:
 
 		@see aml::unit
 	*/
-	template<std::size_t Dir> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	template<std::size_t Dir> AML_CONSTEXPR20
 	explicit Vector(const aml::size_initializer initsz, [[maybe_unused]] const aml::unit_t<Dir>) AML_NOEXCEPT(std::is_nothrow_constructible_v<Vector, decltype(initsz), decltype(aml::zero)> && std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(initsz, aml::zero) {
 		this->container[Dir] = static_cast<value_type>(aml::one);
@@ -841,7 +831,7 @@ public:
 
 		@see aml::fill_initializer
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	explicit Vector(const aml::size_initializer initsz, const aml::fill_initializer<value_type> fill_with) AML_NOEXCEPT(std::is_nothrow_constructible_v<Vector, decltype(initsz)> && noexcept(std::fill(this->container.begin(), this->container.end(), fill_with.value)))
 		: Vector(initsz) {
 		std::fill(this->container.begin(), this->container.end(), fill_with.value);
@@ -850,7 +840,7 @@ public:
 	/**
 		@brief Cast from Vector<U, dynamic_extent> to Vector<T, dynamic_extent>
 	*/
-	template<class U> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	template<class U> AML_CONSTEXPR20
 	explicit Vector(const Vector<U, aml::dynamic_extent>& other) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.size())) 
 	{
@@ -868,7 +858,7 @@ public:
 
 		@tparam OtherSize The size of the static allocated vector at compile-time
 	*/
-	template<class U, Vectorsize OtherSize> /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	template<class U, Vectorsize OtherSize> AML_CONSTEXPR20
 	explicit Vector(const Vector<U, OtherSize>& other) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.static_size))
 	{
@@ -881,22 +871,22 @@ public:
 		);
 	}
 
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	Vector(const Vector&) AML_NOEXCEPT(std::is_nothrow_copy_constructible_v<container_type>) = default;
 
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	Vector(Vector&&) AML_NOEXCEPT(std::is_nothrow_move_constructible_v<container_type>) = default;
 
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	Vector& operator=(const Vector&) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<container_type>) = default;
 
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	Vector& operator=(Vector&&) AML_NOEXCEPT(std::is_nothrow_move_assignable_v<container_type>) = default;
 
 	/**
 		@return Returns size of the vector
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	[[nodiscard]] AML_CONSTEXPR20
 	size_type size() const AML_NOEXCEPT(noexcept(this->container.size())) {
 		return static_cast<size_type>(this->container.size());
 	}
@@ -908,18 +898,18 @@ public:
 
 		@warning If the size changes by more than it was, the new vector elements will not be explicitly initialized 
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	void resize(const size_type new_size) & AML_NOEXCEPT(noexcept(this->container.resize(new_size))) {
 		this->container.resize(new_size);
 	}
 
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	auto&& resize(const size_type new_size) && AML_NOEXCEPT(noexcept(this->resize(new_size))) {
 		this->resize(new_size);
 		return std::move(*this);
 	}
 
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	[[nodiscard]] AML_CONSTEXPR20
 	std::string to_string() const noexcept
 	{
 		std::string str;
@@ -942,7 +932,7 @@ public:
 
 		@return @ref reference to vector's field
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	reference operator[](const size_type index) AML_NOEXCEPT(noexcept(this->container[index])) {
 		return this->container[index];
 	}
@@ -954,7 +944,7 @@ public:
 
 		@return @ref Vector<T, Size>::const_reference to vector's field
 	*/
-	/** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	AML_CONSTEXPR20
 	const_reference operator[](const size_type index) const AML_NOEXCEPT(noexcept(this->container[index])) {
 		return this->container[index];
 	}
@@ -962,7 +952,7 @@ public:
 	/**
 		@return Container %begin()
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ AML_CONSTEXPR20
 	iterator begin() AML_NOEXCEPT(noexcept(this->container.begin())) {
 		return this->container.begin();
 	}
@@ -970,7 +960,7 @@ public:
 	/**
 		@return Container %end()
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ AML_CONSTEXPR20
 	iterator end() AML_NOEXCEPT(noexcept(this->container.end())) {
 		return this->container.end();
 	}
@@ -978,7 +968,7 @@ public:
 	/**
 		@return Container %begin() const
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ AML_CONSTEXPR20
 	const_iterator begin() const AML_NOEXCEPT(noexcept(this->container.begin())) {
 		return this->container.begin();
 	}
@@ -986,7 +976,7 @@ public:
 	/**
 		@return Container %end() const
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ AML_CONSTEXPR20
 	const_iterator end() const AML_NOEXCEPT(noexcept(this->container.end())) {
 		return this->container.end();
 	}
@@ -994,7 +984,7 @@ public:
 	/**
 		@return Container %cbegin() const
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ AML_CONSTEXPR20
 	const_iterator cbegin() const AML_NOEXCEPT(noexcept(this->container.cbegin())) {
 		return this->container.cbegin();
 	}
@@ -1002,7 +992,7 @@ public:
 	/**
 		@return Container %cend() const
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC AML_FORCEINLINE /** @endcond */
+	[[nodiscard]] /** @cond */ AML_FORCEINLINE /** @endcond */ AML_CONSTEXPR20
 	const_iterator cend() const AML_NOEXCEPT(noexcept(this->container.cend())) {
 		return this->container.cend();
 	}
@@ -1010,17 +1000,17 @@ public:
 	/**
 		@return Raw vector's container
 	*/
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	[[nodiscard]] AML_CONSTEXPR20
 	container_type& get_container() & noexcept {
 		return this->container;
 	}
 
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	[[nodiscard]] AML_CONSTEXPR20
 	const container_type& get_container() const & noexcept {
 		return this->container;
 	}
 
-	[[nodiscard]] /** @cond */ AML_CONSTEXPR_DYNAMIC_ALLOC /** @endcond */
+	[[nodiscard]] AML_CONSTEXPR20
 	container_type&& get_container() && noexcept(std::is_nothrow_move_constructible_v<container_type>) {
 		return std::move(this->container);
 	}

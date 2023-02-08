@@ -313,6 +313,7 @@ decltype(auto) get(T&& val) noexcept(noexcept(std::forward<T>(val).template get<
 	return std::forward<T>(val).template get<I>();
 }
 
+// constexpr swap
 template<class T> constexpr
 void swap(T& left, T& right) noexcept 
 {
@@ -331,7 +332,7 @@ namespace detail
 }
 
 template<class T, template <class...> class TP>
-inline constexpr bool is_specialization_of = detail::template is_specialization_impl<T, TP>::value;
+inline constexpr bool is_specialization_of = detail::template is_specialization_impl<aml::remove_cvref<T>, TP>::value;
 
 namespace detail
 {
