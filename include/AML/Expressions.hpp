@@ -20,13 +20,15 @@ public:
 
 	using size_type = std::size_t;
 
+	using number_type = double;
+
 private:
 	enum class Operator_associativity {
 		Left,
 		Right
 	};
 
-	using operator_args_type = aml::fixed_vector<double, StringSize>;
+	using operator_args_type = aml::fixed_vector<number_type, StringSize>;
 
 	struct operator_signature
 	{
@@ -35,19 +37,19 @@ private:
 		Operator_associativity associativity;
 
 		unsigned int argc;
-		std::add_pointer_t<double(const double*)> function;
+		std::add_pointer_t<number_type(const number_type*)> function;
 	};
 
 	static constexpr std::array operator_table
 	{
 		operator_signature{"+", 1, Operator_associativity::Left,
-			2, +[](const double* args) { return args[0] + args[1]; }},
+			2, +[](const number_type* args) { return args[0] + args[1]; }},
 		operator_signature{"-", 1, Operator_associativity::Left,
-			2, +[](const double* args) { return args[0] - args[1]; }},
+			2, +[](const number_type* args) { return args[0] - args[1]; }},
 		operator_signature{"*", 2, Operator_associativity::Left,
-			2, +[](const double* args) { return args[0] * args[1]; }},
+			2, +[](const number_type* args) { return args[0] * args[1]; }},
 		operator_signature{"/", 2, Operator_associativity::Left,
-			2, +[](const double* args) { return args[0] / args[1]; }},
+			2, +[](const number_type* args) { return args[0] / args[1]; }},
 	};
 
 public:
@@ -199,7 +201,7 @@ private:
 	}
 
 	constexpr
-	double invoke_operator(operator_args_type& stack, const Token& optoken) const noexcept
+	number_type invoke_operator(operator_args_type& stack, const Token& optoken) const noexcept
 	{
 		auto op_sign = this->find_operator(optoken.value());
 		auto op_invoke_func = op_sign.function;
@@ -257,7 +259,7 @@ public:
 	}
 
 	constexpr
-	double calculate() const noexcept
+	number_type calculate() const noexcept
 	{	
 		operator_args_type number_stack;
 		for (const auto& token : m_output_stack)

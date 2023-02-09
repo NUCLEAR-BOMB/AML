@@ -48,6 +48,14 @@ template<class T>
 using type_identity = typename std::template type_identity<T>::type;
 #endif
 
+struct identity_function
+{
+	template<class T> constexpr
+	T&& operator()(T&& v) const noexcept {
+		return std::forward<T>(v);
+	}
+};
+
 template<class T>
 class reference_wrapper
 {
