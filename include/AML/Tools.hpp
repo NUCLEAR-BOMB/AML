@@ -158,7 +158,6 @@ inline constexpr unit_t<Dir> unit{}; ///< Shortcut for unit_t<Dir>{}
 template<auto V>
 inline constexpr auto constant = constant_t<V>{}; ///< Shortcut for constant_t<V>{}
 
-
 using selectable_unused = void; ///< Used in @ref selectable_convert to ignore cast
 
 /**
@@ -320,6 +319,16 @@ void swap(T& left, T& right) noexcept
 	T tmp_ = std::move(left);
 	left = std::move(right);
 	right = std::move(tmp_);
+}
+
+template<bool cond, class Left, class Right> constexpr
+decltype(auto) constexpr_ternary([[maybe_unused]] Left&& left, [[maybe_unused]] Right&& right) noexcept
+{
+	if constexpr (cond) {
+		return std::forward<Left>(left);
+	} else {
+		return std::forward<Right>(right);
+	}
 }
 
 namespace detail
@@ -669,17 +678,17 @@ using container_value_type = typename detail::template container_value_impl<Cont
 namespace detail
 {
 	template<class Container, class U, bool = aml::has_rebind<Container, U>>
-	struct rebind_container_impl;
+	struct rebind_impl;
 
 	template<template <class, class...> class Container, class T, class... Parameters, class U>
-	struct rebind_container_impl<Container<T, Parameters...>, U, false>
+	struct rebind_impl<Container<T, Parameters...>, U, false>
 	{
 		// if hasn't Container::rebind<...>::type
 		using type = Container<U, Parameters...>;
 	};
 
 	template<class Container, class U>
-	struct rebind_container_impl<Container, U, true>
+	struct rebind_impl<Container, U, true>
 	{
 		// if has Container::rebind<...>::type
 		using type = typename Container::template rebind<U>::type;
@@ -690,38 +699,38 @@ namespace detail
 	@brief Struct that rebinds container value type
 	@details You can add new specializations to this struct to add support for a container
 
-	@see aml::rebind_container
+	@see aml::rebind
 */
 template<class Container, class U>
-struct rebind_container_body
+struct rebind_body
 {
-	using type = typename detail::template rebind_container_impl<Container, U>::type;
+	using type = typename detail::template rebind_impl<Container, U>::type;
 };
 
 /**
 	@brief Rebinds @p Container as a container with value type of @p U
 
-	@see aml::rebind_container_body
+	@see aml::rebind_body
 */
 template<class Container, class U>
-using rebind_container = typename aml::template rebind_container_body<Container, U>::type;
+using rebind = typename aml::template rebind_body<Container, U>::type;
 
 template<class T, class Allocator, class U>
-struct rebind_container_body<std::vector<T, Allocator>, U>
+struct rebind_body<std::vector<T, Allocator>, U>
 {
-	using type = std::vector<U, rebind_container<Allocator, U>>;
+	using type = std::vector<U, rebind<Allocator, U>>;
 };
 
 template<class T, class Allocator, class U>
-struct rebind_container_body<std::deque<T, Allocator>, U>
+struct rebind_body<std::deque<T, Allocator>, U>
 {
-	using type = std::deque<U, rebind_container<Allocator, U>>;
+	using type = std::deque<U, rebind<Allocator, U>>;
 };
 
 template<class T, class Allocator, class U>
-struct rebind_container_body<std::list<T, Allocator>, U>
+struct rebind_body<std::list<T, Allocator>, U>
 {
-	using type = std::list<U, rebind_container<Allocator, U>>;
+	using type = std::list<U, rebind<Allocator, U>>;
 };
 
 /**
@@ -743,7 +752,7 @@ namespace detail
 	{
 		static_assert((aml::is_same_specialization<First, Rest> && ...));
 
-		using type = aml::rebind_container< First,
+		using type = aml::rebind< First,
 			aml::common_type<
 				aml::container_value_type<First>, 
 				aml::container_value_type<Rest>...
@@ -841,10 +850,10 @@ using function_traits = detail::template function_traits_impl<Func>;
 	struct name {																\
 		template<class Left, class Right> constexpr								\
 		auto operator()(Left&& left, Right&& right) const						\
-			noexcept(noexcept(std::forward<Left>(left) == std::forward<Right>(right)))	\
+			noexcept(noexcept(std::forward<Left>(left) op std::forward<Right>(right)))	\
 		-> decltype(std::declval<Left>() op std::declval<Right>())				\
 		{																		\
-			return std::forward<Left>(left) op std::forward<Right>(right);		\
+			return (std::forward<Left>(left) op std::forward<Right>(right));	\
 		}																		\
 	}
 
@@ -853,23 +862,42 @@ AML_DEFINE_BINARY_OP(minus,			-);
 AML_DEFINE_BINARY_OP(multiplies,	*);
 AML_DEFINE_BINARY_OP(divides,		/);
 AML_DEFINE_BINARY_OP(modulus,		%);
-AML_DEFINE_BINARY_OP(equal_to,		==);
 
+AML_DEFINE_BINARY_OP(equal_to,		==);
 AML_DEFINE_BINARY_OP(not_equal_to,	!=);
 AML_DEFINE_BINARY_OP(greater,		> );
 AML_DEFINE_BINARY_OP(less,			< );
 AML_DEFINE_BINARY_OP(greater_equal, >=);
 AML_DEFINE_BINARY_OP(less_equal,	<=);
 
-AML_DEFINE_BINARY_OP(assignment,		= );
-AML_DEFINE_BINARY_OP(plus_assign,		+=);
-AML_DEFINE_BINARY_OP(minus_assign,		-=);
-AML_DEFINE_BINARY_OP(multiplies_assign,	*=);
-AML_DEFINE_BINARY_OP(divides_assign,	/=);
+#if !AML_MSVC
+	#define AML_DEFINE_BINARY_ASSIGN_OP(name, op) AML_DEFINE_BINARY_OP(name, op)
+#else
+	#define AML_DEFINE_BINARY_ASSIGN_OP(name, op) \
+		struct name {																\
+			template<class Left, class Right> constexpr								\
+			auto operator()(Left&& left, Right&& right) const						\
+				noexcept(noexcept(std::forward<Left>(left) op std::forward<Right>(right)))	\
+			-> decltype(std::declval<Left>() op std::declval<Right>())				\
+			{																		\
+				if constexpr (std::is_rvalue_reference_v<decltype(left)>) {			\
+					return std::move(left) op std::forward<Right>(right);			\
+				} else {															\
+					return left op std::forward<Right>(right);						\
+				}																	\
+			}																		\
+		}
+#endif
+
+AML_DEFINE_BINARY_ASSIGN_OP(assignment,			= );
+AML_DEFINE_BINARY_ASSIGN_OP(plus_assign,		+=);
+AML_DEFINE_BINARY_ASSIGN_OP(minus_assign,		-=);
+AML_DEFINE_BINARY_ASSIGN_OP(multiplies_assign,	*=);
+AML_DEFINE_BINARY_ASSIGN_OP(divides_assign,		/=);
 
 struct negate {
 	template<class T> constexpr
-	auto operator-(T&& left) const 
+	auto operator()(T&& left) const 
 		noexcept(noexcept(-std::forward<T>(left)))
 		-> decltype(-std::declval<T>()) 
 	{
@@ -877,7 +905,7 @@ struct negate {
 	}
 };
 
-
 #undef AML_DEFINE_BINARY_OP
+#undef AML_DEFINE_BINARY_ASSIGN_OP
 
 }

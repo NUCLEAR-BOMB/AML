@@ -191,6 +191,7 @@ public:
 	using const_iterator = const value_type*;
 #endif
 
+	static_assert(!Base::is_dynamic());
 
 public:
 
@@ -512,6 +513,11 @@ public:
 #endif
 		}
 	}
+
+	constexpr
+	reference first() noexcept { return (*this)[aml::index_v<0>]; }
+	constexpr
+	const_reference first() const noexcept { return const_cast<Vector&>(*this).first(); }
 
 	/**
 		@brief Index operator overload to access the vector's field in runtime
@@ -949,6 +955,11 @@ public:
 		return this->container[index];
 	}
 
+	constexpr
+	reference first() noexcept { return (*this)[0]; }
+	constexpr
+	const_reference first() const noexcept { return const_cast<Vector&>(*this).first(); }
+
 	/**
 		@return Container %begin()
 	*/
@@ -1056,8 +1067,153 @@ const auto&& get(const Vector<T, Size>&& vec) noexcept
 	{ return std::move(vec[aml::index_v<I>]); }
 
 
+template<class Container, class U>
+struct rebind_body<Vector<Container, aml::dynamic_extent>, U> {
+	using type = aml::Vector<aml::rebind<Container, U>, aml::dynamic_extent>;
+};
+template<class T, Vectorsize Size, class U>
+struct rebind_body<Vector<T, Size>, U> {
+	using type = aml::Vector<U, Size>;
+};
 
 
+template<class First, Vectorsize FirstSize, class Second, Vectorsize SecondSize>
+struct common_type_body<
+	aml::Vector<First, FirstSize>,
+	aml::Vector<Second, SecondSize>
+> {
+	template<bool first_dynamic, bool second_dynamic, class F, class S>
+	struct get_common_val {
+		using type = aml::container_common_type<F, S>;
+	};
+
+	template<class F, class S> struct get_common_val<true, false, F, S> {
+		using type = aml::rebind<F, aml::common_type<
+			aml::container_value_type<F>, S	
+		>>;
+	};
+	template<class F, class S> struct get_common_val<false, true, F, S> 
+		: get_common_val<true, false, S, F> {};
+
+	template<class F, class S> struct get_common_val<false, false, F, S> {
+		using type = aml::common_type<F, S>;
+	};
+
+	using vec_val_type = typename get_common_val<
+		aml::Vector<First, FirstSize>::is_dynamic(),
+		aml::Vector<Second, SecondSize>::is_dynamic(),
+		First, Second
+	>::type;
+
+	using type = aml::Vector<vec_val_type, aml::max(FirstSize, SecondSize)>;
+};
+
+namespace detail
+{
+	template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
+	void verify_vector_size(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
+	{
+		if constexpr (left.is_dynamic() || right.is_dynamic()) {
+			AML_DEBUG_VERIFY(left.size() == right.size(),
+				"Vector's sizes must be equal | left size: %zu, right size: %zu", left.size(), right.size());
+		} else {
+			static_assert(LeftSize == RightSize, "Vector's sizes must be equal");
+		}
+	}
+
+	template<Vectorsize Start = 0, class Action, class Vec> constexpr
+	void iterate_vector(Action&& action, Vec&& vec) noexcept
+	{
+		if constexpr (vec.is_dynamic()) {
+			for (Vectorsize i = Start; i < vec.size(); ++i) {
+				action(i);
+			}
+		} else {
+			aml::static_for<Start, vec.static_size>(action);
+		}
+	}
+
+	template<class Result, bool is_dynamic, class Action, class Left> constexpr
+	Result apply_vector_operation(Action&& action, Left&& left) noexcept
+	{
+		auto out = [&]() {
+			if constexpr (is_dynamic) { return Result{left.size()}; }
+			else { return Result{}; }
+		}();
+
+		iterate_vector([&](const auto i) {
+			out[i] = action(i);
+		}, left);
+
+		return out;
+	}
+
+	template<class Operation, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
+	auto do_vector_operation(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
+	{
+		verify_vector_size(left, right);
+		using result_t = aml::rebind<
+			aml::common_type<aml::remove_cvref<decltype(left)>, aml::remove_cvref<decltype(right)>>,
+			aml::remove_cvref<decltype(Operation{}(left[0], right[0]))>
+		>;
+		return apply_vector_operation<
+			result_t,
+			left.is_dynamic() || right.is_dynamic()
+		>([&](const auto i) {
+			return Operation{}(left[i], right[i]);
+		}, aml::constexpr_ternary<left.is_dynamic()>(right, left));
+	}
+	template<class Operation, bool swap_order, class Left, Vectorsize LeftSize, class Right> constexpr
+	auto do_vector_operation(const Vector<Left, LeftSize>& left, const Right& right) noexcept
+	{
+		using result_t = aml::rebind<aml::remove_cvref<decltype(left)>, 
+			aml::common_type<
+				typename aml::remove_cvref<decltype(left)>::value_type, 
+				aml::remove_cvref<decltype(right)>
+			>
+		>;
+		return apply_vector_operation<
+			result_t,
+			left.is_dynamic()
+		>([&](const auto i) {
+			if constexpr (swap_order) {
+				return Operation{}(right, left[i]);
+			} else {
+				return Operation{}(left[i], right);
+			}
+		}, left);
+	}
+	template<class Operation, class Left, Vectorsize LeftSize> constexpr
+	auto do_vector_operation(const Vector<Left, LeftSize>& left) noexcept
+	{
+		return apply_vector_operation<
+			aml::remove_cvref<decltype(left)>,
+			left.is_dynamic()
+		>([&](const auto i) {
+			return Operation{}(left[i]);
+		}, left);
+	}
+
+	template<class Operation, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
+	auto& do_vector_assign_operation(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept
+	{
+		verify_vector_size(left, right);
+		iterate_vector([&](const auto i) {
+			Operation{}(left[i], right[i]);
+		}, aml::constexpr_ternary<left.is_dynamic()>(right, left));
+		return left;
+	}
+	template<class Operation, class Left, Vectorsize LeftSize, class Right> constexpr
+	auto& do_vector_assign_operation(Vector<Left, LeftSize>& left, const Right& right) noexcept
+	{
+		iterate_vector([&](const auto i) {
+			Operation{}(left[i], right);
+		}, left);
+		return left;
+	}
+}
+
+#if 0 // old
 
 #define AML_VECTOR_FOR_LOOP(from_, vec_, action_)					\
 	if constexpr (vec_.is_dynamic()) {								\
@@ -1074,13 +1230,13 @@ const auto&& get(const Vector<T, Size>&& vec) noexcept
 	if constexpr (firstvec.is_dynamic() && secondvec.is_dynamic()) {														\
 		AML_DEBUG_VERIFY((left.size() == right.size()), "Dynamic vector's sizes must be equal");							\
 		aml::verify_container_parameters<Left, Right>();																	\
-		aml::Vector<rebind_container<Left, outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
+		aml::Vector<rebind<Left, outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\
 	} else if constexpr (firstvec.is_dynamic() || secondvec.is_dynamic()) {													\
 		AML_DEBUG_VERIFY((firstvec.size() == secondvec.size()), "Dynamic vector's and static vector's sizes must be equal");	\
 		using Container_ = std::conditional_t<firstvec.is_dynamic(), Left, Right>;						\
-		aml::Vector<rebind_container<Container_, outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
+		aml::Vector<rebind<Container_, outtype>, aml::dynamic_extent> out(aml::size_initializer(firstvec.size()));		\
 		dynamic_action																										\
 		return out;																											\
 	} else {																												\
@@ -1119,7 +1275,7 @@ const auto&& get(const Vector<T, Size>&& vec) noexcept
 
 #define AML_OP_BODY3(outtype, vec_, containertype_, isdynamic, action_)				\
 	if constexpr (isdynamic) {														\
-		aml::Vector<rebind_container<containertype_, outtype>, aml::dynamic_extent>	\
+		aml::Vector<rebind<containertype_, outtype>, aml::dynamic_extent>	\
 			out(aml::size_initializer(vec_.size()));								\
 		for (Vectorsize i = 0; i < vec_.size(); ++i) {								\
 			out[i] = action_;														\
@@ -1132,6 +1288,8 @@ const auto&& get(const Vector<T, Size>&& vec) noexcept
 		});																			\
 		return out;																	\
 	}
+
+#endif
 
 /**
 	@brief Sums up the two vectors
@@ -1146,9 +1304,7 @@ const auto&& get(const Vector<T, Size>&& vec) noexcept
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator+(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
-	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() + 
-							  std::declval<aml::value_type_of<decltype(right)>>());
-	AML_OP_BODY1(out_type, left[i] + right[i]);
+	return detail::do_vector_operation<aml::plus>(left, right);
 }
 
 /**
@@ -1163,7 +1319,8 @@ auto operator+(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
 auto& operator+=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
-	AML_OP_BODY2(left.is_dynamic() || right.is_dynamic(), left[i] += right[i]);
+	//AML_OP_BODY2(left.is_dynamic() || right.is_dynamic(), left[i] += right[i]);
+	return detail::do_vector_assign_operation<aml::plus_assign>(left, right);
 }
 
 /**
@@ -1178,9 +1335,10 @@ auto& operator+=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& r
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator-(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
-	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() -
-							  std::declval<aml::value_type_of<decltype(right)>>());
-	AML_OP_BODY1(out_type, left[i] - right[i]);
+	return detail::do_vector_operation<aml::minus>(left, right);
+	//using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() -
+	//						  std::declval<aml::value_type_of<decltype(right)>>());
+	//AML_OP_BODY1(out_type, left[i] - right[i]);
 }
 
 /**
@@ -1195,7 +1353,8 @@ auto operator-(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize
 */
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
 auto& operator-=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) noexcept {
-	AML_OP_BODY2(left.is_dynamic() || right.is_dynamic(), left[i] -= right[i]);
+	return detail::do_vector_assign_operation<aml::minus_assign>(left, right);
+	//AML_OP_BODY2(left.is_dynamic() || right.is_dynamic(), left[i] -= right[i]);
 }
 
 /**
@@ -1213,9 +1372,10 @@ auto& operator-=(Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& r
 */
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator*(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
-	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() * 
-							  std::declval<Right>());
-	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] * right);
+	return detail::do_vector_operation<aml::multiplies, false>(left, right);
+	//using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() * 
+	//						  std::declval<Right>());
+	//AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] * right);
 }
 
 /**
@@ -1234,7 +1394,8 @@ auto operator*(const Vector<Left, LeftSize>& left, const Right& right) noexcept 
 */
 template<class Left, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator*(const Left& left, const Vector<Right, RightSize>& right) noexcept {
-	return (right * left);
+	return detail::do_vector_operation<aml::multiplies, true>(right, left);
+	//return (right * left);
 }
 
 /**
@@ -1249,7 +1410,8 @@ auto operator*(const Left& left, const Vector<Right, RightSize>& right) noexcept
 */
 template<class Left, Vectorsize LeftSize, class Right> constexpr
 auto& operator*=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
-	AML_OP_BODY2(left.is_dynamic(), left[i] *= right);
+	return detail::do_vector_assign_operation<aml::multiplies_assign>(left, right);
+	//AML_OP_BODY2(left.is_dynamic(), left[i] *= right);
 }
 
 /**
@@ -1267,9 +1429,10 @@ auto& operator*=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
 */
 template<class Left, Vectorsize LeftSize, class Right> [[nodiscard]] constexpr
 auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept {
-	using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() / 
-							  std::declval<Right>());
-	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] / right);
+	return detail::do_vector_operation<aml::divides, false>(left, right);
+	//using out_type = decltype(std::declval<aml::value_type_of<decltype(left)>>() / 
+	//						  std::declval<Right>());
+	//AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), left[i] / right);
 }
 
 /**
@@ -1287,9 +1450,10 @@ auto operator/(const Vector<Left, LeftSize>& left, const Right& right) noexcept 
 */
 template<class Left, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator/(const Left& left, const Vector<Right, RightSize>& right) noexcept {
-	using out_type = decltype(std::declval<Left>() / 
-							  std::declval<aml::value_type_of<decltype(right)>>());
-	AML_OP_BODY3(out_type, right, Right, right.is_dynamic(), left / right[i]);
+	return detail::do_vector_operation<aml::divides, true>(right, left);
+	//using out_type = decltype(std::declval<Left>() / 
+	//						  std::declval<aml::value_type_of<decltype(right)>>());
+	//AML_OP_BODY3(out_type, right, Right, right.is_dynamic(), left / right[i]);
 }
 
 /**
@@ -1304,7 +1468,8 @@ auto operator/(const Left& left, const Vector<Right, RightSize>& right) noexcept
 */
 template<class Left, Vectorsize LeftSize, class Right> constexpr
 auto& operator/=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
-	AML_OP_BODY2(left.is_dynamic(), left[i] /= right);
+	return detail::do_vector_assign_operation<aml::divides_assign>(left, right);
+	//AML_OP_BODY2(left.is_dynamic(), left[i] /= right);
 }
 
 /**
@@ -1319,8 +1484,9 @@ auto& operator/=(Vector<Left, LeftSize>& left, const Right& right) noexcept {
 */
 template<class Left, Vectorsize LeftSize> [[nodiscard]] constexpr
 auto operator-(const Vector<Left, LeftSize>& left) noexcept {
-	using out_type = aml::value_type_of<Vector<Left, LeftSize>>;
-	AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), -left[i]);
+	return detail::do_vector_operation<aml::negate>(left);
+	//using out_type = aml::value_type_of<Vector<Left, LeftSize>>;
+	//AML_OP_BODY3(out_type, left, Left, left.is_dynamic(), -left[i]);
 }
 
 /**
@@ -1341,9 +1507,9 @@ auto operator/(const Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) n
 template<class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> constexpr
 auto& operator/=(Vector<Left, LeftSize>&, const Vector<Right, RightSize>&) noexcept = delete;
 
-#undef AML_OP_BODY1
-#undef AML_OP_BODY2
-#undef AML_OP_BODY3
+//#undef AML_OP_BODY1
+//#undef AML_OP_BODY2
+//#undef AML_OP_BODY3
 
 /**
 	@brief Checks if the vectors are equal
@@ -1404,12 +1570,12 @@ bool operator!=(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 template<class OutType = selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
 auto dist(const aml::Vector<T, Size>& vec) noexcept 
 {
-	using outtype = std::common_type_t<float, aml::value_type_of<decltype(vec)>>;
-	outtype out = aml::sqr<outtype>(vec[VI::first]);
+	using result_t = aml::common_type<float, aml::value_type_of<decltype(vec)>>;
+	result_t out = aml::sqr<result_t>(vec.first());
 
-	AML_VECTOR_FOR_LOOP(1, vec,				\
-		out += aml::sqr<outtype>(vec[i]);
-	);
+	detail::iterate_vector<1>([&](const auto i) {
+		out += static_cast<result_t>(aml::sqr(vec[i]));
+	}, vec);
 
 	return aml::selectable_convert<OutType>(aml::sqrt(out));
 }
@@ -1423,11 +1589,11 @@ auto dist(const aml::Vector<T, Size>& vec) noexcept
 template<class OutType = selectable_unused, class T, Vectorsize Size> [[nodiscard]] constexpr
 auto sum_of(const Vector<T, Size>& vec) noexcept 
 {
-	auto out = vec[VI::first];
+	auto out = vec.first();
 
-	AML_VECTOR_FOR_LOOP(1, vec,				\
+	detail::iterate_vector<1>([&](const auto i) {
 		out += vec[i];
-	);
+	}, vec);
 
 	return aml::selectable_convert<OutType>(out);
 }
@@ -1448,20 +1614,13 @@ struct dot_fn {
 template<class OutType = selectable_unused, class Left, Vectorsize LeftSize, class Right, Vectorsize RightSize> [[nodiscard]] constexpr
 auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSize>& right) const noexcept
 {
-	auto out = (left[VI::first] * right[VI::first]);
+	auto out = (left.first() * right.first());
 
-	if constexpr (left.is_dynamic() || right.is_dynamic()) {
-		AML_DEBUG_VERIFY(left.size() == right.size(), "Vector's sizes must be equal | left size: %zu, right size: %zu", left.size(), right.size());
-		for (Vectorsize i = 1; i < left.size(); ++i) {
-			out += left[i] * right[i];
-		}
-	}
-	else {
-		static_assert(LeftSize == RightSize, "Vector's sizes must be equal");
-		aml::static_for<1, LeftSize>([&](const auto i) {
-			out += left[i] * right[i];
-		});
-	}
+	detail::verify_vector_size(left, right);
+
+	detail::iterate_vector<1>([&](const auto i) {
+		out += left[i] * right[i];
+	}, left);
 
 	return aml::selectable_convert<OutType>(out);
 }
@@ -1512,25 +1671,30 @@ auto operator()(const Vector<Left, LeftSize>& left, const Vector<Right, RightSiz
 {
 	if constexpr (left.is_dynamic() || right.is_dynamic()) {
 		AML_DEBUG_VERIFY((left.size() == right.size()) && (left.size() == 3), "The size of the vectors must be equal to 3 | left size: %zu, right size: %zu", left.size(), right.size());
-	}
-	else {
+	} else {
 		static_assert((left.static_size == 3), "The size of the vectors must be equal to 3");
 	}
 
-	using left_value_type = aml::value_type_of<decltype(left)>;
-	using right_value_type = aml::value_type_of<decltype(right)>;
+	using result_t = aml::rebind<
+		aml::common_type<aml::remove_cvref<decltype(left)>, aml::remove_cvref<decltype(right)>>,
+		aml::remove_cvref<decltype((left[0] * right[0]) - (left[0] * right[0]))>
+	>;
 
-	using out_type = decltype((std::declval<left_value_type>()* std::declval<right_value_type>()) -
-		(std::declval<left_value_type>() * std::declval<right_value_type>()));
-
-	using namespace aml::VI;
 	const auto& a = left; const auto& b = right;
 
-	AML_VECTOR_FUNCTION_BODY1(out_type, left, right, \
-		out[X] = (a[Y] * b[Z]) - (a[Z] * b[Y]);			\
-		out[Y] = (a[Z] * b[X]) - (a[X] * b[Z]);			\
-		out[Z] = (a[X] * b[Y]) - (a[Y] * b[X]);			\
-	);
+	auto out = [&]() {
+		if constexpr (left.is_dynamic()) { return result_t{left.size()}; }
+		else if constexpr (right.is_dynamic()) { return result_t{right.size()}; }
+		else { return result_t{}; }
+	}();
+
+	using namespace aml::VI;
+
+	out[X] = (a[Y] * b[Z]) - (a[Z] * b[Y]);
+	out[Y] = (a[Z] * b[X]) - (a[X] * b[Z]);
+	out[Z] = (a[X] * b[Y]) - (a[Y] * b[X]);
+
+	return out;
 }
 };
 
@@ -1590,44 +1754,13 @@ auto normalize(const Vector<T, Size>& vec) noexcept
 
 /**
 	@brief Type alias for @ref aml::Vector<Container, dynamic_extent> and it container
-	@details Uses #aml::rebind_container to change @c std::vector value type
+	@details Uses #aml::rebind to change @c std::vector value type
 
 	@see Vector<Container, dynamic_extent> @n
-		 aml::rebind_container
+		 aml::rebind
 */
 template<class T>
 using DVector = Vector<std::vector<T>, aml::dynamic_extent>;
-
-template<class First, Vectorsize FirstSize, class Second, Vectorsize SecondSize>
-struct common_type_body<
-	aml::Vector<First, FirstSize>,
-	aml::Vector<Second, SecondSize>
-> {
-	template<bool first_dynamic, bool second_dynamic, class F, class S>
-	struct get_common_val {
-		using type = aml::container_common_type<F, S>;
-	};
-
-	template<class F, class S> struct get_common_val<true, false, F, S> {
-		using type = aml::rebind_container<F, aml::common_type<
-			aml::container_value_type<F>, S	
-		>>;
-	};
-	template<class F, class S> struct get_common_val<false, true, F, S> 
-		: get_common_val<true, false, S, F> {};
-
-	template<class F, class S> struct get_common_val<false, false, F, S> {
-		using type = aml::common_type<F, S>;
-	};
-
-	using vec_val_type = typename get_common_val<
-		aml::Vector<First, FirstSize>::is_dynamic(),
-		aml::Vector<Second, SecondSize>::is_dynamic(),
-		First, Second
-	>::type;
-
-	using type = aml::Vector<vec_val_type, aml::max(FirstSize, SecondSize)>;
-};
 
 #if 0
 template<class First, class... Ts>
