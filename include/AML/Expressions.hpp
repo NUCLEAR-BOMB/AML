@@ -71,45 +71,9 @@ public:
 	constexpr
 	Token(Type type, cstring_type str, size_type cnt) noexcept
 		: m_type(type), m_value(str, cnt) {}
-
 	constexpr
-	Token(cstring_type str) noexcept 
-		: Token()
-	{
-		constexpr auto is_digit = [](char chr) {
-			return aml::is_digit(static_cast<unsigned char>(chr)) || chr == '.';
-		};
-		constexpr auto is_bracket = [](char chr) {
-			return chr == '(' || chr == ')';
-		};
-
-		do {
-		if (is_digit(str[0])) {
-			m_type = Type::Number; break;
-		}
-		if (is_bracket(str[0])) {
-			m_type = Type::Bracket;
-			m_value = string_view_type(str, static_cast<size_type>(1));
-			return;
-		}
-		m_type = Type::Operator;
-		} while (0);
-
-		auto end = str + 1;
-		for (auto it = end; *it != '\0'; ++it)
-		{
-			if (m_type == Type::Number && !is_digit(*it)) {
-				end = it; break;
-			}
-			if (m_type == Type::Operator && 
-				(!aml::is_graph(static_cast<unsigned char>(*it)) || is_digit(*it) || is_bracket(*it))) 
-			{
-				end = it; break;
-			}
-		}
-
-		m_value = string_view_type(str, static_cast<size_type>(end - str));
-	}
+	Token(Type type, string_view_type str) noexcept
+		: m_type(type), m_value(str) {}
 
 	constexpr
 	const string_view_type value() const noexcept {
@@ -125,6 +89,48 @@ private:
 	Type m_type;
 	string_view_type m_value;
 }; // class Token
+
+	constexpr static
+	Token make_token(cstring_type str) noexcept
+	{
+		constexpr auto is_digit = [](char chr) {
+			return aml::is_digit(static_cast<unsigned char>(chr)) || chr == '.';
+		};
+		constexpr auto is_bracket = [](char chr) {
+			return chr == '(' || chr == ')';
+		};
+
+		typename Token::Type type{ Token::Type::Operator };
+
+		do {
+			if (is_digit(str[0])) {
+				type = Token::Type::Number; break;
+			}
+			if (is_bracket(str[0])) {
+				return Token{
+					Token::Type::Bracket,
+					string_view_type(str, static_cast<size_type>(1))
+				};
+			}
+		} while (0);
+
+		auto end = (str + 1);
+		for (auto it = (str + 1); *it != '\0'; ++it)
+		{
+			if (type == Token::Type::Number && !is_digit(*it)) {
+				end = it; break;
+			}
+			if (type == Token::Type::Operator &&
+				(!aml::is_graph(static_cast<unsigned char>(*it)) || is_digit(*it) || is_bracket(*it))) {
+				end = it; break;
+			}
+		}
+
+		return Token{
+			type,
+			string_view_type(str, static_cast<size_type>(end - str))
+		};
+	}
 
 	using stack_type = aml::fixed_vector<Token, StringSize>;
 
@@ -232,7 +238,7 @@ public:
 				++it; continue;
 			}
 
-			auto token = Token(it);
+			auto token = make_token(it);
 			it = token.value().data() + token.value().size();
 			
 			switch (token.type())

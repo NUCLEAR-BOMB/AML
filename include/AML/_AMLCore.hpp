@@ -137,10 +137,16 @@
 	#define AML_CONSTEXPR20
 #endif
 
-#if defined(__cpp_consteval) && !AML_MSVC
+#if AML_CXX20 && (__cpp_consteval >= 201811L)
 	#define AML_CONSTEVAL consteval
 #else
 	#define AML_CONSTEVAL constexpr
+#endif
+
+#if AML_MSVC // error C7595
+	#define AML_MSVC_CONSTEVAL constexpr
+#else
+	#define AML_MSVC_CONSTEVAL AML_CONSTEVAL
 #endif
 
 #if AML_MSVC || defined(__FUNCSIG__)
@@ -149,7 +155,7 @@
 	//#define AML_CURRENT_FUNCTION __func__
 #elif AML_GCC || defined(__PRETTY_FUNCTION__)
 	#define AML_CURRENT_FUNCTION __PRETTY_FUNCTION__
-#elif AML_CXX_STL >= 201103
+#elif AML_CXX_STL >= 201103L
 	#define AML_CURRENT_FUNCTION __func__
 #else
 	#define AML_CURRENT_FUNCTION ""
@@ -192,7 +198,7 @@ void logerror(
 {
 	std::fprintf(stderr, "\n   ");
 
-	va_list argptr;
+	std::va_list argptr;
 	va_start(argptr, msg);
 	std::vfprintf(stderr, msg, argptr);
 	va_end(argptr);

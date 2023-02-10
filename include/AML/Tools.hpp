@@ -117,13 +117,13 @@ struct fill_initializer
 
 /// Type of @ref zero
 struct zero_t {
-	template<class T> AML_CONSTEVAL
+	template<class T> AML_MSVC_CONSTEVAL
 	explicit operator T() const noexcept { return static_cast<T>(0); }
 };
 
 /// Type of @ref one
 struct one_t {
-	template<class T> AML_CONSTEVAL
+	template<class T> AML_MSVC_CONSTEVAL
 	explicit operator T() const noexcept { return static_cast<T>(1); }
 };
 
@@ -131,7 +131,7 @@ struct one_t {
 template<std::size_t Direction>
 struct unit_t {
 	static constexpr auto dir = Direction;
-	template<class T> AML_CONSTEVAL
+	template<class T> AML_MSVC_CONSTEVAL
 	explicit operator T() const noexcept { return static_cast<T>(1); }
 };
 
@@ -217,6 +217,21 @@ auto to_signed(const T& val) noexcept {
 	return static_cast<std::make_signed_t<T>>(val);
 }
 
+namespace detail
+{
+	template<auto V, std::size_t N, decltype(V)... Vs>
+	struct make_filled_sequence_impl
+		: make_filled_sequence_impl<V, N - 1, V, Vs...>
+	{};
+
+	template<auto V, decltype(V)... Vs>
+	struct make_filled_sequence_impl<V, 0, Vs...> {
+		using type = std::integer_sequence<decltype(V), Vs...>;
+	};
+}
+
+template<auto V, std::size_t N>
+using make_filled_sequence = typename detail::template make_filled_sequence_impl<V, N>::type;
 
 /**
 	@brief Max recursion level for #aml::static_for

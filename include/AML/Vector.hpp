@@ -256,6 +256,13 @@ public:
 	> constexpr
 	explicit Vector(Rest&&... r) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<value_type>)
 		: Storage{ std::forward<Rest>(r)... } {}
+
+private:
+
+	template<class Val, std::size_t... Idx> constexpr
+	Vector(Val&& v, std::index_sequence<Idx...>) noexcept
+		: Storage{((void)Idx, v)...} {}
+
 public:
 
 	/**
@@ -264,9 +271,9 @@ public:
 
 		@see aml::zero
 	*/
-	AML_CONSTEVAL
+	AML_MSVC_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::zero_t) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<value_type>)
-		: Vector(aml::fill_initializer(static_cast<value_type>(aml::zero)))
+		: Vector(static_cast<value_type>(aml::zero), std::make_index_sequence<Size>{})
 	{}
 
 	/**
@@ -275,9 +282,9 @@ public:
 
 		@see aml::one
 	*/
-	AML_CONSTEVAL
+	AML_MSVC_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::one_t) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<value_type>)
-		: Vector(aml::fill_initializer(static_cast<value_type>(aml::one)))
+		: Vector(static_cast<value_type>(aml::one), std::make_index_sequence<Size>{})
 	{}
 
 	/**
@@ -286,7 +293,7 @@ public:
 
 		@see aml::unit
 	*/
-	template<std::size_t Dir> AML_CONSTEVAL
+	template<std::size_t Dir> AML_MSVC_CONSTEVAL
 	explicit Vector([[maybe_unused]] const aml::unit_t<Dir>) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<value_type>)
 		: Vector(aml::zero)
 	{
@@ -315,11 +322,7 @@ public:
 	*/
 	constexpr
 	explicit Vector(const aml::fill_initializer<value_type> fill_with) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<value_type>) 
-		: Storage{} {
-		aml::static_for<Size>([&](const auto i) {
-			(*this)[i] = fill_with.value;
-		});
-	}
+		: Vector(fill_with.value, std::make_index_sequence<Size>{}) {}
 
 	/**
 		@brief Initializes the vector from dynamic vector
@@ -452,7 +455,7 @@ public:
 
 		@see aml::VI namespace
 	*/
-	template<size_type I> AML_CONSTEVAL
+	template<size_type I> constexpr
 	reference operator[]([[maybe_unused]] const index_t<I>) noexcept 
 	{
 		static_assert(I < Size, "Static vector index out of range");
@@ -478,7 +481,7 @@ public:
 
 		@see VI namespace
 	*/
-	template<size_type I> AML_CONSTEVAL
+	template<size_type I> constexpr
 	const_reference operator[]([[maybe_unused]] const index_t<I>) const noexcept {
 		return const_cast<Vector&>(*this)[aml::index_v<I>];
 	}
@@ -850,10 +853,8 @@ public:
 	explicit Vector(const Vector<U, aml::dynamic_extent>& other) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.size())) 
 	{
-		using other_value_type = aml::value_type_of<decltype(other)>;
-
 		std::transform(other.cbegin(), other.cend(), this->begin(),
-			[](const other_value_type& val) {
+			[](const auto& val) {
 				return static_cast<value_type>(val);
 			}
 		);
@@ -868,10 +869,8 @@ public:
 	explicit Vector(const Vector<U, OtherSize>& other) AML_NOEXCEPT(std::is_nothrow_copy_assignable_v<reference>)
 		: Vector(aml::size_initializer(other.static_size))
 	{
-		using other_value_type = aml::value_type_of<decltype(other)>;
-
 		std::transform(other.cbegin(), other.cend(), this->container.begin(),
-			[](const other_value_type& val) {
+			[](const auto& val) {
 				return static_cast<value_type>(val);
 			}
 		);
