@@ -5,7 +5,7 @@
 !include/
 !source/
 # !unittests/
-!tests/
+!test/
 !doc/
 !examples/
 !cmake/
