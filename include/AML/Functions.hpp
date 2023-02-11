@@ -74,11 +74,11 @@ decltype(auto) min(First&& f, Ts&&... vals) noexcept
 /**
 	@brief The sum of the input variadic arguments
 */
-template<class OutType = aml::selectable_unused, class First, class... Rest> [[nodiscard]] constexpr
-decltype(auto) sum_of(const First& first, const Rest&... rest) noexcept {
-	decltype(first + (rest + ...)) out = first;
+template<class First, class... Rest> [[nodiscard]] constexpr
+auto sum_of(First&& first, Rest&&... rest) noexcept {
+	decltype(first + (rest + ...)) out = std::forward<First>(first);
 	([&] {
-		out += rest;
+		out += std::forward<Rest>(rest);
 	}(), ...);
 	return out;
 }
@@ -117,7 +117,7 @@ bool operator()(const Left& left, const Right& right) const noexcept
 	{
 		using common = std::common_type_t<Left, Right>;
 
-		const auto m = aml::max<common>(static_cast<common>(1), static_cast<common>(aml::abs(left)), static_cast<common>(aml::abs(right)));
+		const auto m = aml::max(static_cast<common>(1), static_cast<common>(aml::abs(left)), static_cast<common>(aml::abs(right)));
 		return (aml::abs(left - right)) <= (std::numeric_limits<common>::epsilon() * m);
 	}
 	else if constexpr (std::is_arithmetic_v<Left> && std::is_arithmetic_v<Right>) {
@@ -139,7 +139,7 @@ bool operator()(const Left& left, const Right& right) const noexcept
 		return (aml::unwrap(left) == aml::unwrap(right));
 	}
 	else {
-		static_assert(!sizeof(Left*), "Left and Right types do not have a equal operator");
+		static_assert(aml::always_false<Left, Right>, "Left and Right types do not have a equal operator");
 	}
 }
 
@@ -229,6 +229,12 @@ bool negative(const T& val) noexcept {
 	}
 }
 
+template<class T> [[nodiscard]] constexpr
+auto negate_if(T&& val, bool cond)
+{
+	return (cond ? -std::forward<T>(val) : std::forward<T>(val));
+}
+
 /**
 	@brief Checks if @p val is positive
 */
@@ -252,7 +258,7 @@ decltype(auto) floor(T&& val) noexcept
 		return static_cast<conv>(t - (static_cast<T>(t) > val ? 1 : 0));
 	} 
 	else {
-		static_assert(!sizeof(T*), "Flooring not supported type");
+		static_assert(aml::always_false<T>, "Flooring not supported type");
 	}
 }
 
@@ -271,7 +277,7 @@ decltype(auto) ceil(T&& val) noexcept
 		return static_cast<conv>(t + (static_cast<T>(t) < val ? 1 : 0));
 	} 
 	else {
-		static_assert(!sizeof(T*), "Ceiling not supported type");
+		static_assert(aml::always_false<T>, "Ceiling not supported type");
 	}
 }
 
@@ -290,7 +296,7 @@ decltype(auto) round(T&& val) noexcept
 		  : aml::floor<OutType>(val - static_cast<T>(0.5));
 	} 
 	else {
-		static_assert(!sizeof(T*), "Rounding not supported type");
+		static_assert(aml::always_false<T>, "Rounding not supported type");
 	}
 }
 
@@ -301,6 +307,25 @@ bool is_gteq_zero(const T& val) noexcept
 		return val;
 	} else {
 		return (val >= static_cast<T>(aml::zero));
+	}
+}
+
+template<unsigned Start = 0, decltype(Start) Steps = 0, decltype(Start) Step = 1, class T, class Fun> constexpr
+void series(const T* val_ptr, Fun&& fun) noexcept
+{
+	auto stepc = Start;
+	while (true)
+	{
+		auto last = *val_ptr;
+
+		fun(stepc); // change val
+
+		if (aml::equal(last, *val_ptr)) break;
+		if constexpr (Steps != 0) {
+			if (stepc == (Start + (Steps * Step))) break;
+		}
+
+		stepc += Step;
 	}
 }
 
