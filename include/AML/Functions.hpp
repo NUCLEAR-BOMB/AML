@@ -25,32 +25,51 @@ bool is_big_endian() noexcept {
 	return (bint.c[0] == 1);
 }
 
-template<class OutType = aml::selectable_unused, class First> [[nodiscard]] constexpr
-decltype(auto) max(First&& first) noexcept {
-	return aml::selectable_convert<OutType>(std::forward<First>(first));
-}
 
-template<class OutType = aml::selectable_unused, class First, class Second> [[nodiscard]] constexpr
-decltype(auto) max(First&& first, Second&& second) noexcept {
-	return aml::selectable_convert<OutType>((first > second) ? (std::forward<First>(first)) : (std::forward<Second>(second)));
+template<class Operation, class First, class... Ts> [[nodiscard]] constexpr
+decltype(auto) compare(First&& f, Ts&&... vals) noexcept
+{
+	constexpr bool is_ref =
+		(std::is_reference_v<First> || (std::is_reference_v<Ts> || ...))
+		&& (std::is_same_v<std::remove_const_t<First>, std::remove_const_t<Ts>> && ...);
+	
+	if constexpr (is_ref)
+	{
+		using ptr_type_ = std::conditional_t<
+			std::is_const_v<std::remove_reference_t<First>> || (std::is_const_v<std::remove_reference_t<Ts>> || ...),
+			const aml::remove_cvref<First>*,
+			aml::remove_cvref<First>*
+		>;
+
+		ptr_type_ out = &f;
+		((out = (Operation{}(vals, *out) ? &vals : out)), ...);
+		return *out;
+	}
+	else 
+	{
+		using common = aml::common_type<aml::remove_cvref<First>, aml::remove_cvref<Ts>...>;
+
+		common v = static_cast<common>(f);
+		((v = (Operation{}(vals, v) ? static_cast<common&&>(vals) : v)), ...);
+		return v;
+	}
 }
 
 /**
 	@brief Maximum element from input variadic arguments
 */
-template<class OutType = aml::selectable_unused, class First, class Second, class... Rest> [[nodiscard]] constexpr
-auto max(First&& first, Second&& second, Rest&&... rest) noexcept 
+template<class First, class... Ts> [[nodiscard]] constexpr
+decltype(auto) max(First&& f, Ts&&... vals) noexcept
 {
-	using outtype = std::common_type_t<First, Second, Rest...>;
-
-	outtype out = std::forward<outtype>(aml::max(std::forward<First>(first), std::forward<Second>(second)));
-
-	([&] {
-		if (rest > out) out = std::forward<Rest>(rest);
-	}(), ...);
-
-	return aml::selectable_convert<OutType>(std::forward<outtype>(out));
+	return aml::compare<aml::greater>(std::forward<First>(f), std::forward<Ts>(vals)...);
 }
+
+template<class First, class... Ts> [[nodiscard]] constexpr
+decltype(auto) min(First&& f, Ts&&... vals) noexcept
+{
+	return aml::compare<aml::less>(std::forward<First>(f), std::forward<Ts>(vals)...);
+}
+
 
 /**
 	@brief The sum of the input variadic arguments
@@ -70,6 +89,11 @@ decltype(auto) sum_of(const First& first, const Rest&... rest) noexcept {
 template<class OutType = aml::selectable_unused, class T> [[nodiscard]] constexpr
 auto sqr(const T& val) noexcept {
 	return aml::selectable_convert<OutType>(val * val);
+}
+
+template<class T> [[nodiscard]] constexpr
+auto cbr(const T& val) noexcept {
+	return (val * val * val);
 }
 
 /**
