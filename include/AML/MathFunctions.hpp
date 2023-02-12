@@ -13,8 +13,8 @@ namespace aml {
 template<class T> [[nodiscard]] constexpr
 auto sqrt(const T& val) noexcept 
 {
-#if AML_HAS_BUILDIN(__buildin_sqrt)
-	return __buildin_sqrt(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_sqrt)
+	return __builtin_sqrt(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -31,8 +31,8 @@ auto sqrt(const T& val) noexcept
 template<class T> [[nodiscard]] constexpr
 auto cbrt(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_cbrt)
-	return __buildin_cbrt(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_cbrt)
+	return __builtin_cbrt(val);
 #else
 	using common = aml::common_type<T, float>;;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -63,8 +63,8 @@ auto pow(const Left& left, const Right& right) noexcept {
 template<class T> [[nodiscard]] constexpr
 auto exp(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_exp)
-	return __buildin_exp(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_exp)
+	return __builtin_exp(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -78,8 +78,8 @@ auto exp(const T& val) noexcept
 template<class T> [[nodiscard]] constexpr
 auto sin(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_sin)
-	return __buildin_sin(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_sin)
+	return __builtin_sin(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -92,8 +92,8 @@ auto sin(const T& val) noexcept
 template<class T> [[nodiscard]] constexpr
 auto cos(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_cos)
-	return __buildin_cos(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_cos)
+	return __builtin_cos(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -106,8 +106,8 @@ auto cos(const T& val) noexcept
 template<class T> [[nodiscard]] constexpr
 auto tan(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_tan)
-	return __buildin_tan(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_tan)
+	return __builtin_tan(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -120,8 +120,8 @@ auto tan(const T& val) noexcept
 template<class T> [[nodiscard]] constexpr
 auto asin(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_asin)
-	return __buildin_asin(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_asin)
+	return __builtin_asin(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -135,8 +135,8 @@ auto asin(const T& val) noexcept
 template<class T> [[nodiscard]] constexpr
 auto acos(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_acos)
-	return __buildin_acos(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_acos)
+	return __builtin_acos(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -151,8 +151,8 @@ auto acos(const T& val) noexcept
 template<class T> [[nodiscard]] constexpr
 auto atan(const T& val) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_atan)
-	return __buildin_atan(val);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_atan)
+	return __builtin_atan(val);
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -166,8 +166,8 @@ auto atan(const T& val) noexcept
 template<class Y_, class X_> [[nodiscard]] constexpr
 auto atan2(const Y_& y, const X_& x) noexcept
 {
-#if AML_HAS_BUILDIN(__buildin_atan2)
-	return __buildin_atan2(y, x);
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_atan2)
+	return __builtin_atan2(y, x);
 #else
 	using common = aml::common_type<Y_, X_, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
@@ -183,8 +183,22 @@ auto atan2(const Y_& y, const X_& x) noexcept
 }
 
 template<class First, class... Rest> [[nodiscard]] constexpr
-auto hypot(First&& f, Rest&&... rest) noexcept {
-	return aml::sqrt(aml::sum_of(std::forward<First>(f), std::forward<Rest>(rest)...));
+auto hypot(const First& f, const Rest&... rest) noexcept 
+{
+	using common = aml::common_type<float, First, Rest...>;
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_hypot)
+	if constexpr (sizeof...(rest) == 1) {
+		return static_cast<common>(__builtin_hypot(f, rest...));
+	}
+#endif
+	if constexpr (sizeof...(rest) == 0) {
+		return static_cast<common>(f);
+	}
+	if (AML_IS_CONSTANT_EVALUATED() || sizeof...(rest) > 2) {
+		return static_cast<common>(aml::sqrt(aml::sum_of(aml::sqr(f), aml::sqr(rest)...)));
+	} else {
+		return static_cast<common>(::std::hypot(f, rest...));
+	}
 }
 
 }
