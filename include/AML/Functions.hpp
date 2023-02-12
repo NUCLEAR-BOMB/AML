@@ -26,32 +26,35 @@ bool is_big_endian() noexcept {
 }
 
 
-template<class Operation, class First, class... Ts> [[nodiscard]] constexpr
-decltype(auto) compare(First&& f, Ts&&... vals) noexcept
+namespace detail
 {
-	constexpr bool is_ref =
-		(std::is_reference_v<First> || (std::is_reference_v<Ts> || ...))
-		&& (std::is_same_v<std::remove_const_t<First>, std::remove_const_t<Ts>> && ...);
+	template<class Operation, class First, class... Ts> [[nodiscard]] constexpr
+	decltype(auto) compare(First&& f, Ts&&... vals) noexcept
+	{
+		constexpr bool is_ref =
+			(std::is_reference_v<First> || (std::is_reference_v<Ts> || ...))
+			&& (std::is_same_v<std::remove_const_t<First>, std::remove_const_t<Ts>> && ...);
 	
-	if constexpr (is_ref)
-	{
-		using ptr_type_ = std::conditional_t<
-			std::is_const_v<std::remove_reference_t<First>> || (std::is_const_v<std::remove_reference_t<Ts>> || ...),
-			const aml::remove_cvref<First>*,
-			aml::remove_cvref<First>*
-		>;
+		if constexpr (is_ref)
+		{
+			using ptr_type_ = std::conditional_t<
+				std::is_const_v<std::remove_reference_t<First>> || (std::is_const_v<std::remove_reference_t<Ts>> || ...),
+				const aml::remove_cvref<First>*,
+				aml::remove_cvref<First>*
+			>;
 
-		ptr_type_ out = &f;
-		((out = (Operation{}(vals, *out) ? &vals : out)), ...);
-		return *out;
-	}
-	else 
-	{
-		using common = aml::common_type<aml::remove_cvref<First>, aml::remove_cvref<Ts>...>;
+			ptr_type_ out = &f;
+			((out = (Operation{}(vals, *out) ? &vals : out)), ...);
+			return *out;
+		}
+		else 
+		{
+			using common = aml::common_type<aml::remove_cvref<First>, aml::remove_cvref<Ts>...>;
 
-		common v = static_cast<common>(f);
-		((v = (Operation{}(vals, v) ? static_cast<common&&>(vals) : v)), ...);
-		return v;
+			common v = static_cast<common>(f);
+			((v = (Operation{}(vals, v) ? static_cast<common&&>(vals) : v)), ...);
+			return v;
+		}
 	}
 }
 
@@ -61,13 +64,13 @@ decltype(auto) compare(First&& f, Ts&&... vals) noexcept
 template<class First, class... Ts> [[nodiscard]] constexpr
 decltype(auto) max(First&& f, Ts&&... vals) noexcept
 {
-	return aml::compare<aml::greater>(std::forward<First>(f), std::forward<Ts>(vals)...);
+	return detail::template compare<aml::greater>(std::forward<First>(f), std::forward<Ts>(vals)...);
 }
 
 template<class First, class... Ts> [[nodiscard]] constexpr
 decltype(auto) min(First&& f, Ts&&... vals) noexcept
 {
-	return aml::compare<aml::less>(std::forward<First>(f), std::forward<Ts>(vals)...);
+	return detail::template compare<aml::less>(std::forward<First>(f), std::forward<Ts>(vals)...);
 }
 
 

@@ -8,32 +8,13 @@ namespace algorithms
 {
 
 template<unsigned Steps = 0, class T> constexpr
-auto taylor_exp(const T& val) noexcept
+auto exp_series(const T& val) noexcept
 {
-	using result_t = aml::common_type<T, float>;
-
-	const auto fval = static_cast<result_t>(val);
-
-	auto out = 1 + fval;
-	auto next = fval;
-
-	decltype(Steps) stepc = 2;
-
-	while (true)
-	{
-		auto last = out;
-
-		next *= (fval / stepc);
+	auto out = 1 + val;
+	aml::series<3, Steps, 1>(&out, [&, next = aml::sqr(val) / T(2)](auto step) mutable {
 		out += next;
-
-		if (aml::equal(last, out)) break;
-		if constexpr (Steps != 0) {
-			if (stepc == (Steps + 2)) break;
-		}
-
-		++stepc;
-	}
-
+		next *= val / T(step);
+	});
 	return out;
 }
 
