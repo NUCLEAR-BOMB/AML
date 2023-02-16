@@ -73,10 +73,8 @@ public:
 	constexpr const_reverse_iterator rbegin() const noexcept { return this->Base::rend() - static_cast<difference_type>(this->size()); }
 	constexpr const_reverse_iterator crbegin() const noexcept { return this->rbegin(); }
 
-	constexpr reference back() noexcept {
-		return (*this)[this->size() - 1]; }
-	constexpr const_reference back() const noexcept { 
-		return (*this)[this->size() - 1]; }
+	constexpr reference back() noexcept { return (*this)[this->size() - 1]; }
+	constexpr const_reference back() const noexcept { return (*this)[this->size() - 1]; }
 	constexpr reference front() noexcept { return (*this)[0]; }
 	constexpr const_reference front() const noexcept { return (*this)[0]; }
 
@@ -85,11 +83,11 @@ public:
 		return ReserveSize;
 	}
 
-	constexpr
-	void push_back(const value_type& value) noexcept 
+	template<class Value, std::enable_if_t<std::is_same_v<aml::remove_cvref<Value>, value_type>, int> = 0> constexpr
+	void push_back(Value&& value) noexcept
 	{
 		AML_DEBUG_VERIFY(m_current_size < reserved_size(), "Maximum limit is used");
-		Base::operator[](m_current_size) = value;
+		Base::operator[](m_current_size) = std::forward<Value>(value);
 		++m_current_size;
 	}
 
@@ -119,6 +117,10 @@ public:
 		AML_DEBUG_VERIFY(new_size < reserved_size(), "Maximum limit is used");
 		m_current_size = new_size;
 	}
+	constexpr
+	void clear() noexcept {
+		m_current_size = 0;
+	}
 
 	constexpr
 	reference operator[](size_type index) noexcept {
@@ -147,6 +149,7 @@ bool operator==(
 	}
 	return true;
 }
+#if !AML_CXX20
 template<class Left, std::size_t LeftRSize, class Right, std::size_t RightRSize> [[nodiscard]] constexpr
 bool operator!=(
 	const aml::fixed_vector<Left, LeftRSize>& left,
@@ -154,17 +157,15 @@ bool operator!=(
 ) noexcept {
 	return !(left == right);
 }
+#endif
 
-
-
-
-template<class T, std::size_t ReserveSize>
-class fixed_valarray : private std::array<T, ReserveSize> {
+template<class T, std::size_t Size>
+class fixed_valarray : private std::array<T, Size> {
 private:
-	using Base = std::array<T, ReserveSize>;
+	using Base = std::array<T, Size>;
 public:
 	
-	static constexpr auto static_reserved_size = ReserveSize;
+	static constexpr auto static_reserved_size = Size;
 
 	using value_type = typename Base::value_type;
 	using size_type = typename Base::size_type;
@@ -210,7 +211,7 @@ public:
 	template<std::size_t N> constexpr
 	fixed_valarray(const value_type(&arr)[N]) noexcept
 		: fixed_valarray(arr, std::make_index_sequence<N>{}) {
-		static_assert(N == ReserveSize, "The size of the array must be the same");
+		static_assert(N == Size, "The size of the array must be the same");
 	}
 
 	constexpr
@@ -227,7 +228,7 @@ public:
 
 
 	[[nodiscard]] static AML_CONSTEVAL
-	size_type size() noexcept { return ReserveSize; }
+	size_type size() noexcept { return Size; }
 };
 
 template<class T, std::size_t N>
@@ -341,9 +342,11 @@ bool operator==(const aml::fixed_valarray<Left, LeftSize>& left, const aml::fixe
 		return true;
 	}
 }
+#if !AML_CXX20
 template<class Left, std::size_t LeftSize, class Right, std::size_t RightSize> [[nodiscard]] constexpr
 bool operator!=(const aml::fixed_valarray<Left, LeftSize>& left, const aml::fixed_valarray<Right, RightSize>& right) noexcept {
 	return !(left == right);
 }
+#endif
 
 }
