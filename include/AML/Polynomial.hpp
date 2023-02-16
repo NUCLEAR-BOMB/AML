@@ -26,7 +26,7 @@ public:
 
 	static constexpr size_type degree = Deg;
 
-	using container_type = T[degree + 1];
+	using container_type = aml::fixed_valarray<T, degree + 1>;
 
 	
 	constexpr
@@ -42,9 +42,9 @@ public:
 
 	template<class... Rest, std::enable_if_t<enable_if_variadic_constructor<Rest...>, int> = 0> constexpr
 	Polynomial(Rest&&... r) noexcept 
-		: container{std::forward<Rest>(r)...}
+		: container({std::forward<Rest>(r)...})
 	{
-		AML_DEBUG_VERIFY(!aml::is_zero(*std::rbegin(this->container)), "Eldest coefficient of the polynomial must not be zero");
+		AML_DEBUG_VERIFY(!aml::is_zero(*std::rbegin(this->container)), "Last coefficient of the polynomial must not be zero");
 	}
 
 	constexpr Polynomial(const Polynomial&) noexcept = default;
@@ -52,10 +52,22 @@ public:
 	constexpr Polynomial& operator=(const Polynomial&) noexcept = default;
 	constexpr Polynomial& operator=(Polynomial&&) noexcept = default;
 
-	[[nodiscard]] AML_CONSTEVAL static
+	[[nodiscard]] constexpr
 	size_type size() noexcept {
-		return std::extent_v<container_type>;
+		return std::size(this->container);
 	}
+
+	[[nodiscard]] constexpr
+	reference last() noexcept { return this->container.back(); }
+	[[nodiscard]] constexpr
+	const_reference last() const noexcept { return this->container.back(); }
+
+
+	[[nodiscard]] constexpr
+	container_type& get_container() noexcept { return container; }
+	[[nodiscard]] constexpr
+	const container_type& get_container() const noexcept { return container; }
+
 
 	template<size_type I> constexpr reference get() & noexcept { return this->container[I]; }
 	template<size_type I> constexpr const_reference get() const & noexcept { return this->container[I]; }
@@ -219,8 +231,59 @@ inline constexpr bool is_polynomial_with_degree = detail::template is_polynomial
 template<class T>
 inline constexpr bool is_polynomial = detail::template is_polynomial_impl<T>::value;
 
-template<class T, std::size_t Degree>
-using enable_if_polynomial = std::enable_if_t<aml::is_polynomial_with_degree<(Degree), T>, int>;
+template<class Left, class Right, std::size_t Deg> constexpr
+auto operator*(const Polynomial<Left, Deg>& left, const Right& right) noexcept
+{
+	Polynomial<aml::common_type<Left, Right>, Deg> out;
+	out.get_container() = (left.get_container() * right);
+	return out;
+}
+template<class Left, class Right, std::size_t Deg> constexpr
+auto operator*(const Left& left, const Polynomial<Right, Deg>& right) noexcept { return (right * left); }
+
+template<class Left, class Right, std::size_t Deg> constexpr
+auto operator/(const Polynomial<Left, Deg>& left, const Right& right) noexcept
+{
+	Polynomial<aml::common_type<Left, Right>, Deg> out;
+	out.get_container() = (left.get_container() / right);
+	return out;
+}
+template<class Left, class Right, std::size_t Deg> constexpr
+auto operator/(const Left& left, const Polynomial<Right, Deg>& right) noexcept
+{
+	Polynomial<aml::common_type<Left, Right>, Deg> out;
+	out.get_container() = (left / right.get_container());
+	return out;
+}
+
+
+
+template<class Left, std::size_t LeftSize, class Right, std::size_t RightSize> constexpr
+bool operator==(const Polynomial<Left, LeftSize>& left, const Polynomial<Right, RightSize>& right) noexcept
+{
+	if constexpr (LeftSize != RightSize) { return false; }
+	else { return left.get_container() == right.get_container(); }
+}
+template<class Left, std::size_t LeftSize, class Right, std::size_t RightSize> constexpr
+bool operator!=(const Polynomial<Left, LeftSize>& left, const Polynomial<Right, RightSize>& right) noexcept {
+	return !(left == right);
+}
+
+
+template<class Poly> [[nodiscard]] constexpr
+decltype(auto) monic(Poly&& poly) AML_NOEXCEPT(noexcept(poly / poly.last()))
+{
+	return (poly / poly.last());
+}
+
+
+
+
+
+namespace detail {
+	template<class T, std::size_t Degree>
+	using enable_if_polynomial = std::enable_if_t<aml::is_polynomial_with_degree<(Degree), T>, int>;
+}
 
 #if 0
 template<class Pol, enable_if_polynomial<Pol, 0> = 0> [[nodiscard]] constexpr
@@ -230,20 +293,20 @@ auto solve([[maybe_unused]] Pol&& polynomial) noexcept
 }
 #endif
 
-template<class Pol, enable_if_polynomial<Pol, 1> = 0> [[nodiscard]] constexpr
+template<class Pol, detail::template enable_if_polynomial<Pol, 1> = 0> [[nodiscard]] constexpr
 auto solve(Pol&& polynomial) noexcept
 {
 	return PolynomialRoot{ -(get<0>(polynomial) / get<1>(polynomial)) };
 }
 
-template<class Pol, enable_if_polynomial<Pol, 2> = 0> [[nodiscard]] constexpr
+template<class Pol, detail::template enable_if_polynomial<Pol, 2> = 0> [[nodiscard]] constexpr
 auto solve(Pol&& polynomial) noexcept
 {
 	using poly_val_t = aml::common_type<aml::value_type_of<Pol>, float>;
 
-	auto a = static_cast<poly_val_t>(get<2>(polynomial));
-	auto b = static_cast<poly_val_t>(get<1>(polynomial));
-	auto c = static_cast<poly_val_t>(get<0>(polynomial));
+	const auto a = static_cast<poly_val_t>(get<2>(polynomial));
+	const auto b = static_cast<poly_val_t>(get<1>(polynomial));
+	const auto c = static_cast<poly_val_t>(get<0>(polynomial));
 
 	const auto D = sqr(b) - (4 * a * c);
 
@@ -258,6 +321,30 @@ auto solve(Pol&& polynomial) noexcept
 	return poly_t{(-b + sqrt_D) / (2 * a), (-b - sqrt_D) / (2 * a)};
 }
 
+#if 0
+template<class T> [[nodiscard]] constexpr
+auto solve(const aml::Polynomial<T, 3>& polynomial) noexcept
+{
+	using poly_val_t = aml::common_type<T, float>;
+
+	const auto a = static_cast<poly_val_t>(get<0>(polynomial));
+	const auto b = static_cast<poly_val_t>(get<1>(polynomial));
+	const auto c = static_cast<poly_val_t>(get<2>(polynomial));
+	const auto d = static_cast<poly_val_t>(get<3>(polynomial));
+
+	const auto p = (3*a*c - sqr(b)) / (3*sqr(a));
+	const auto q = (27*sqr(a)*d - 9*a*b*c + 2*cbr(b)) / (27*cbr(a));
+
+	const auto Q = cbr(p/3) + sqr(q/2);
+
+	if (Q < 0) {
+		const auto A = aml::cbrt(-q / 2 + sqrt_Q);
+		const auto B = aml::cbrt(-q / 2 - sqrt_Q);
+	}
+
+	const auto sqrt_Q = aml::csqrt(Q);
+}
+#endif
 
 
 template<class... Args> [[nodiscard]] constexpr
