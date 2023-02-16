@@ -86,8 +86,13 @@ reference_wrapper(T&) -> reference_wrapper<T>;
 template<class T>
 struct type_wrapper { T value; };
 
-template<class... Rest>
-inline constexpr bool always_false = ((sizeof(type_wrapper<Rest>*) == 0) && ...);
+struct any_argument {
+	template <typename T> constexpr
+	operator T&& () const noexcept;
+};
+
+template<class...>
+inline constexpr bool always_false = false;
 
 /// Wrapper around @c std::size_t
 struct size_initializer
@@ -354,6 +359,11 @@ decltype(auto) constexpr_ternary([[maybe_unused]] Left&& left, [[maybe_unused]] 
 	}
 }
 
+template<class Function, class T, T... Vals> constexpr
+decltype(auto) unpack_variadic_to_function(std::integer_sequence<T, Vals...>, Function&& fun) noexcept {
+	return std::forward<Function>(fun)(Vals...);
+}
+
 namespace detail
 {
 	template<class, template<class...> class>
@@ -449,16 +459,25 @@ decltype(auto) get_variadic(Args&&... args) noexcept {
 	return detail::template get_variadic_impl<Pos, Args...>::get(std::forward<Args>(args)...);
 }
 
-constexpr bool is_digit(unsigned char chr) noexcept {
-	return (chr >= '0' && '9' >= chr);
+template<class CharT>
+constexpr bool is_digit(CharT ch) noexcept {
+	return [](auto chr) { return (chr >= '0' && '9' >= chr); }(static_cast<unsigned char>(ch));
 }
-
-constexpr bool is_graph(unsigned char chr) noexcept {
-	return (chr >= '!' && '~' >= chr);
+template<class CharT>
+constexpr bool is_graph(CharT ch) noexcept {
+	return [](auto chr) { return (chr >= '!' && '~' >= chr); }(static_cast<unsigned char>(ch));
 }
-
-constexpr bool is_space(unsigned char chr) noexcept {
-	return (chr >= '\t' && '\r' >= chr) || (chr == ' ');
+template<class CharT>
+constexpr bool is_alpha(CharT ch) noexcept {
+	return [](auto chr) { return (chr >= 'A' && 'Z' >= chr) || (chr >= 'a' && 'z' >= chr); }(static_cast<unsigned char>(ch));
+}
+template<class CharT>
+constexpr bool is_alnum(CharT ch) noexcept {
+	return aml::is_digit(ch) || aml::is_alpha(ch);
+}
+template<class CharT>
+constexpr bool is_space(CharT ch) noexcept {
+	return [](auto chr) { return (chr >= '\t' && '\r' >= chr) || (chr == ' '); }(static_cast<unsigned char>(ch));
 }
 
 namespace detail
@@ -842,32 +861,74 @@ using value_type_of = typename detail::template get_value_type_impl<aml::remove_
 
 namespace detail
 {
+	template<class T, class = void>
+	struct is_callable_impl : std::false_type {};
+
+	template<class T>
+	struct is_callable_impl<T, std::void_t<decltype(&T::operator())>> : std::true_type {};
+}
+
+template<class T>
+inline constexpr bool is_callable = detail::template is_callable_impl<T>::value;
+
+namespace detail
+{	
+	template<class Callable, class, class = void>
+	struct is_can_invoke_with_params : std::false_type {};
+
+	template<class Callable, std::size_t... Idx>
+	struct is_can_invoke_with_params<Callable, std::index_sequence<Idx...>,
+		std::void_t<decltype(std::declval<Callable>()(((void)Idx, aml::any_argument{})...))>> : std::true_type {};
+
+	template<class Callable, std::size_t ArgsCount = 0, bool = true>
+	struct count_any_parameters 
+		: count_any_parameters<Callable, ArgsCount + 1, 
+			is_can_invoke_with_params<Callable, std::make_index_sequence<ArgsCount>>::value>
+	{};
+
+	template<class Callable, std::size_t ArgsCount>
+	struct count_any_parameters<Callable, ArgsCount, false> {
+		static constexpr auto value = (ArgsCount + 1);
+	};
+
+	template<class F, class = void>
+	struct function_traits_impl;
+
+	template<class F, class>
+	struct function_traits_impl 
+	{
+		static constexpr auto arg_count = count_any_parameters<F>::value;
+	};
+
+	template<class F>
+	struct function_traits_impl<F, std::void_t<decltype(&F::operator())>>
+		: function_traits_impl<decltype(&F::operator())> {};
+
 	template<class R, class... Args>
-	struct function_traits_impl_base 
+	struct function_traits_impl<R(Args...)>
 	{
 		using result_type = R;
 
 		using args_as_tuple = std::tuple<Args...>;
 
+		static constexpr auto arg_count = sizeof...(Args);
+
 		template<std::size_t I>
 		using arg = std::tuple_element_t<I, args_as_tuple>;
 	};
-
-	template<class>
-	struct function_traits_impl;
-
-	template<class R, class... Args> struct function_traits_impl<R(Args..., ...)> 
-		: function_traits_impl_base<R, Args...> {};
-
-	template<class R, class... Args> struct function_traits_impl<std::function<R(Args...)>> 
-		: function_traits_impl_base<R, Args...> {};
-
-	template<class R, class... Args> struct function_traits_impl<R(Args...)> 
-		: function_traits_impl_base<R, Args...> {};
+	template<class R, class... Args>
+	struct function_traits_impl<R(*)(Args...)>
+		: function_traits_impl<R(Args...)> {};
+	template<class R, class Cls, class... Args>
+	struct function_traits_impl<R(Cls::*)(Args...)>
+		: function_traits_impl<R(Args...)> {};
+	template<class R, class Cls, class... Args>
+	struct function_traits_impl<R(Cls::*)(Args...) const>
+		: function_traits_impl<R(Args...)> {};
 }
 
-template<class Func>
-using function_traits = detail::template function_traits_impl<Func>;
+template<class Callable>
+using function_traits = detail::template function_traits_impl<aml::remove_cvref<Callable>>;
 
 #define AML_DEFINE_BINARY_OP(name, op)	\
 	struct name {																\
