@@ -103,10 +103,19 @@ auto cbr(const T& val) noexcept {
 	@brief Absolute value or modulus of a number. @f$ |x| @f$
 */
 template<class T> [[nodiscard]] constexpr
-decltype(auto) abs(const T& val) noexcept {
+auto abs(const T& val) noexcept {
 	if constexpr (std::is_unsigned_v<T>) {
 		return val;
 	} else {
+#if AML_HAS_CONSTEXPR_BUILTIN(__builtin_fabs)
+		if constexpr (std::is_same_v<T, float>) {
+			return __builtin_fabsf(val);
+		} else if constexpr (std::is_same_v<T, double>) {
+			return __builtin_fabs(val);
+		} else if constexpr (std::is_same_v<T, long double>) {
+			return __builtin_fabsl(val);
+		}
+#endif
 		return (val < static_cast<T>(0)) ? (-val) : (val);
 	}
 }

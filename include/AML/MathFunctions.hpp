@@ -5,6 +5,7 @@
 #include <AML/Algorithms/Exp.hpp>
 #include <AML/Algorithms/Trigonometry.hpp>
 #include <AML/Algorithms/Root.hpp>
+#include <AML/Algorithms/Log.hpp>
 
 #include <cmath>
 
@@ -125,7 +126,7 @@ auto asin(const T& val) noexcept
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
-		return aml::algorithms::fast_asin(static_cast<common>(val));
+		return aml::algorithms::optimize_asin(static_cast<common>(val), [](auto&& val) { return aml::algorithms::asin_series(val); });
 	} else {
 		return static_cast<common>(::std::asin(val));
 	}
@@ -156,7 +157,7 @@ auto atan(const T& val) noexcept
 #else
 	using common = aml::common_type<T, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
-		return aml::algorithms::fast_atan<150>(static_cast<common>(val));
+		return aml::algorithms::euler_atan<150>(static_cast<common>(val));
 	} else {
 		return static_cast<common>(::std::atan(val));
 	}
@@ -171,7 +172,7 @@ auto atan2(const Y_& y, const X_& x) noexcept
 #else
 	using common = aml::common_type<Y_, X_, float>;
 	if (AML_IS_CONSTANT_EVALUATED()) {
-		AML_DEBUG_VERIFY(!aml::equal(y, aml::zero) && !aml::equal(x, aml::zero), "y and x must not equal zero");
+		AML_DEBUG_VERIFY(!(aml::equal(y, aml::zero) && aml::equal(x, aml::zero)), "y and x must not equal zero");
 
 		using flt_y = aml::common_type<Y_, float>;
 		using flt_x = aml::common_type<X_, float>;

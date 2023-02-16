@@ -44,15 +44,15 @@ auto asin_series(const T& val) noexcept
 	return out;
 }
 
-template<unsigned Steps = 0, class T> constexpr
-auto fast_asin(const T& val) noexcept
+template<unsigned Steps = 0, class T, class Fun> constexpr
+auto optimize_asin(const T& val, Fun&& fun) noexcept
 {
 	// https://stackoverflow.com/a/62855844
 
 	constexpr auto half_pi_ = static_cast<T>(1.5707963267948966);
 
-	constexpr auto calc = [](const auto& v) {
-		return half_pi_ - (2 * asin_series<Steps>( newton_sqrt((T(1) - v) / T(2)) ));
+	constexpr auto calc = [&fun](auto&& v) {
+		return half_pi_ - (2 * std::forward<Fun>(fun)( newton_sqrt((T(1) - v) / T(2)) ));
 	};
 
 	if (val >= T(0)) {
@@ -74,10 +74,22 @@ auto atan_series(const T& val) noexcept
 	return out;
 }
 
-template<unsigned Steps = 100, class T> constexpr
-auto fast_atan(const T& val) noexcept
+template<unsigned Steps = 0, class T> constexpr
+auto euler_atan(const T& val) noexcept
 {
-	return 2 * atan_series<Steps>(val / (1 + newton_sqrt(1 + aml::sqr(val))) );
+	auto out = T(0);
+	const auto sqr_val = aml::sqr(val);
+	aml::series<2, Steps, 2>(&out, [&, next = T(1)](auto step) mutable {
+		out += next;
+		next *= (step * sqr_val) / ((step + 1)*(1 + sqr_val));
+	});
+	return out * (val / (1 + sqr_val));
+}
+
+template<class T, class Fun> constexpr
+auto optimize_atan(const T& val, Fun&& fun) noexcept
+{
+	return 2 * std::forward<Fun>(fun)(val / (1 + newton_sqrt(1 + aml::sqr(val))));
 }
 
 template<unsigned Steps = 100, class Y_, class X_> constexpr
@@ -90,7 +102,7 @@ auto atan2(const Y_& y, const X_& x) noexcept
 	const bool is_x_zero = aml::equal(x, aml::zero);
 
 	return 
-		!is_x_zero ? fast_atan<Steps>(y / x) : common(0)
+		!is_x_zero ? euler_atan<Steps>(y / x) : common(0)
 	  + (1 - 2*(y < 0))*(pi_*(x < 0) + half_pi_*is_x_zero);
 }
 
