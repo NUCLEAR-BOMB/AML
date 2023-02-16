@@ -258,7 +258,8 @@ auto round(const Complex<T>& val) noexcept {
 
 template<class T> [[nodiscard]] constexpr
 auto abs(const Complex<T>& val) noexcept {
-	return aml::sqrt( sqr(Re(val)) + sqr(Im(val)) );
+	return aml::hypot(Re(val), Im(val));
+	//return aml::sqrt( sqr(Re(val)) + sqr(Im(val)) );
 }
 
 template<class T> [[nodiscard]] constexpr
@@ -292,6 +293,20 @@ template<class T> [[nodiscard]] constexpr
 auto csqrt(const Complex<T>& val) noexcept {
 	return aml::sqrt(val);
 }
+
+template<class T> [[nodiscard]] constexpr
+auto arg(const Complex<T>& val) noexcept {
+	return aml::atan2(Im(val), Re(val));
+}
+
+
+#if 0
+template<class T> [[nodiscard]] constexpr
+auto cbrt(const Complex<T>& val) noexcept
+{
+
+}
+#endif
 
 template<class T>
 std::ostream& operator<<(std::ostream& os, const Complex<T>& right) {
