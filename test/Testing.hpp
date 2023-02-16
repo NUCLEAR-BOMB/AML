@@ -8,11 +8,11 @@
 	[[maybe_unused]] constexpr void test_name()
 
 #ifndef NO_TESTS
-#define DEFINE_VAR \
-	constexpr
+	#define DEFINE_VAR \
+		constexpr
 #else
-#define DEFINE_VAR \
-	[[maybe_unused]] constexpr
+	#define DEFINE_VAR \
+		[[maybe_unused]] constexpr
 #endif
 
 #ifndef NO_TESTS

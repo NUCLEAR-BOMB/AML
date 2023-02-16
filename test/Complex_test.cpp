@@ -103,6 +103,8 @@ DEFINE_TEST(complex_functions)
 	TEST_EQUALS(aml::csqrt(-1), aml::Complex(0.f, 1.f));
 
 	TEST_EQUALS(aml::normalize(aml::Complex(1, 1)), aml::Complex(0.70710678f, 0.70710678f));
+
+	TEST_EQUALS(aml::arg(aml::Complex(1, 0)), 0.f);
 }
 
 DEFINE_TEST(complex_structured_binding)
