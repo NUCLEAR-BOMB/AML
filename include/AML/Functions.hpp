@@ -171,14 +171,14 @@ namespace detail {
 	struct equal_op_proxy {
 		const T& v;
 	};
-}
 
-template<class T> constexpr
-const detail::equal_op_proxy<T> operator<(const T& left, const equal_fn&) { return { left }; }
+	template<class T> constexpr
+	const detail::equal_op_proxy<T> operator<(const T& left, const equal_fn&) { return { left }; }
 
-template<class Left, class Right> constexpr
-decltype(auto) operator>(const detail::equal_op_proxy<Left>& left, const Right& right) {
-	return aml::equal(left.v, right);
+	template<class Left, class Right> constexpr
+	decltype(auto) operator>(const detail::equal_op_proxy<Left>& left, const Right& right) {
+		return aml::equal(left.v, right);
+	}
 }
 
 #endif

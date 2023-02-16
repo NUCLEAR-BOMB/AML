@@ -482,6 +482,37 @@ constexpr bool is_space(CharT ch) noexcept {
 
 namespace detail
 {
+	template<class Operation, bool cond>
+	struct swap_binary_args_if_impl
+	{
+		template<class Left, class Right> constexpr
+		auto operator()(Left&& left, Right&& right) const
+			noexcept(noexcept(Operation{}(std::forward<Left>(left), std::forward<Right>(right))))
+			-> decltype(Operation{}(std::forward<Left>(left), std::forward<Right>(right)))
+		{
+			return Operation{}(std::forward<Left>(left), std::forward<Right>(right));
+		}
+	};
+	template<class Operation>
+	struct swap_binary_args_if_impl<Operation, true>
+	{
+		template<class Left, class Right> constexpr
+		auto operator()(Left&& left, Right&& right) const
+			noexcept(noexcept(Operation{}(std::forward<Right>(right), std::forward<Left>(left))))
+			-> decltype(Operation{}(std::forward<Right>(right), std::forward<Left>(left)))
+		{
+			return Operation{}(std::forward<Right>(right), std::forward<Left>(left));
+		}
+	};
+
+
+}
+
+template<class Operation, bool cond>
+using swap_binary_args_if = detail::template swap_binary_args_if_impl<Operation, cond>;
+
+namespace detail
+{
 	template<std::size_t Bytes>
 	struct signed_from_bytes_impl
 	{
