@@ -2,16 +2,16 @@
 
 #include <AML/Expressions.hpp>
 
+#include <gtest/gtest.h>
+
 namespace {
 
-DEFINE_TEST(expressions) 
+TEST(aa, expressions) 
 {
-	DEFINE_VAR aml::Expression expr1("1.5 * 2 + (1/2)*(2/1) - 1");
-	DEFINE_VAR auto result1 = expr1.calculate();
-	TEST_EQUALS(result1, 3.0);
-
-	DEFINE_VAR auto result2 = aml::Expression("30 / 2 * 1 - 1").calculate();
-	TEST_EQUALS(result2, 14.0);
+	static constexpr aml::Expression expr1{"1.5 * x + (1/2)*(2/1) - 1"};
+	static constexpr auto result1 = expr1.function();
+	static constexpr auto res = result1(2);
+	ASSERT_EQ(res, 3.0);
 }
 
 }

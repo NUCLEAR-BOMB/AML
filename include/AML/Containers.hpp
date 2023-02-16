@@ -91,7 +91,7 @@ public:
 		++m_current_size;
 	}
 
-	template<class... Args> constexpr
+	template<class... Args> AML_CONSTEXPR20
 	void emplace_back(Args&&... args) noexcept 
 	{
 		AML_DEBUG_VERIFY(m_current_size < reserved_size(), "Maximum limit is used");
