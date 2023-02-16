@@ -121,7 +121,7 @@
 	#error C++17 or higher is required
 #endif
 
-#if AML_CXX20	
+#if AML_CXX20 && (__cpp_lib_is_constant_evaluated >= 201811L)
 	#define AML_IS_CONSTANT_EVALUATED() ::std::is_constant_evaluated()
 #else
 	#if AML_MSVC || AML_GCC || AML_CLANG
@@ -131,7 +131,7 @@
 	#endif
 #endif
 
-#if AML_CXX20
+#if AML_CXX20 && (__cpp_constexpr_dynamic_alloc >= 201907L)
 	#define AML_CONSTEXPR20 constexpr
 #else
 	#define AML_CONSTEXPR20
@@ -179,6 +179,18 @@
 	#define AML_NOEXCEPT(...) noexcept
 #endif
 
+#if defined(__has_builtin)
+	#define AML_HAS_BUILTIN(x) __has_builtin(x)
+#else
+	#define AML_HAS_BUILTIN(x) (0)
+#endif
+
+#if defined(__has_builtin) && defined(__has_constexpr_builtin)
+	#define AML_HAS_CONSTEXPR_BUILTIN(x) (__has_builtin(x) && __has_constexpr_builtin(x))
+#else
+	#define AML_HAS_CONSTEXPR_BUILTIN(x) (0)
+#endif
+
 namespace aml {
 
 using error_line_type		= std::decay_t<decltype(__LINE__)>;
@@ -213,7 +225,7 @@ void logerror(
 		::aml::logerror(__LINE__, AML_CURRENT_FUNCTION, __FILE__, __VA_ARGS__)
 
 #else /// !AML_DEBUG
-	#define AML_DEBUG_ERROR(...) ((void)0)
+	#define AML_DEBUG_ERROR(...) AML_UNREACHABLE
 #endif /// !AML_DEBUG
 
 #if AML_DEBUG
